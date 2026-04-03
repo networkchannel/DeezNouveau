@@ -1,0 +1,30 @@
+[
+  {
+    "content": "Configure SMTP credentials in .env",
+    "status": "in_progress"
+  },
+  {
+    "content": "Wire security telemetry to all sensitive frontend API calls (auth, orders, gift cards)",
+    "status": "pending"
+  },
+  {
+    "content": "Update backend to enforce security validation on sensitive routes",
+    "status": "pending"
+  },
+  {
+    "content": "Improve Login waiting page: email delivery status + resend button with cooldown",
+    "status": "pending"
+  },
+  {
+    "content": "Backend: return email_sent status + add /auth/magic/resend endpoint",
+    "status": "pending"
+  },
+  {
+    "content": "Test SMTP email delivery",
+    "status": "pending"
+  },
+  {
+    "content": "End-to-end testing with testing agent",
+    "status": "pending"
+  }
+]
