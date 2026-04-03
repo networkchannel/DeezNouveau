@@ -10,7 +10,7 @@ import { Loader2, Mail, ArrowLeft, Check } from "lucide-react";
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
 export default function Login() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { verifyMagicLink, checkAuth, user } = useAuth();
