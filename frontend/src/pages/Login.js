@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { securePost } from "@/utils/secureApi";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
+import CaptchaWidget from "@/components/CaptchaWidget";
 import { Loader2, Mail, ArrowLeft, Check, RefreshCw, AlertTriangle, CheckCircle2, Shield } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -19,11 +20,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phase, setPhase] = useState("form"); // form | waiting | verifying | verified
-  const [emailSent, setEmailSent] = useState(null); // null | true | false
+  const [emailSent, setEmailSent] = useState(null);
   const [sessionId, setSessionId] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resending, setResending] = useState(false);
   const [resendCount, setResendCount] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState("");
   const pollingRef = useRef(null);
   const cooldownRef = useRef(null);
   const lang = i18n.language || "fr";
@@ -51,6 +53,8 @@ export default function Login() {
       invalidEmail: "Email invalide",
       linkExpired: "Lien expiré ou invalide",
       genericError: "Une erreur est survenue, veuillez réessayer.",
+      captchaRequired: "Veuillez compléter la vérification.",
+      captchaLabel: "Vérifiez que vous êtes humain",
     },
     en: {
       title: "Sign in",
@@ -74,13 +78,14 @@ export default function Login() {
       invalidEmail: "Invalid email",
       linkExpired: "Link expired or invalid",
       genericError: "An error occurred, please try again.",
+      captchaRequired: "Please complete the verification.",
+      captchaLabel: "Verify you're human",
     }
   };
   const T = txt[lang] || txt.en;
 
   useEffect(() => { if (user && user.email) navigate("/profile"); }, [user, navigate]);
 
-  // Handle token from URL (magic link click)
   useEffect(() => {
     const token = searchParams.get("token");
     if (token) {
@@ -91,7 +96,6 @@ export default function Login() {
     }
   }, [searchParams, verifyMagicLink, navigate, T.linkExpired]);
 
-  // Polling for magic link verification
   const startPolling = useCallback((sid) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     pollingRef.current = setInterval(async () => {
@@ -111,13 +115,11 @@ export default function Login() {
     }, 3000);
   }, [checkAuth, navigate, T.linkExpired]);
 
-  // Cleanup
   useEffect(() => () => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
   }, []);
 
-  // Cooldown timer
   const startCooldown = (seconds) => {
     setResendCooldown(seconds);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
@@ -129,48 +131,42 @@ export default function Login() {
     }, 1000);
   };
 
-  // Submit magic link request — with triple-fallback error handling
   const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmedEmail = email.trim();
     if (!trimmedEmail || !trimmedEmail.includes("@")) { setError(T.invalidEmail); return; }
+    if (!captchaToken) { setError(T.captchaRequired); return; }
     
     setLoading(true);
     setError("");
     setEmailSent(null);
     
     try {
-      // Primary: use securePost with telemetry
       const result = await securePost("/auth/magic", {
         email: trimmedEmail,
-        language: lang
+        language: lang,
+        captcha_token: captchaToken
       });
       
-      // Store email for order history
       try {
         localStorage.setItem("deezlink_email", trimmedEmail.toLowerCase());
         window.dispatchEvent(new Event("deezlink_email_update"));
       } catch {}
       
-      // Transition to waiting phase
       const sid = result?.session_id || "";
       setSessionId(sid);
-      setEmailSent(result?.email_sent !== false); // Default to true if field missing
+      setEmailSent(result?.email_sent !== false);
       setPhase("waiting");
       if (sid) startPolling(sid);
       startCooldown(60);
-      
     } catch (err) {
-      console.error("[Login] Magic link error:", err);
-      
-      // Extract error detail
       const status = err?.response?.status;
       const detail = err?.response?.data?.detail;
-      
       if (status === 429) {
-        setError(typeof detail === "string" ? detail : "Trop de tentatives. Patientez quelques minutes.");
+        setError(typeof detail === "string" ? detail : "Trop de tentatives. Patientez.");
       } else if (status === 403) {
-        setError(typeof detail === "string" ? detail : "Erreur de sécurité. Rechargez la page.");
+        setCaptchaToken(""); // Reset captcha on 403
+        setError(typeof detail === "string" ? detail : "Vérification échouée. Recommencez le captcha.");
       } else if (typeof detail === "string") {
         setError(detail);
       } else {
@@ -181,12 +177,10 @@ export default function Login() {
     }
   };
 
-  // Resend email — strict telemetry
   const handleResend = async () => {
     if (resendCooldown > 0 || resending) return;
     setResending(true);
     setError("");
-    
     try {
       const result = await securePost("/auth/magic/resend", {
         email: email.trim(),
@@ -204,7 +198,6 @@ export default function Login() {
     }
   };
 
-  // Cancel and go back
   const handleCancel = () => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     if (cooldownRef.current) clearInterval(cooldownRef.current);
@@ -212,10 +205,10 @@ export default function Login() {
     setEmailSent(null);
     setResendCount(0);
     setResendCooldown(0);
+    setCaptchaToken("");
     setError("");
   };
 
-  /* ============ VERIFYING STATE ============ */
   if (phase === "verifying") return (
     <div className="max-w-sm mx-auto px-5 py-24 text-center">
       <Loader2 className="h-5 w-5 animate-spin text-t-muted mx-auto mb-3" />
@@ -223,10 +216,9 @@ export default function Login() {
     </div>
   );
 
-  /* ============ VERIFIED STATE ============ */
   if (phase === "verified") return (
     <div className="max-w-sm mx-auto px-5 py-24 text-center">
-      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.3 }}>
+      <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
         <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-3">
           <Check className="h-5 w-5 text-green-400" />
         </div>
@@ -235,48 +227,29 @@ export default function Login() {
     </div>
   );
 
-  /* ============ WAITING STATE ============ */
   if (phase === "waiting") return (
     <div className="max-w-md mx-auto px-5 py-16">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <div className="bg-surface border border-border rounded-2xl p-8">
-          
-          {/* Header icon */}
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
               <Mail className="h-7 w-7 text-purple-400" />
             </div>
           </div>
-
-          {/* Title */}
-          <h2 className="text-t-primary font-semibold text-[20px] text-center mb-2">
-            {T.checkEmail}
-          </h2>
+          <h2 className="text-t-primary font-semibold text-[20px] text-center mb-2">{T.checkEmail}</h2>
           <p className="text-t-secondary text-[13px] text-center mb-1">{T.linkSentTo}</p>
           <p className="text-purple-400 text-[14px] font-medium text-center mb-6">{email}</p>
-
-          {/* Email delivery status */}
           <AnimatePresence mode="wait">
             {emailSent === true && (
-              <motion.div
-                key="sent"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 mb-4"
-              >
+              <motion.div key="sent" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 mb-4">
                 <CheckCircle2 className="h-4 w-4 text-green-400 shrink-0" />
                 <span className="text-green-400 text-[13px] font-medium">{T.emailDelivered}</span>
               </motion.div>
             )}
             {emailSent === false && (
-              <motion.div
-                key="failed"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-4"
-              >
+              <motion.div key="failed" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                className="flex items-start gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-4">
                 <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
                 <div>
                   <span className="text-red-400 text-[13px] font-medium block">{T.emailFailed}</span>
@@ -285,77 +258,31 @@ export default function Login() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Resend notification */}
-          <AnimatePresence>
-            {resendCount > 0 && emailSent === true && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mb-4"
-              >
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                  <RefreshCw className="h-3.5 w-3.5 text-purple-400" />
-                  <span className="text-purple-400 text-[12px] font-medium">
-                    {T.resent} ({resendCount}x)
-                  </span>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Waiting animation */}
-          {emailSent !== false && (
-            <div className="flex items-center justify-center gap-2 text-t-muted text-[13px] mb-6">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              {T.waiting}
+          {resendCount > 0 && emailSent === true && (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 mb-4">
+              <RefreshCw className="h-3.5 w-3.5 text-purple-400" />
+              <span className="text-purple-400 text-[12px] font-medium">{T.resent} ({resendCount}x)</span>
             </div>
           )}
-
-          {/* Expiry notice */}
-          <p className="text-t-muted text-[12px] text-center mb-6">{T.expires}</p>
-
-          {/* Error */}
-          {error && (
-            <p className="text-red-400 text-[13px] text-center mb-4">{error}</p>
+          {emailSent !== false && (
+            <div className="flex items-center justify-center gap-2 text-t-muted text-[13px] mb-6">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {T.waiting}
+            </div>
           )}
-
-          {/* Action buttons */}
+          <p className="text-t-muted text-[12px] text-center mb-6">{T.expires}</p>
+          {error && <p className="text-red-400 text-[13px] text-center mb-4">{error}</p>}
           <div className="flex flex-col gap-3">
-            {/* Resend button */}
-            <button
-              onClick={handleResend}
-              disabled={resendCooldown > 0 || resending}
-              data-testid="resend-btn"
+            <button onClick={handleResend} disabled={resendCooldown > 0 || resending}
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-medium transition-all
-                ${resendCooldown > 0 || resending
-                  ? "bg-white/5 text-t-muted cursor-not-allowed"
-                  : "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20"
-                }`}
-            >
-              {resending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              {resendCooldown > 0
-                ? `${T.resendIn} ${resendCooldown}s`
-                : T.resend
-              }
+                ${resendCooldown > 0 || resending ? "bg-white/5 text-t-muted cursor-not-allowed" : "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20"}`}>
+              {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              {resendCooldown > 0 ? `${T.resendIn} ${resendCooldown}s` : T.resend}
             </button>
-
-            {/* Back button */}
-            <button
-              onClick={handleCancel}
-              data-testid="back-btn"
-              className="text-t-muted hover:text-t-secondary text-[13px] transition-colors inline-flex items-center justify-center gap-1 py-2"
-            >
+            <button onClick={handleCancel}
+              className="text-t-muted hover:text-t-secondary text-[13px] transition-colors inline-flex items-center justify-center gap-1 py-2">
               <ArrowLeft className="h-3 w-3" /> {T.otherEmail}
             </button>
           </div>
-
-          {/* Security badge */}
           <div className="flex items-center justify-center gap-1.5 mt-6 pt-4 border-t border-border">
             <Shield className="h-3 w-3 text-purple-400/50" />
             <span className="text-t-muted/50 text-[11px]">{T.securedBy}</span>
@@ -365,43 +292,35 @@ export default function Login() {
     </div>
   );
 
-  /* ============ FORM STATE ============ */
   return (
     <div className="max-w-sm mx-auto px-5 py-24">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-t-primary font-semibold text-[22px] mb-2">{T.title}</h1>
         <p className="text-t-secondary text-[13px] mb-6">{T.subtitle}</p>
-
         <div className="bg-surface border border-border rounded-xl p-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-[13px] text-t-secondary block mb-2">Email</label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+              <Input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }}
                 className="bg-bg border-border text-t-primary placeholder:text-t-muted h-11 rounded-lg text-[14px] focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
-                placeholder="you@example.com"
-                required
-                autoFocus
-                data-testid="login-email"
-              />
+                placeholder="you@example.com" required autoFocus data-testid="login-email" />
             </div>
+            
+            {/* CAPTCHA Widget */}
+            <CaptchaWidget
+              onVerified={(token) => setCaptchaToken(token)}
+              label={T.captchaLabel}
+            />
+            
             {error && <p className="text-red-400 text-[13px]">{error}</p>}
-            <motion.button
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-[14px] font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
-              data-testid="login-submit"
-            >
+            <motion.button type="submit" disabled={loading || !captchaToken}
+              whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}
+              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[14px] font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              data-testid="login-submit">
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               {loading ? T.processing : T.btn}
             </motion.button>
           </form>
-
-          {/* Security badge */}
           <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border">
             <Shield className="h-3 w-3 text-purple-400/40" />
             <span className="text-t-muted/40 text-[10px]">{T.securedBy}</span>

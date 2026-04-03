@@ -111,6 +111,125 @@ def _cleanup_nonces():
     for n in expired:
         del USED_NONCES[n]
 
+# ═══════════════════════════════════════════════════════════
+# CUSTOM CAPTCHA SYSTEM — Slider + Proof-of-Work + Timing
+# Zero external dependencies, fully self-contained
+# ═══════════════════════════════════════════════════════════
+
+# In-memory challenge store (auto-cleanup on access)
+CAPTCHA_CHALLENGES: Dict[str, dict] = {}
+CAPTCHA_SOLVED: Dict[str, float] = {}  # solved challenge_id -> timestamp (for token reuse in session)
+
+def _cleanup_captcha():
+    """Remove expired challenges and solved tokens"""
+    now = time.time()
+    expired = [k for k, v in CAPTCHA_CHALLENGES.items() if now - v["created_at"] > 180]
+    for k in expired:
+        del CAPTCHA_CHALLENGES[k]
+    expired_solved = [k for k, v in CAPTCHA_SOLVED.items() if now - v > 600]
+    for k in expired_solved:
+        del CAPTCHA_SOLVED[k]
+
+def generate_captcha_challenge(fingerprint: str = "") -> dict:
+    """Generate a new captcha challenge"""
+    if len(CAPTCHA_CHALLENGES) % 20 == 0:
+        _cleanup_captcha()
+    
+    challenge_id = secrets.token_urlsafe(24)
+    target_position = random.randint(15, 85)  # 15-85% range (avoid edges)
+    pow_prefix = secrets.token_hex(8)
+    pow_difficulty = 4  # 4 leading hex zeros = ~65536 iterations average, ~1-2s on browser
+    
+    # Store server-side (NEVER send target to client)
+    CAPTCHA_CHALLENGES[challenge_id] = {
+        "target": target_position,
+        "pow_prefix": pow_prefix,
+        "pow_difficulty": pow_difficulty,
+        "fingerprint": fingerprint,
+        "created_at": time.time(),
+        "used": False
+    }
+    
+    # Return to client (includes target for visual rendering — security comes from PoW + timing + one-time-use)
+    return {
+        "challenge_id": challenge_id,
+        "pow_prefix": pow_prefix,
+        "pow_difficulty": pow_difficulty,
+        "target": target_position,
+        "visual_seed": secrets.token_hex(4),
+        "expires_in": 120
+    }
+
+def verify_captcha_solution(challenge_id: str, slider_value: int, pow_nonce: str, solve_time_ms: int) -> tuple:
+    """
+    Verify a captcha solution. Returns (valid: bool, reason: str)
+    
+    Checks:
+    1. Challenge exists and not expired (< 2 min)
+    2. Challenge not already used (one-time)
+    3. PoW valid: SHA256(prefix + nonce) starts with N zero hex chars
+    4. Slider position within ±6 of target
+    5. Timing: 800ms < solve_time < 120000ms
+    """
+    if not challenge_id or challenge_id not in CAPTCHA_CHALLENGES:
+        return False, "invalid_challenge"
+    
+    challenge = CAPTCHA_CHALLENGES[challenge_id]
+    
+    # Check expiry
+    if time.time() - challenge["created_at"] > 180:
+        del CAPTCHA_CHALLENGES[challenge_id]
+        return False, "expired"
+    
+    # Check one-time use
+    if challenge["used"]:
+        return False, "already_used"
+    
+    # Mark as used immediately (prevent race conditions)
+    challenge["used"] = True
+    
+    # Verify PoW: SHA256(prefix + nonce) must start with N zero hex chars
+    pow_hash = hashlib.sha256(f"{challenge['pow_prefix']}{pow_nonce}".encode()).hexdigest()
+    required_prefix = "0" * challenge["pow_difficulty"]
+    if not pow_hash.startswith(required_prefix):
+        del CAPTCHA_CHALLENGES[challenge_id]
+        return False, "invalid_pow"
+    
+    # Verify slider position (±6 tolerance)
+    target = challenge["target"]
+    if abs(slider_value - target) > 6:
+        del CAPTCHA_CHALLENGES[challenge_id]
+        return False, "wrong_position"
+    
+    # Verify timing (800ms to 120s)
+    if solve_time_ms < 800:
+        del CAPTCHA_CHALLENGES[challenge_id]
+        return False, "too_fast"
+    if solve_time_ms > 120000:
+        del CAPTCHA_CHALLENGES[challenge_id]
+        return False, "too_slow"
+    
+    # Generate a signed captcha token (valid for 10 min, reusable within session)
+    captcha_token = secrets.token_urlsafe(32)
+    CAPTCHA_SOLVED[captcha_token] = time.time()
+    
+    # Cleanup challenge
+    del CAPTCHA_CHALLENGES[challenge_id]
+    
+    return True, captcha_token
+
+def verify_captcha_token(token: str) -> bool:
+    """Verify a previously solved captcha token (for form submissions)"""
+    if not token or token not in CAPTCHA_SOLVED:
+        return False
+    # Check if still valid (10 min window)
+    if time.time() - CAPTCHA_SOLVED[token] > 600:
+        del CAPTCHA_SOLVED[token]
+        return False
+    return True
+
+
+
 async def extract_telemetry_and_data(request: Request) -> dict:
     """
     Extract and validate telemetry from a request body.
@@ -530,6 +649,8 @@ api_router = APIRouter(prefix="/api")
 
 # ==================== ROBUST BODY PARSER (Apache/o2switch proxy compatibility) ====================
 import json as json_module
+import random
+import math
 
 async def parse_body(request: Request) -> dict:
     """
@@ -1045,6 +1166,48 @@ def get_client_ip(request: Request) -> str:
     # Fallback to direct connection
     return request.client.host if request.client else "127.0.0.1"
 
+
+# ═══════════════════════════════════════════════════════════
+# CAPTCHA ENDPOINTS
+# ═══════════════════════════════════════════════════════════
+
+@api_router.post("/captcha/generate")
+async def captcha_generate(request: Request):
+    """Generate a new captcha challenge"""
+    ctx = await extract_telemetry_and_data(request)
+    fp = ctx.get("fingerprint", "")
+    
+    challenge = generate_captcha_challenge(fp)
+    return challenge
+
+@api_router.post("/captcha/verify")
+async def captcha_verify(request: Request):
+    """Verify a captcha solution and return a reusable token"""
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    
+    challenge_id = data.get("challenge_id", "")
+    slider_value = int(data.get("slider_value", -1))
+    pow_nonce = str(data.get("pow_nonce", ""))
+    solve_time_ms = int(data.get("solve_time_ms", 0))
+    
+    valid, result = verify_captcha_solution(challenge_id, slider_value, pow_nonce, solve_time_ms)
+    
+    if not valid:
+        logger.warning(f"[CAPTCHA] Failed: reason={result} ip={ctx['client_ip']} fp={ctx.get('fingerprint','')[:16]}")
+        await db.security_logs.insert_one({
+            "event": "captcha_failed",
+            "reason": result,
+            "ip": ctx["client_ip"],
+            "fingerprint": ctx.get("fingerprint", "")[:16],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=403, detail=f"Captcha verification failed: {result}")
+    
+    logger.info(f"[CAPTCHA] Solved: ip={ctx['client_ip']} time={solve_time_ms}ms")
+    return {"success": True, "captcha_token": result}
+
+
 # ==================== DEEZER API PROXY ====================
 
 @api_router.get("/stats/public")
@@ -1279,10 +1442,16 @@ async def magic_link_request(request: Request):
     
     email = data.get("email", "").strip().lower() if data else ""
     language = data.get("language", "en") if data else "en"
+    captcha_token = data.get("captcha_token", "") if data else ""
     
     if not email or "@" not in email:
         logger.error(f"[MAGIC] No valid email. Data parsed: {data}")
         raise HTTPException(status_code=400, detail="Email is required")
+    
+    # Verify captcha token (required)
+    if not verify_captcha_token(captcha_token):
+        logger.warning(f"[MAGIC] Invalid captcha from {client_ip} for {email}")
+        raise HTTPException(status_code=403, detail="Captcha verification required. Please complete the captcha.")
     
     # Rate limit by IP — just reject, NO IP blocking
     ip_key = f"magic_ip:{client_ip}"
@@ -1677,9 +1846,14 @@ async def create_order(request: Request):
     pack_id = data.get("pack_id", "")
     email = data.get("email", "").strip().lower()
     language = data.get("language", "en")
+    captcha_token = data.get("captcha_token", "")
     
     if not pack_id or not email:
         raise HTTPException(status_code=400, detail="pack_id and email are required")
+    
+    # Verify captcha (required for orders)
+    if not verify_captcha_token(captcha_token):
+        raise HTTPException(status_code=403, detail="Captcha verification required.")
     
     # Log telemetry
     logger.info(f"[ORDER] score={ctx['telemetry_score']} ip={ctx['client_ip']} fp={ctx.get('fingerprint','')[:16]}")
@@ -1780,12 +1954,17 @@ async def create_custom_order(request: Request):
     
     quantity = int(data.get("quantity", 0))
     email = data.get("email", "").strip().lower()
+    captcha_token = data.get("captcha_token", "")
     
     if not email or quantity < 1:
         raise HTTPException(status_code=400, detail="email and quantity are required")
     
     if quantity < 1 or quantity > 1000:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 1000")
+    
+    # Verify captcha (required for orders)
+    if not verify_captcha_token(captcha_token):
+        raise HTTPException(status_code=403, detail="Captcha verification required.")
     
     # Block without telemetry
     if not ctx["telemetry_valid"]:
@@ -1915,8 +2094,14 @@ async def confirm_mock_order(order_id: str):
     return {"status": new_status, "links_assigned": len(assigned_links), "loyalty_points_earned": points_earned}
 
 @api_router.get("/orders/history/{email}")
-async def get_order_history(email: str):
+async def get_order_history(email: str, request: Request, user: dict = Depends(get_current_user)):
+    """Order history — REQUIRES authentication, users can only see their own orders"""
     email = email.strip().lower()
+    
+    # Users can only see their own orders (admins can see all)
+    if user.get("role") != "admin" and user.get("email", "").lower() != email:
+        raise HTTPException(status_code=403, detail="You can only view your own orders.")
+    
     orders = await db.orders.find({"email": email}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"orders": orders}
 

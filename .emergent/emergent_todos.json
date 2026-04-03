@@ -1,22 +1,26 @@
 [
   {
-    "content": "Fix SITE_URL for magic link generation (was using CORS_ORIGINS='*')",
+    "content": "Backend: create /api/captcha/generate + captcha verification logic (PoW + slider + timing + one-time)",
     "status": "completed"
   },
   {
-    "content": "Make securePost resilient — fallback to plain request if telemetry fails",
+    "content": "Backend: lock /orders/history behind authentication (logged in user only, own orders only)",
     "status": "completed"
   },
   {
-    "content": "Redesign email template to be more professional with clickable button",
+    "content": "Frontend: CaptchaWidget component (slider + PoW + dark/purple theme)",
     "status": "completed"
   },
   {
-    "content": "Improve Login.js error handling for edge cases",
+    "content": "Frontend: integrate captcha on Login, Checkout",
     "status": "completed"
   },
   {
-    "content": "Test email delivery with correct link URL",
+    "content": "Frontend: update OrderHistory to require auth",
     "status": "completed"
+  },
+  {
+    "content": "Test full flow with testing agent",
+    "status": "in_progress"
   }
 ]

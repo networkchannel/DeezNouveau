@@ -1,87 +1,124 @@
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
 import axios from "axios";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, ExternalLink, Loader2 } from "lucide-react";
+import { Package, Clock, Lock, ArrowRight } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
 export default function OrderHistory() {
   const { t, i18n } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const lang = i18n.language || "fr";
-  const [email, setEmail] = useState(() => localStorage.getItem("deezlink_email") || "");
   const [orders, setOrders] = useState([]);
-  const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const doSearch = useCallback(async (e) => {
-    if (!e?.trim()) return;
-    setLoading(true);
-    try { const { data } = await axios.get(`${API}/orders/history/${encodeURIComponent(e.trim())}`); setOrders(data.orders || []); } catch { setOrders([]); }
-    setSearched(true); setLoading(false);
-  }, []);
+  useEffect(() => {
+    if (!authLoading && user && user.email) {
+      setLoading(true);
+      axios.get(`${API}/orders/history/${encodeURIComponent(user.email)}`, { withCredentials: true })
+        .then(r => setOrders(r.data.orders || []))
+        .catch(() => setOrders([]))
+        .finally(() => setLoading(false));
+    }
+  }, [user, authLoading]);
 
-  useEffect(() => { const s = localStorage.getItem("deezlink_email"); if (s) doSearch(s); }, [doSearch]);
+  // Not authenticated — show login required
+  if (!authLoading && (!user || !user.email)) {
+    return (
+      <div className="max-w-md mx-auto px-5 py-24 text-center">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto mb-6">
+            <Lock className="h-7 w-7 text-purple-400" />
+          </div>
+          <h2 className="text-t-primary font-semibold text-[20px] mb-2">
+            {lang === "fr" ? "Connexion requise" : "Login required"}
+          </h2>
+          <p className="text-t-secondary text-[14px] mb-6">
+            {lang === "fr" 
+              ? "Connectez-vous pour accéder à votre historique de commandes."
+              : "Sign in to access your order history."}
+          </p>
+          <button
+            onClick={() => navigate("/login")}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white text-[14px] font-medium rounded-xl transition-colors"
+          >
+            {lang === "fr" ? "Se connecter" : "Sign in"}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
 
-  const STATUS_COLOR = {
-    completed: "text-green bg-green-dim",
-    pending: "text-yellow-500 bg-yellow-500/10",
-    payment_mock: "text-accent bg-accent-dim",
-    failed: "text-red-500 bg-red-500/10",
-  };
+  if (authLoading || loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-5 py-16 text-center">
+        <div className="animate-pulse text-t-muted">Loading...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto px-5 py-16">
-      <h1 className="text-t-primary font-semibold text-[20px] mb-6">{t("history_title")}</h1>
+    <div className="max-w-2xl mx-auto px-5 py-12">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-t-primary font-semibold text-[22px] mb-1">
+          {lang === "fr" ? "Mes commandes" : "My orders"}
+        </h1>
+        <p className="text-t-secondary text-[13px] mb-8">{user.email}</p>
 
-      <form onSubmit={(e) => { e.preventDefault(); doSearch(email); }} className="flex gap-3 mb-8">
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-          placeholder={t("history_email_placeholder")}
-          className="bg-surface border-border text-t-primary placeholder:text-t-muted rounded-md text-[14px]" />
-        <button type="submit" disabled={loading}
-          className="bg-accent hover:bg-accent-hover text-white text-[13px] font-medium px-5 rounded-md transition-colors flex items-center gap-2 shrink-0">
-          {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-        </button>
-      </form>
-
-      {searched && orders.length === 0 && (
-        <p className="text-t-muted text-[14px] text-center py-12">{t("history_no_orders")}</p>
-      )}
-
-      {orders.length > 0 && (
-        <div className="bg-surface border border-border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-t-muted text-[12px] font-normal">{lang === "fr" ? "Commande" : "Order"}</TableHead>
-                <TableHead className="text-t-muted text-[12px] font-normal">{lang === "fr" ? "Date" : "Date"}</TableHead>
-                <TableHead className="text-t-muted text-[12px] font-normal text-right">{lang === "fr" ? "Montant" : "Amount"}</TableHead>
-                <TableHead className="text-t-muted text-[12px] font-normal">{lang === "fr" ? "Statut" : "Status"}</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {orders.map((o) => (
-                <TableRow key={o.order_id} className="border-border hover:bg-surface-2">
-                  <TableCell className="font-mono text-[12px] text-t-secondary">{o.order_id}</TableCell>
-                  <TableCell className="text-[12px] text-t-muted">{new Date(o.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-[13px] text-t-primary font-medium tabular-nums text-right">{o.price}€</TableCell>
-                  <TableCell>
-                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded ${STATUS_COLOR[o.status] || STATUS_COLOR.pending}`}>{o.status}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Link to={`/order/${o.order_id}`} className="text-t-muted hover:text-t-secondary text-[12px] flex items-center gap-1">
-                      {lang === "fr" ? "Voir" : "View"} <ExternalLink className="h-3 w-3" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+        {orders.length === 0 ? (
+          <div className="text-center py-16">
+            <Package className="h-8 w-8 text-t-muted mx-auto mb-3" />
+            <p className="text-t-muted text-[14px]">
+              {lang === "fr" ? "Aucune commande" : "No orders yet"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {orders.map((order, i) => (
+              <motion.div
+                key={order.order_id || i}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="bg-surface border border-border rounded-xl p-4 hover:border-purple-500/20 transition-colors cursor-pointer"
+                onClick={() => navigate(`/order/${order.order_id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-t-primary text-[14px] font-medium">
+                      #{order.order_id}
+                    </p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-t-muted text-[12px]">
+                        {order.quantity} {lang === "fr" ? "liens" : "links"}
+                      </span>
+                      <span className="text-t-muted text-[12px] flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(order.created_at).toLocaleDateString(lang)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-purple-400 font-semibold text-[16px]">{order.total_price?.toFixed(2)}€</p>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                      order.status === "completed" ? "bg-green-500/10 text-green-400" :
+                      order.status === "pending" || order.status === "payment_mock" ? "bg-yellow-500/10 text-yellow-400" :
+                      "bg-zinc-500/10 text-zinc-400"
+                    }`}>
+                      {order.status}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 }

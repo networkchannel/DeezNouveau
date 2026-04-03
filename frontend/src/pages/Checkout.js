@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import axios from "axios";
 import { securePost } from "@/utils/secureApi";
 import { Input } from "@/components/ui/input";
+import CaptchaWidget from "@/components/CaptchaWidget";
 import { ArrowLeft, Loader2, Shield } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -20,6 +21,7 @@ export default function Checkout() {
   const [email, setEmail] = useState(() => localStorage.getItem("deezlink_email") || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const isCustom = packId === "custom";
   const customQty = isCustom ? parseInt(searchParams.get("qty") || "1", 10) : 0;
@@ -42,13 +44,14 @@ export default function Checkout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) { setError(lang === "fr" ? "Email requis" : "Email required"); return; }
+    if (!captchaToken) { setError(lang === "fr" ? "Veuillez compléter la vérification." : "Please complete the captcha."); return; }
     setLoading(true); setError("");
     try {
       let data;
       if (isCustom) {
-        data = await securePost("/orders/create-custom", { quantity: customQty, email: email.trim(), language: lang });
+        data = await securePost("/orders/create-custom", { quantity: customQty, email: email.trim(), language: lang, captcha_token: captchaToken });
       } else {
-        data = await securePost("/orders/create", { pack_id: packId, email: email.trim(), language: lang });
+        data = await securePost("/orders/create", { pack_id: packId, email: email.trim(), language: lang, captcha_token: captchaToken });
       }
       localStorage.setItem("deezlink_email", email.trim().toLowerCase());
       window.dispatchEvent(new Event("deezlink_email_update"));
@@ -59,6 +62,7 @@ export default function Checkout() {
       }
     } catch (err) {
       const detail = err.response?.data?.detail;
+      if (err.response?.status === 403) setCaptchaToken(""); // Reset captcha
       setError(typeof detail === "string" ? detail : "Error");
     } finally { setLoading(false); }
   };
@@ -108,6 +112,12 @@ export default function Checkout() {
                 </p>
               </div>
 
+              {/* CAPTCHA */}
+              <CaptchaWidget
+                onVerified={(token) => setCaptchaToken(token)}
+                label={lang === "fr" ? "Vérifiez avant de payer" : "Verify before paying"}
+              />
+
               {error && <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2.5">{error}</p>}
 
               <div className="flex items-center gap-4 text-xs text-t-muted pt-2 font-mono">
@@ -117,9 +127,9 @@ export default function Checkout() {
                 <span className="text-t-secondary">LTC</span>
               </div>
 
-              <motion.button type="submit" disabled={loading}
+              <motion.button type="submit" disabled={loading || !captchaToken}
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-4 rounded-xl transition-all shadow-lg shadow-accent-glow flex items-center justify-center gap-2">
+                className="w-full bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold py-4 rounded-xl transition-all shadow-lg shadow-accent-glow flex items-center justify-center gap-2">
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
                 {loading
                   ? (lang === "fr" ? "Redirection..." : "Redirecting...")
