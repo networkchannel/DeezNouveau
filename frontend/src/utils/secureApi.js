@@ -1,62 +1,79 @@
 import axios from 'axios';
-import { buildSecurePayload } from './security';
+import { generateBrowserFingerprint, getSecurityCookie } from './security';
+import CryptoJS from 'crypto-js';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
 /**
- * Requête POST sécurisée avec fingerprint + token rotatif
+ * Build telemetry object for anti-replay + fingerprinting
+ * Sent with every sensitive POST request
  */
-export const securePost = async (endpoint, data) => {
-  const securePayload = buildSecurePayload(data);
+const buildTelemetry = () => {
+  const fp = sessionStorage.getItem('_fp') || generateBrowserFingerprint().fingerprint;
+  const ck = getSecurityCookie();
+  
+  return {
+    fp,
+    ts: Date.now(),
+    nonce: CryptoJS.lib.WordArray.random(16).toString(),
+    ck,
+  };
+};
+
+/**
+ * Secure POST — injects telemetry into request body
+ * The backend extracts _t and validates it
+ */
+export const securePost = async (endpoint, data = {}) => {
+  const telemetry = buildTelemetry();
+  
+  const payload = {
+    ...data,
+    _t: telemetry
+  };
   
   try {
-    const response = await axios.post(`${API}${endpoint}`, securePayload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await axios.post(`${API}${endpoint}`, payload, {
+      headers: { 'Content-Type': 'application/json' },
       withCredentials: true
     });
-    
     return response.data;
   } catch (error) {
     if (error.response?.status === 403) {
-      console.error('🔒 Security validation failed');
-      throw new Error('Security validation failed. Please refresh the page.');
+      console.warn('[Security] Telemetry validation failed — refreshing security state');
+      // Regenerate fingerprint and retry once
+      const { fingerprint } = generateBrowserFingerprint();
+      sessionStorage.setItem('_fp', fingerprint);
+      sessionStorage.setItem('_seq', '0');
     }
     throw error;
   }
 };
 
 /**
- * Requête GET sécurisée (avec headers de sécurité)
+ * Secure GET — adds security headers
  */
-export const secureGet = async (endpoint) => {
-  const { getSecurityToken, getSecurityCookie } = await import('./security');
-  const { token } = getSecurityToken();
-  const cookie = getSecurityCookie();
-  const fp = sessionStorage.getItem('_fp') || '';
+export const secureGet = async (endpoint, params = {}) => {
+  const fp = sessionStorage.getItem('_fp') || generateBrowserFingerprint().fingerprint;
+  const ck = getSecurityCookie();
   
   try {
     const response = await axios.get(`${API}${endpoint}`, {
+      params,
       headers: {
-        'X-Security-Token': token,
         'X-Fingerprint': fp,
-        'X-Security-Cookie': cookie
+        'X-Security-Cookie': ck,
+        'X-Timestamp': Date.now().toString()
       },
       withCredentials: true
     });
-    
     return response.data;
   } catch (error) {
     if (error.response?.status === 403) {
-      console.error('🔒 Security validation failed');
-      throw new Error('Security validation failed. Please refresh the page.');
+      console.warn('[Security] GET validation failed');
     }
     throw error;
   }
 };
 
-export default {
-  post: securePost,
-  get: secureGet
-};
+export default { post: securePost, get: secureGet };

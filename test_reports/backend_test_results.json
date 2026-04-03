@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-04-03T17:15:27.201489",
+  "total_tests": 14,
+  "passed_tests": 11,
+  "success_rate": 78.57142857142857,
+  "results": [
+    {
+      "test": "GET /stats/public",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "GET /packs",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "GET /deezer/trending",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "GET /geo",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "POST /orders/create WITHOUT telemetry returns 403",
+      "success": false,
+      "details": "Should return 403",
+      "expected_status": 403,
+      "actual_status": "No response"
+    },
+    {
+      "test": "POST /orders/create WITH telemetry returns 200",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "POST /auth/magic returns email_sent field and session_id",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "POST /auth/magic/resend endpoint exists and works",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "Admin login with correct credentials",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "Admin login with wrong credentials returns 401",
+      "success": false,
+      "details": "Should return 401",
+      "expected_status": 401,
+      "actual_status": "No response"
+    },
+    {
+      "test": "POST /orders/create-custom WITH telemetry",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "POST /orders/create-custom WITHOUT telemetry returns 403",
+      "success": false,
+      "details": "Should return 403",
+      "expected_status": 403,
+      "actual_status": "No response"
+    },
+    {
+      "test": "GET /pricing/calculate",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    },
+    {
+      "test": "POST /gift-cards/purchase WITH telemetry",
+      "success": true,
+      "details": "",
+      "expected_status": null,
+      "actual_status": null
+    }
+  ]
+}

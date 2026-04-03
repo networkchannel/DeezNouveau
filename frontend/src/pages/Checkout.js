@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
+import { securePost } from "@/utils/secureApi";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Loader2, Shield } from "lucide-react";
 
@@ -45,11 +46,9 @@ export default function Checkout() {
     try {
       let data;
       if (isCustom) {
-        const resp = await axios.post(`${API}/orders/create-custom`, { quantity: customQty, email: email.trim() });
-        data = resp.data;
+        data = await securePost("/orders/create-custom", { quantity: customQty, email: email.trim(), language: lang });
       } else {
-        const resp = await axios.post(`${API}/orders/create`, { pack_id: packId, email: email.trim() });
-        data = resp.data;
+        data = await securePost("/orders/create", { pack_id: packId, email: email.trim(), language: lang });
       }
       localStorage.setItem("deezlink_email", email.trim().toLowerCase());
       window.dispatchEvent(new Event("deezlink_email_update"));

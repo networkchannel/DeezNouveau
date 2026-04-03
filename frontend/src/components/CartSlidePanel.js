@@ -4,9 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
-import axios from "axios";
-
-const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
+import { securePost } from "@/utils/secureApi";
 
 export default function CartSlidePanel({ isOpen, onClose }) {
   const { cart, removeFromCart, updateQuantity, getTotal, getTotalItems } = useCart();
@@ -25,18 +23,18 @@ export default function CartSlidePanel({ isOpen, onClose }) {
     setGiftCardError("");
     
     try {
-      const response = await axios.post(`${API}/gift-cards/validate`, {
+      const result = await securePost("/gift-cards/validate", {
         code: giftCardCode.trim().toUpperCase(),
       });
       
-      if (response.data.valid) {
+      if (result.valid) {
         setGiftCardApplied({
           code: giftCardCode.trim().toUpperCase(),
-          balance: response.data.balance,
+          balance: result.balance,
         });
         setGiftCardCode("");
       } else {
-        setGiftCardError(response.data.error || "Code invalide");
+        setGiftCardError(result.error || "Code invalide");
       }
     } catch (error) {
       setGiftCardError(error.response?.data?.detail || "Erreur de validation");

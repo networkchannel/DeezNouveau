@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { securePost } from "@/utils/secureApi";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 const AuthContext = createContext(null);
@@ -22,18 +23,20 @@ export function AuthProvider({ children }) {
   useEffect(() => { checkAuth(); }, [checkAuth]);
 
   const login = async (email, password) => {
-    const { data } = await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true });
+    // Admin login uses securePost too
+    const data = await securePost("/auth/login", { email, password });
     setUser(data);
     return data;
   };
 
   const magicLogin = async (email, language = "en") => {
-    const { data } = await axios.post(`${API}/auth/magic`, { email, language }, { withCredentials: true });
+    const data = await securePost("/auth/magic", { email, language });
     return data;
   };
 
   const verifyMagicLink = async (token) => {
-    const { data } = await axios.post(`${API}/auth/magic/verify`, { token }, { withCredentials: true });
+    // Verify uses securePost
+    const data = await securePost("/auth/magic/verify", { token });
     setUser(data);
     return data;
   };

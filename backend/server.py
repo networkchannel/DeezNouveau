@@ -75,7 +75,6 @@ def validate_fingerprint_security(fp: str, telemetry: dict) -> bool:
     
     now = time.time()
     
-    # Enregistrer ou mettre à jour
     if fp not in VALID_FINGERPRINTS:
         VALID_FINGERPRINTS[fp] = {
             'first_seen': now,
@@ -87,150 +86,161 @@ def validate_fingerprint_security(fp: str, telemetry: dict) -> bool:
         VALID_FINGERPRINTS[fp]['last_seen'] = now
     
     VALID_FINGERPRINTS[fp]['request_count'] += 1
-    
     return True
 
-def validate_token_security(token: str, fp: str, telemetry: dict) -> bool:
-    """Valide un token rotatif et détecte les replays"""
-    if not token or len(token) != 64:
-        return False
-    
-    now = time.time()
-    timestamp = telemetry.get('ts', 0) / 1000.0  # ms → s
-    
-    # Vérifier timestamp (max 60s de décalage)
-    if abs(now - timestamp) > 60:
-        return False
-    
-    # Vérifier si token déjà utilisé (replay attack)
-    if token in USED_TOKENS:
-        return False
-    
-    # Enregistrer le token comme utilisé
-    USED_TOKENS[token] = now
-    
-    # Vérifier séquence monotone croissante (anti-replay)
-    seq = telemetry.get('seq', 0)
-    if seq <= FINGERPRINT_SEQUENCES[fp]:
-        return False  # Séquence invalide ou rejouée
-    
-    FINGERPRINT_SEQUENCES[fp] = seq
-    
-    return True
-
-def validate_cookie_security(cookie: str, fp: str) -> bool:
-    """Valide le cookie de sécurité"""
-    if not cookie or len(cookie) != 64:
-        return False
-    
-    # Vérifier correspondance avec le fingerprint enregistré
-    if fp in VALID_FINGERPRINTS:
-        stored_cookie = VALID_FINGERPRINTS[fp].get('cookie', '')
-        if stored_cookie and stored_cookie != cookie:
-            return False  # Cookie ne correspond pas
-    
-    return True
-
-def check_ip_rate_limit_security(ip: str, max_requests: int = 20, window: int = 60) -> bool:
+def check_ip_rate_limit_security(ip: str, max_requests: int = 30, window: int = 60) -> bool:
     """Vérifie le rate limiting par IP"""
     now = time.time()
-    
-    # Enregistrer la tentative
     IP_ATTEMPTS[ip].append(now)
-    
-    # Compter les tentatives dans la fenêtre
     recent = [ts for ts in IP_ATTEMPTS[ip] if now - ts < window]
     IP_ATTEMPTS[ip] = recent
-    
     return len(recent) <= max_requests
 
-async def validate_security(request: Request) -> dict:
+# ═══════════════════════════════════════════════════════════
+# TELEMETRY VALIDATION — lightweight anti-replay + fingerprinting
+# Applied to all sensitive POST routes
+# ═══════════════════════════════════════════════════════════
+
+# Store used nonces to prevent replay (auto-cleanup)
+USED_NONCES: Dict[str, float] = {}
+
+def _cleanup_nonces():
+    """Remove nonces older than 5 minutes"""
+    now = time.time()
+    expired = [n for n, ts in USED_NONCES.items() if now - ts > 300]
+    for n in expired:
+        del USED_NONCES[n]
+
+async def extract_telemetry_and_data(request: Request) -> dict:
     """
-    Middleware de validation sécuritaire complète
-    Retourne le payload déchiffré ou lève HTTPException
+    Extract and validate telemetry from a request body.
+    Returns the clean data payload (without _t) + telemetry metadata.
+    Non-blocking: logs suspicious requests but doesn't reject normal users.
     """
-    
-    # Nettoyage périodique (tous les 100 requêtes environ)
-    if len(USED_TOKENS) % 100 == 0:
+    # Periodic cleanup
+    if len(USED_NONCES) % 50 == 0:
+        _cleanup_nonces()
         cleanup_expired_data()
     
-    # Récupérer l'IP
-    client_ip = request.client.host
+    client_ip = get_client_ip(request)
     
-    # Vérifier rate limit IP
+    # IP rate limit
     if not check_ip_rate_limit_security(client_ip, max_requests=30, window=60):
-        raise HTTPException(
-            status_code=429,
-            detail="Too many requests from this IP"
-        )
+        raise HTTPException(status_code=429, detail="Too many requests")
     
+    # Parse body — use stored body from middleware if available
+    body = None
     try:
-        body = await request.json()
+        stored = getattr(request.state, '_body', None)
+        if stored and len(stored) > 0:
+            body = json_module.loads(stored)
+        else:
+            raw = await request.body()
+            if raw:
+                body = json_module.loads(raw)
     except Exception:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid request body"
-        )
+        pass
     
-    # Extraire telemetry
-    telemetry = body.get('_t', {})
+    if not body or not isinstance(body, dict):
+        return {"data": {}, "telemetry": {}, "telemetry_valid": False, "telemetry_score": 0, "client_ip": client_ip, "fingerprint": ""}
     
-    if not telemetry:
-        raise HTTPException(
-            status_code=403,
-            detail="Missing security telemetry"
-        )
+    telemetry = body.pop("_t", None)
+    data = body  # Everything except _t is the actual data
     
-    fp = telemetry.get('fp', '')
-    token = telemetry.get('tk', '')
-    cookie = telemetry.get('ck', '')
-    nonce = telemetry.get('nonce', '')
+    telemetry_valid = False
+    telemetry_score = 0  # 0-100 trust score
+    rejection_reason = None
     
-    # Validation fingerprint
-    if not validate_fingerprint_security(fp, telemetry):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid browser fingerprint"
-        )
-    
-    # Validation token (anti-replay)
-    if not validate_token_security(token, fp, telemetry):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid or expired security token"
-        )
-    
-    # Validation cookie
-    if not validate_cookie_security(cookie, fp):
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid security cookie"
-        )
-    
-    # Vérifier nonce unique
-    if not nonce or len(nonce) < 16:
-        raise HTTPException(
-            status_code=403,
-            detail="Invalid nonce"
-        )
-    
-    encrypted_data = body.get('_d', '')
+    if telemetry and isinstance(telemetry, dict):
+        fp = telemetry.get("fp", "")
+        ts = telemetry.get("ts", 0)
+        nonce = telemetry.get("nonce", "")
+        ck = telemetry.get("ck", "")
+        
+        now_ms = time.time() * 1000
+        
+        # 1. Fingerprint validation (required, +30 points)
+        if fp and len(fp) == 64:
+            validate_fingerprint_security(fp, telemetry)
+            telemetry_score += 30
+        else:
+            rejection_reason = "invalid_fingerprint"
+        
+        # 2. Timestamp freshness — allow 120s drift (+25 points)
+        if ts and abs(now_ms - ts) < 120000:
+            telemetry_score += 25
+        else:
+            rejection_reason = rejection_reason or "stale_timestamp"
+        
+        # 3. Nonce uniqueness — anti-replay (+30 points)
+        if nonce and len(nonce) >= 16:
+            if nonce not in USED_NONCES:
+                USED_NONCES[nonce] = time.time()
+                telemetry_score += 30
+            else:
+                rejection_reason = "replayed_nonce"
+        else:
+            rejection_reason = rejection_reason or "missing_nonce"
+        
+        # 4. Cookie presence (+15 points)
+        if ck and len(ck) == 64:
+            telemetry_score += 15
+        
+        telemetry_valid = telemetry_score >= 55  # Minimum: fp + timestamp + nonce
+        
+        # Log suspicious requests
+        if not telemetry_valid:
+            logger.warning(
+                f"[SECURITY] Low telemetry score {telemetry_score}/100 from {client_ip} "
+                f"| reason={rejection_reason} | fp={fp[:16] if fp else 'none'}..."
+            )
+            await db.security_logs.insert_one({
+                "event": "telemetry_failure",
+                "ip": client_ip,
+                "score": telemetry_score,
+                "reason": rejection_reason,
+                "fingerprint": fp[:16] if fp else "",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+    else:
+        # No telemetry at all — highly suspicious
+        logger.warning(f"[SECURITY] No telemetry from {client_ip}")
+        await db.security_logs.insert_one({
+            "event": "no_telemetry",
+            "ip": client_ip,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
     
     return {
-        'fingerprint': fp,
-        'telemetry': telemetry,
-        'encrypted_payload': encrypted_data,
-        'validated': True
+        "data": data,
+        "telemetry": telemetry or {},
+        "telemetry_valid": telemetry_valid,
+        "telemetry_score": telemetry_score,
+        "client_ip": client_ip,
+        "fingerprint": telemetry.get("fp", "") if telemetry else ""
     }
 
-def require_security(func):
+def require_telemetry(strict: bool = True):
     """
-    Décorateur pour protéger une route avec validation sécuritaire
+    Decorator for routes that require telemetry validation.
+    strict=True: reject requests with invalid telemetry (403)
+    strict=False: log but allow (for gradual rollout)
     """
-    async def wrapper(request: Request, *args, **kwargs):
-        security = await validate_security(request)
-        return await func(request, security, *args, **kwargs)
-    return wrapper
+    def decorator(func):
+        async def wrapper(request: Request, *args, **kwargs):
+            ctx = await extract_telemetry_and_data(request)
+            if strict and not ctx["telemetry_valid"]:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Security validation failed. Please refresh and try again."
+                )
+            # Inject context into request state
+            request.state.security = ctx
+            request.state.clean_data = ctx["data"]
+            return await func(request, *args, **kwargs)
+        wrapper.__name__ = func.__name__
+        return wrapper
+    return decorator
 
 # ═══════════════════════════════════════════════════════════
 # GIFT CARD SYSTEM (merged from gift_cards.py)
@@ -1058,8 +1068,19 @@ async def deezer_trending():
 
 # --- Auth Routes ---
 @api_router.post("/auth/login")
-async def login(req: LoginRequest, request: Request):
-    client_ip = get_client_ip(request)
+async def login(request: Request):
+    """Admin login with telemetry validation"""
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    if not data:
+        data = await parse_body(request)
+    
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    client_ip = ctx["client_ip"]
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required")
     
     # Check if IP is blocked
     if rate_limiter.is_ip_blocked(client_ip):
@@ -1072,10 +1093,10 @@ async def login(req: LoginRequest, request: Request):
     
     rate_limiter.record_request(rate_key)
     
-    email = req.email.strip().lower()
+    email = email
     user = await db.users.find_one({"email": email})
     
-    if not user or not verify_password(req.password, user.get("password_hash", "")):
+    if not user or not verify_password(password, user.get("password_hash", "")):
         # Record failed attempt
         failed_count = rate_limiter.record_failed_login(client_ip)
         
@@ -1193,19 +1214,28 @@ async def update_profile(req: ProfileUpdateRequest, user: dict = Depends(get_cur
 # --- Magic Link Auth with Anti-Abuse ---
 @api_router.post("/auth/magic")
 async def magic_link_request(request: Request):
-    """Magic link login - robust body parsing for Apache proxy compatibility"""
-    data = await parse_body(request)
+    """Magic link login — with telemetry validation and email delivery feedback"""
+    # Extract telemetry + clean data
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    client_ip = ctx["client_ip"]
+    
+    # If no telemetry data extracted, fall back to parse_body
+    if not data:
+        data = await parse_body(request)
+    
     email = data.get("email", "").strip().lower() if data else ""
     language = data.get("language", "en") if data else "en"
     
     if not email or "@" not in email:
-        logger.error(f"[MAGIC] No valid email. Data parsed: {data}. Headers: content-type={request.headers.get('content-type')}")
+        logger.error(f"[MAGIC] No valid email. Data parsed: {data}")
         raise HTTPException(status_code=400, detail="Email is required")
     
-    client_ip = get_client_ip(request)
-    
-    if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Invalid email")
+    # Log telemetry status
+    if ctx["telemetry_valid"]:
+        logger.info(f"[MAGIC] Secure request (score={ctx['telemetry_score']}) from {client_ip} for {email}")
+    else:
+        logger.warning(f"[MAGIC] Unsecured request from {client_ip} for {email} (score={ctx['telemetry_score']})")
     
     # Check if IP is blocked
     if rate_limiter.is_ip_blocked(client_ip):
@@ -1218,11 +1248,10 @@ async def magic_link_request(request: Request):
     # Rate limit by IP
     ip_key = f"magic_ip:{client_ip}"
     if rate_limiter.is_rate_limited(ip_key, RATE_LIMITS["magic_link_ip"]["max"], RATE_LIMITS["magic_link_ip"]["window"]):
-        rate_limiter.block_ip(client_ip, 600)  # Block for 10 min
+        rate_limiter.block_ip(client_ip, 600)
         await db.security_logs.insert_one({
             "event": "magic_link_rate_limit_ip",
-            "ip": client_ip,
-            "email": email,
+            "ip": client_ip, "email": email,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         raise HTTPException(status_code=429, detail="Too many requests from your IP. Please wait.")
@@ -1230,11 +1259,10 @@ async def magic_link_request(request: Request):
     # Rate limit by email
     email_key = f"magic_email:{email}"
     if rate_limiter.is_rate_limited(email_key, RATE_LIMITS["magic_link_email"]["max"], RATE_LIMITS["magic_link_email"]["window"]):
-        rate_limiter.block_email(email, 300)  # Block email for 5 min
+        rate_limiter.block_email(email, 300)
         await db.security_logs.insert_one({
             "event": "magic_link_rate_limit_email",
-            "ip": client_ip,
-            "email": email,
+            "ip": client_ip, "email": email,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
         raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait 5 minutes.")
@@ -1247,8 +1275,7 @@ async def magic_link_request(request: Request):
     session_id = secrets.token_urlsafe(16)
     expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
     
-    # Store token in DB with IP for security tracking
-    await db.magic_tokens.delete_many({"email": email})  # Remove old tokens
+    await db.magic_tokens.delete_many({"email": email})
     await db.magic_tokens.insert_one({
         "email": email,
         "token": magic_token,
@@ -1256,42 +1283,123 @@ async def magic_link_request(request: Request):
         "verified": False,
         "expiry": expiry.isoformat(),
         "request_ip": client_ip,
+        "fingerprint": ctx.get("fingerprint", ""),
+        "telemetry_score": ctx["telemetry_score"],
         "created_at": datetime.now(timezone.utc).isoformat()
     })
     
-    # Log the request
+    # Send email and capture delivery status
+    email_sent = send_magic_link_email(email, magic_token, language)
+    
     await db.security_logs.insert_one({
         "event": "magic_link_requested",
         "email": email,
         "ip": client_ip,
+        "email_sent": email_sent,
+        "telemetry_score": ctx["telemetry_score"],
         "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
-    # Send email
-    send_magic_link_email(email, magic_token, language)
+    return {
+        "message": "Magic link sent" if email_sent else "Email delivery failed",
+        "email": email,
+        "session_id": session_id,
+        "email_sent": email_sent,
+        "telemetry_verified": ctx["telemetry_valid"]
+    }
+
+@api_router.post("/auth/magic/resend")
+async def magic_link_resend(request: Request):
+    """Resend magic link — requires telemetry, has separate rate limiting"""
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    client_ip = ctx["client_ip"]
     
-    return {"message": "Magic link sent", "email": email, "session_id": session_id}
+    if not data:
+        data = await parse_body(request)
+    
+    email = data.get("email", "").strip().lower() if data else ""
+    session_id = data.get("session_id", "") if data else ""
+    language = data.get("language", "en") if data else "en"
+    
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    # Strict telemetry for resend (prevent automated abuse)
+    if not ctx["telemetry_valid"]:
+        logger.warning(f"[RESEND] Blocked — invalid telemetry from {client_ip}")
+        await db.security_logs.insert_one({
+            "event": "resend_blocked_telemetry",
+            "ip": client_ip, "email": email,
+            "score": ctx["telemetry_score"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=403, detail="Security validation failed. Please refresh the page.")
+    
+    # Rate limit: max 2 resends per email per 5 min
+    resend_key = f"resend:{email}"
+    if rate_limiter.is_rate_limited(resend_key, 2, 300):
+        raise HTTPException(status_code=429, detail="Too many resend attempts. Please wait.")
+    rate_limiter.record_request(resend_key)
+    
+    # Check existing session
+    existing = await db.magic_tokens.find_one({"email": email})
+    if not existing:
+        raise HTTPException(status_code=404, detail="No pending login session found")
+    
+    expiry = datetime.fromisoformat(existing["expiry"])
+    if datetime.now(timezone.utc) > expiry:
+        await db.magic_tokens.delete_one({"email": email})
+        raise HTTPException(status_code=410, detail="Session expired. Please start a new login.")
+    
+    # Generate new token (invalidate old one), keep same session_id
+    new_token = secrets.token_urlsafe(32)
+    new_expiry = datetime.now(timezone.utc) + timedelta(minutes=30)
+    
+    await db.magic_tokens.update_one(
+        {"email": email},
+        {"$set": {
+            "token": new_token,
+            "expiry": new_expiry.isoformat(),
+            "request_ip": client_ip,
+            "fingerprint": ctx.get("fingerprint", ""),
+            "resent_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    email_sent = send_magic_link_email(email, new_token, language)
+    
+    await db.security_logs.insert_one({
+        "event": "magic_link_resent",
+        "email": email,
+        "ip": client_ip,
+        "email_sent": email_sent,
+        "telemetry_score": ctx["telemetry_score"],
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "message": "Magic link resent" if email_sent else "Email delivery failed",
+        "email_sent": email_sent,
+        "session_id": existing["session_id"]
+    }
 
 @api_router.post("/auth/magic/verify")
 async def magic_link_verify(request: Request):
-    import json as json_mod
+    """Verify magic link token — accepts telemetry"""
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
     
-    # Parse body manually (Apache proxy compatibility)
-    token = None
-    try:
-        raw_body = await request.body()
-        if raw_body:
-            data = json_mod.loads(raw_body)
-            token = data.get("token", "")
-    except:
-        pass
+    token = data.get("token", "") if data else ""
     
     if not token:
+        # Fallback: try raw body parse
         try:
-            stored_body = getattr(request.state, '_body', None)
-            if stored_body:
-                data = json_mod.loads(stored_body)
-                token = data.get("token", "")
+            raw_body = await request.body()
+            if raw_body:
+                import json as json_mod
+                parsed = json_mod.loads(raw_body)
+                token = parsed.get("token", "")
         except:
             pass
     
@@ -1524,7 +1632,11 @@ async def get_geo(request: Request):
 # --- Order Routes ---
 @api_router.post("/orders/create")
 async def create_order(request: Request):
-    data = await parse_body(request)
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    if not data:
+        data = await parse_body(request)
+    
     pack_id = data.get("pack_id", "")
     email = data.get("email", "").strip().lower()
     language = data.get("language", "en")
@@ -1532,14 +1644,18 @@ async def create_order(request: Request):
     if not pack_id or not email:
         raise HTTPException(status_code=400, detail="pack_id and email are required")
     
-    # Validation sécuritaire optionnelle (headers)
-    try:
-        fp = request.headers.get('X-Fingerprint', '')
-        token = request.headers.get('X-Security-Token', '')
-        if fp and token:
-            logger.info(f"Secure order with fingerprint: {fp[:16]}...")
-    except Exception as e:
-        logger.warning(f"Security headers missing or invalid: {e}")
+    # Log telemetry
+    logger.info(f"[ORDER] score={ctx['telemetry_score']} ip={ctx['client_ip']} fp={ctx.get('fingerprint','')[:16]}")
+    
+    # Block orders without telemetry (strict for money operations)
+    if not ctx["telemetry_valid"]:
+        await db.security_logs.insert_one({
+            "event": "order_blocked_telemetry",
+            "ip": ctx["client_ip"], "email": email,
+            "score": ctx["telemetry_score"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=403, detail="Security validation failed. Please refresh and try again.")
     
     pack = next((p for p in PACKS if p["id"] == pack_id), None)
     if not pack:
@@ -1620,7 +1736,11 @@ async def create_order(request: Request):
 
 @api_router.post("/orders/create-custom")
 async def create_custom_order(request: Request):
-    data = await parse_body(request)
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    if not data:
+        data = await parse_body(request)
+    
     quantity = int(data.get("quantity", 0))
     email = data.get("email", "").strip().lower()
     
@@ -1629,6 +1749,16 @@ async def create_custom_order(request: Request):
     
     if quantity < 1 or quantity > 1000:
         raise HTTPException(status_code=400, detail="Quantity must be between 1 and 1000")
+    
+    # Block without telemetry
+    if not ctx["telemetry_valid"]:
+        await db.security_logs.insert_one({
+            "event": "custom_order_blocked_telemetry",
+            "ip": ctx["client_ip"], "email": email,
+            "score": ctx["telemetry_score"],
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+        raise HTTPException(status_code=403, detail="Security validation failed. Please refresh and try again.")
     
     # Check loyalty discount
     user = await db.users.find_one({"email": email})
@@ -2087,9 +2217,6 @@ async def admin_users(user: dict = Depends(require_admin), skip: int = 0, limit:
     total = await db.users.count_documents({})
     return {"users": users, "total": total}
 
-# Include API router
-app.include_router(api_router)
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -2254,6 +2381,9 @@ async def apply_gift_card_route(data: GiftCardApplication, request: Request):
     except Exception as e:
         logger.error(f"Gift card application error: {e}")
         raise HTTPException(status_code=500, detail="Failed to apply gift card")
+
+# Include API router (after all routes are defined)
+app.include_router(api_router)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

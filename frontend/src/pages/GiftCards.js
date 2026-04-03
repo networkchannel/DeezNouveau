@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
+import { securePost } from "@/utils/secureApi";
 import { Gift, Check, AlertCircle, Sparkles, Copy, ArrowRight } from "lucide-react";
-
-const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
 
@@ -39,8 +37,8 @@ export default function GiftCards() {
         recipient_name: recipientName || null,
         message: message || null,
       });
-      if (response.data.success) {
-        setGeneratedCode(response.data.gift_card.code);
+      if (response.success) {
+        setGeneratedCode(response.gift_card.code);
         setSuccess(true);
       }
     } catch (err) {
