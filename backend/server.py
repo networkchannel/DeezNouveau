@@ -470,13 +470,13 @@ class RateLimiter:
 rate_limiter = RateLimiter()
 
 RATE_LIMITS = {
-    "magic_link_ip": {"max": 5, "window": 300},      # 5 per 5 min per IP
-    "magic_link_email": {"max": 3, "window": 300},   # 3 per 5 min per email
-    "login_ip": {"max": 10, "window": 300},          # 10 per 5 min per IP
+    "magic_link_ip": {"max": 20, "window": 300},      # 20 per 5 min per IP (generous — shared IPs, NAT, testing)
+    "magic_link_email": {"max": 10, "window": 300},    # 10 per 5 min per email
+    "login_ip": {"max": 15, "window": 300},            # 15 per 5 min per IP
     "gift_card_validate": {"max": 10, "window": 600},  # 10 per 10 min (brute force protection)
     "gift_card_purchase": {"max": 5, "window": 3600},  # 5 per hour
-    "order_email": {"max": 10, "window": 3600},      # 10 per hour per email
-    "geo_ip": {"max": 60, "window": 60},             # 60 per min per IP
+    "order_email": {"max": 10, "window": 3600},        # 10 per hour per email
+    "geo_ip": {"max": 60, "window": 60},               # 60 per min per IP
 }
 
 # Country names mapping
@@ -1284,41 +1284,25 @@ async def magic_link_request(request: Request):
         logger.error(f"[MAGIC] No valid email. Data parsed: {data}")
         raise HTTPException(status_code=400, detail="Email is required")
     
-    # Log telemetry status
-    if ctx["telemetry_valid"]:
-        logger.info(f"[MAGIC] Secure request (score={ctx['telemetry_score']}) from {client_ip} for {email}")
-    else:
-        logger.warning(f"[MAGIC] Unsecured request from {client_ip} for {email} (score={ctx['telemetry_score']})")
-    
-    # Check if IP is blocked
-    if rate_limiter.is_ip_blocked(client_ip):
-        raise HTTPException(status_code=429, detail="Access temporarily blocked. Try again later.")
-    
-    # Check if email is blocked
-    if rate_limiter.is_email_blocked(email):
-        raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait 5 minutes.")
-    
-    # Rate limit by IP
+    # Rate limit by IP — just reject, NO IP blocking
     ip_key = f"magic_ip:{client_ip}"
     if rate_limiter.is_rate_limited(ip_key, RATE_LIMITS["magic_link_ip"]["max"], RATE_LIMITS["magic_link_ip"]["window"]):
-        rate_limiter.block_ip(client_ip, 600)
         await db.security_logs.insert_one({
             "event": "magic_link_rate_limit_ip",
             "ip": client_ip, "email": email,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
-        raise HTTPException(status_code=429, detail="Too many requests from your IP. Please wait.")
+        raise HTTPException(status_code=429, detail="Too many requests. Please wait a few minutes.")
     
-    # Rate limit by email
+    # Rate limit by email — just reject, NO email blocking
     email_key = f"magic_email:{email}"
     if rate_limiter.is_rate_limited(email_key, RATE_LIMITS["magic_link_email"]["max"], RATE_LIMITS["magic_link_email"]["window"]):
-        rate_limiter.block_email(email, 300)
         await db.security_logs.insert_one({
             "event": "magic_link_rate_limit_email",
             "ip": client_ip, "email": email,
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
-        raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait 5 minutes.")
+        raise HTTPException(status_code=429, detail="Too many requests for this email. Please wait a few minutes.")
     
     rate_limiter.record_request(ip_key)
     rate_limiter.record_request(email_key)
