@@ -658,143 +658,196 @@ def send_email(to_email: str, subject: str, html_content: str) -> bool:
         return False
 
 def _email_base_template(content: str, direction: str = "ltr") -> str:
-    """Apple liquid-glass inspired email base template"""
+    """Professional email template — dark minimal design, maximum compatibility"""
     return f"""<!DOCTYPE html>
-<html dir="{direction}">
+<html dir="{direction}" lang="{direction}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
-<meta name="supported-color-schemes" content="dark">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="color-scheme" content="dark light">
+<meta name="supported-color-schemes" content="dark light">
+<title>DeezLink</title>
+<!--[if mso]>
+<style>table,td,div,p,a,span{{font-family:Arial,Helvetica,sans-serif !important;}}</style>
+<![endif]-->
 </head>
-<body style="margin:0;padding:0;background:#050B18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;color:#F5F5F7;-webkit-font-smoothing:antialiased;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#050B18;">
-<tr><td align="center" style="padding:40px 20px;">
-<table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Roboto,Helvetica,Arial,sans-serif;color:#ffffff;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;word-spacing:normal;">
 
-<!-- Logo -->
-<tr><td align="center" style="padding:0 0 32px;">
-  <table role="presentation" cellpadding="0" cellspacing="0">
+<!-- Wrapper -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0a0a0a;">
+<tr><td align="center" style="padding:32px 16px;">
+
+<!-- Container 540px -->
+<table role="presentation" width="540" cellpadding="0" cellspacing="0" border="0" style="max-width:540px;width:100%;">
+
+<!-- Logo Header -->
+<tr><td align="center" style="padding:0 0 28px;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
   <tr>
-    <td style="padding:8px 16px;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(139,92,246,0.15));border:1px solid rgba(99,102,241,0.2);border-radius:12px;">
-      <span style="font-size:22px;font-weight:800;color:#F5F5F7;letter-spacing:-0.5px;">Deez<span style="color:#818CF8;">Link</span></span>
+    <td style="padding:10px 20px;background-color:#1a1a2e;border:1px solid #2a2a3e;border-radius:12px;">
+      <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;text-decoration:none;">Deez<span style="color:#a855f7;">Link</span></span>
     </td>
   </tr>
   </table>
 </td></tr>
 
 <!-- Main Card -->
-<tr><td style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;">
-  <!-- Gradient Top Bar -->
-  <div style="height:4px;background:linear-gradient(90deg,#6366F1,#8B5CF6,#22D3EE,#10B981);"></div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-  <tr><td style="padding:40px 36px;">
+<tr><td style="background-color:#141418;border:1px solid #1e1e28;border-radius:20px;overflow:hidden;">
+  <!-- Purple accent bar -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr><td style="height:3px;background:linear-gradient(90deg,#7c3aed,#a855f7,#c084fc);font-size:0;line-height:0;">&nbsp;</td></tr>
+  </table>
+  <!-- Content -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr><td style="padding:36px 32px;">
     {content}
   </td></tr>
   </table>
 </td></tr>
 
 <!-- Footer -->
-<tr><td align="center" style="padding:28px 0 0;">
-  <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.3);line-height:1.6;">
+<tr><td align="center" style="padding:24px 0 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+  <tr><td style="font-size:11px;color:#555555;text-align:center;line-height:1.6;">
     DeezLink &mdash; Premium Music Access<br>
-    <span style="color:rgba(255,255,255,0.2);">Secure &bull; Instant &bull; Trusted</span>
-  </p>
+    <span style="color:#444444;">Secure &bull; Instant &bull; Trusted</span>
+  </td></tr>
+  </table>
 </td></tr>
 
 </table>
+<!-- /Container -->
+
 </td></tr>
 </table>
+<!-- /Wrapper -->
+
 </body>
 </html>"""
 
 
 def send_magic_link_email(email: str, token: str, lang: str = "fr"):
-    """Send magic link authentication email — Apple liquid-glass design"""
-    base_url = os.environ.get('CORS_ORIGINS', 'https://deezlink.com').split(',')[0]
+    """Send magic link authentication email — professional dark design with bulletproof button"""
+    base_url = os.environ.get('SITE_URL', 'https://deezlink.com')
     magic_link = f"{base_url}/login?token={token}"
+    
+    logger.info(f"[EMAIL] Magic link URL: {magic_link}")
 
     texts = {
         "fr": {
-            "subject": "Votre lien de connexion DeezLink",
+            "subject": "🔐 Votre lien de connexion DeezLink",
             "greeting": "Bonjour,",
-            "body": "Cliquez sur le bouton ci-dessous pour vous connecter instantanement a votre compte DeezLink.",
-            "btn": "Se connecter",
+            "body": "Vous avez demandé un lien de connexion pour votre compte DeezLink. Cliquez sur le bouton ci-dessous pour accéder à votre espace.",
+            "btn": "Se connecter à DeezLink",
+            "or_copy": "Ou copiez ce lien dans votre navigateur :",
             "expire": "Ce lien expire dans 30 minutes.",
-            "ignore": "Si vous n'avez pas demande ce lien, ignorez cet email.",
-            "security": "Pour votre securite, ne partagez jamais ce lien.",
+            "security": "Pour votre sécurité, ne partagez jamais ce lien.",
+            "ignore": "Si vous n'avez pas demandé ce lien, ignorez simplement cet email. Votre compte reste sécurisé.",
         },
         "ar": {
-            "subject": "رابط تسجيل الدخول إلى DeezLink",
+            "subject": "🔐 رابط تسجيل الدخول إلى DeezLink",
             "greeting": "مرحبا،",
-            "body": "انقر على الزر أدناه لتسجيل الدخول إلى حسابك في DeezLink.",
-            "btn": "تسجيل الدخول",
+            "body": "لقد طلبت رابط تسجيل دخول لحسابك في DeezLink. انقر على الزر أدناه للوصول إلى حسابك.",
+            "btn": "تسجيل الدخول إلى DeezLink",
+            "or_copy": "أو انسخ هذا الرابط في متصفحك:",
             "expire": "تنتهي صلاحية هذا الرابط خلال 30 دقيقة.",
-            "ignore": "إذا لم تطلب هذا الرابط، يرجى تجاهل هذا البريد.",
             "security": "لأمانك، لا تشارك هذا الرابط مع أي شخص.",
+            "ignore": "إذا لم تطلب هذا الرابط، يرجى تجاهل هذا البريد. حسابك آمن.",
         },
         "en": {
-            "subject": "Your DeezLink Login Link",
+            "subject": "🔐 Your DeezLink Login Link",
             "greeting": "Hello,",
-            "body": "Click the button below to instantly sign in to your DeezLink account.",
-            "btn": "Sign In",
+            "body": "You requested a login link for your DeezLink account. Click the button below to access your account.",
+            "btn": "Sign In to DeezLink",
+            "or_copy": "Or copy this link into your browser:",
             "expire": "This link expires in 30 minutes.",
-            "ignore": "If you didn't request this link, please ignore this email.",
             "security": "For your security, never share this link.",
+            "ignore": "If you didn't request this link, simply ignore this email. Your account remains secure.",
+        },
+        "es": {
+            "subject": "🔐 Tu enlace de inicio de sesión DeezLink",
+            "greeting": "Hola,",
+            "body": "Has solicitado un enlace de inicio de sesión para tu cuenta DeezLink. Haz clic en el botón de abajo para acceder.",
+            "btn": "Iniciar sesión en DeezLink",
+            "or_copy": "O copia este enlace en tu navegador:",
+            "expire": "Este enlace expira en 30 minutos.",
+            "security": "Por tu seguridad, nunca compartas este enlace.",
+            "ignore": "Si no solicitaste este enlace, ignora este email. Tu cuenta permanece segura.",
         },
     }
-    t = texts.get(lang, texts["en"])
+    t = texts.get(lang, texts.get("en"))
     direction = "rtl" if lang == "ar" else "ltr"
 
     content = f"""
-    <!-- Icon -->
-    <div style="text-align:center;margin-bottom:28px;">
-      <div style="display:inline-block;width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#6366F1,#8B5CF6);line-height:64px;text-align:center;">
-        <span style="font-size:28px;">&#9889;</span>
-      </div>
-    </div>
     <!-- Greeting -->
-    <h1 style="margin:0 0 8px;font-size:26px;font-weight:700;color:#F5F5F7;text-align:center;letter-spacing:-0.3px;">{t['greeting']}</h1>
-    <p style="margin:0 0 32px;font-size:15px;color:rgba(255,255,255,0.6);text-align:center;line-height:1.7;">
-      {t['body']}
-    </p>
-    <!-- CTA Button -->
-    <div style="text-align:center;margin:0 0 32px;">
-      <a href="{magic_link}" style="display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#6366F1,#818CF8);color:#FFFFFF;font-size:16px;font-weight:700;text-decoration:none;border-radius:14px;letter-spacing:0.2px;box-shadow:0 8px 32px rgba(99,102,241,0.35);">
-        {t['btn']}
+    <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#ffffff;">{t['greeting']}</p>
+    <p style="margin:0 0 28px;font-size:14px;color:#a0a0a0;line-height:1.7;">{t['body']}</p>
+    
+    <!-- CTA Button — Bulletproof (works in Outlook, Gmail, Apple Mail) -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 24px;">
+    <tr><td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{magic_link}" style="height:52px;v-text-anchor:middle;width:320px;" arcsize="15%" fillcolor="#7c3aed">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">{t['btn']}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-->
+      <a href="{magic_link}" target="_blank" style="display:inline-block;padding:16px 48px;background-color:#7c3aed;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;border-radius:10px;text-align:center;letter-spacing:0.2px;mso-hide:all;">
+        {t['btn']} &rarr;
       </a>
-    </div>
-    <!-- Info pills -->
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+      <!--<![endif]-->
+    </td></tr>
+    </table>
+    
+    <!-- Fallback link -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 28px;">
+    <tr><td style="padding:14px 16px;background-color:#1a1a24;border:1px solid #2a2a36;border-radius:10px;">
+      <p style="margin:0 0 6px;font-size:11px;color:#666666;text-transform:uppercase;letter-spacing:1px;">{t['or_copy']}</p>
+      <a href="{magic_link}" style="font-size:12px;color:#a855f7;text-decoration:none;word-break:break-all;line-height:1.5;">{magic_link}</a>
+    </td></tr>
+    </table>
+    
+    <!-- Info -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;">
     <tr>
-      <td style="padding:12px 16px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.12);border-radius:12px;">
-        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">
-          &#128337; {t['expire']}<br>
-          &#128274; {t['security']}
-        </p>
-      </td>
+      <td width="24" style="vertical-align:top;padding-top:2px;"><span style="font-size:13px;">&#9200;</span></td>
+      <td style="padding-left:8px;font-size:13px;color:#888888;line-height:1.5;">{t['expire']}</td>
+    </tr>
+    <tr><td colspan="2" style="height:8px;"></td></tr>
+    <tr>
+      <td width="24" style="vertical-align:top;padding-top:2px;"><span style="font-size:13px;">&#128274;</span></td>
+      <td style="padding-left:8px;font-size:13px;color:#888888;line-height:1.5;">{t['security']}</td>
     </tr>
     </table>
-    <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.25);text-align:center;">{t['ignore']}</p>
+    
+    <!-- Separator -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td style="height:1px;background-color:#1e1e28;font-size:0;line-height:0;">&nbsp;</td></tr>
+    </table>
+    
+    <!-- Ignore notice -->
+    <p style="margin:16px 0 0;font-size:12px;color:#555555;line-height:1.6;">{t['ignore']}</p>
     """
 
     html = _email_base_template(content, direction)
     return send_email(email, t["subject"], html)
 
 def send_order_confirmation_email(email: str, order_id: str, links: List[str], lang: str = "fr"):
-    """Send order confirmation with links — Apple liquid-glass design"""
+    """Send order confirmation with links — professional dark design"""
     links_rows = ""
     for i, link in enumerate(links):
         links_rows += f"""
         <tr>
-          <td style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <td style="padding:10px 14px;border-bottom:1px solid #1e1e28;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td width="32" style="vertical-align:middle;">
-                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,rgba(34,211,238,0.15),rgba(16,185,129,0.15));text-align:center;line-height:28px;font-size:12px;font-weight:700;color:#22D3EE;">{i+1}</div>
+                <div style="width:28px;height:28px;border-radius:8px;background-color:#1a2a1a;text-align:center;line-height:28px;font-size:12px;font-weight:700;color:#22d3ee;">{i+1}</div>
               </td>
               <td style="vertical-align:middle;padding-left:12px;">
-                <a href="{link}" style="color:#818CF8;font-size:13px;font-family:monospace;text-decoration:none;word-break:break-all;">{link}</a>
+                <a href="{link}" style="color:#a855f7;font-size:13px;font-family:'Courier New',monospace;text-decoration:none;word-break:break-all;">{link}</a>
               </td>
             </tr>
             </table>
@@ -823,24 +876,24 @@ def send_order_confirmation_email(email: str, order_id: str, links: List[str], l
 
     content = f"""
     <div style="text-align:center;margin-bottom:28px;">
-      <div style="display:inline-block;width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#10B981,#22D3EE);line-height:64px;text-align:center;">
-        <span style="font-size:28px;">&#10004;</span>
+      <div style="display:inline-block;width:56px;height:56px;border-radius:16px;background-color:#0a2a0a;border:1px solid #1a3a1a;line-height:56px;text-align:center;">
+        <span style="font-size:24px;">&#10004;</span>
       </div>
     </div>
-    <h1 style="margin:0 0 6px;font-size:24px;font-weight:700;color:#F5F5F7;text-align:center;">{t['title']}</h1>
-    <p style="margin:0 0 28px;font-size:13px;color:rgba(255,255,255,0.4);text-align:center;font-family:monospace;">{t['order_label']} #{order_id}</p>
+    <h1 style="margin:0 0 6px;font-size:22px;font-weight:700;color:#ffffff;text-align:center;">{t['title']}</h1>
+    <p style="margin:0 0 28px;font-size:13px;color:#666666;text-align:center;font-family:'Courier New',monospace;">{t['order_label']} #{order_id}</p>
     <!-- Links Card -->
-    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;overflow:hidden;margin-bottom:24px;">
-      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-        <span style="font-size:14px;font-weight:600;color:#22D3EE;">&#127925; {t['links_title']}</span>
+    <div style="background-color:#1a1a24;border:1px solid #2a2a36;border-radius:14px;overflow:hidden;margin-bottom:24px;">
+      <div style="padding:14px 16px;border-bottom:1px solid #2a2a36;">
+        <span style="font-size:14px;font-weight:600;color:#22d3ee;">&#127925; {t['links_title']}</span>
       </div>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         {links_rows}
       </table>
     </div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-    <tr><td style="padding:12px 16px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.1);border-radius:12px;">
-      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td style="padding:12px 16px;background-color:#0a1a0a;border:1px solid #1a2a1a;border-radius:10px;">
+      <p style="margin:0;font-size:13px;color:#888888;line-height:1.6;">
         &#128737; {t['guarantee']}<br>&#128274; {t['keep']}
       </p>
     </td></tr>
@@ -1694,7 +1747,7 @@ async def create_order(request: Request):
     # OxaPay integration
     if OXAPAY_API_KEY:
         try:
-            base_url = os.environ.get('CORS_ORIGINS', 'https://deezlink.com').split(',')[0]
+            base_url = os.environ.get('SITE_URL', 'https://deezlink.com')
             payload = {
                 "merchant": OXAPAY_API_KEY,
                 "amount": final_price,
@@ -1788,7 +1841,7 @@ async def create_custom_order(request: Request):
     
     if OXAPAY_API_KEY:
         try:
-            base_url = os.environ.get('CORS_ORIGINS', 'https://deezlink.com').split(',')[0]
+            base_url = os.environ.get('SITE_URL', 'https://deezlink.com')
             payload = {
                 "merchant": OXAPAY_API_KEY,
                 "amount": pricing["total"],

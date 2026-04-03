@@ -1,30 +1,22 @@
 [
   {
-    "content": "Configure SMTP credentials in .env",
+    "content": "Fix SITE_URL for magic link generation (was using CORS_ORIGINS='*')",
     "status": "completed"
   },
   {
-    "content": "Test SMTP connectivity and login",
+    "content": "Make securePost resilient — fallback to plain request if telemetry fails",
     "status": "completed"
   },
   {
-    "content": "Backend: improve /auth/magic with email_sent status + add /auth/magic/resend endpoint",
+    "content": "Redesign email template to be more professional with clickable button",
     "status": "completed"
   },
   {
-    "content": "Backend: enforce security telemetry validation on sensitive routes",
+    "content": "Improve Login.js error handling for edge cases",
     "status": "completed"
   },
   {
-    "content": "Frontend: wire secureApi to all sensitive API calls (auth, orders, gift cards)",
-    "status": "completed"
-  },
-  {
-    "content": "Frontend: improve Login waiting page with delivery status + resend + cooldown",
-    "status": "completed"
-  },
-  {
-    "content": "End-to-end testing with testing agent",
+    "content": "Test email delivery with correct link URL",
     "status": "completed"
   }
 ]

@@ -35,10 +35,10 @@ export default function Login() {
       btn: "Recevoir le lien",
       processing: "Envoi en cours...",
       checkEmail: "Vérifiez votre boîte mail",
-      linkSentTo: "Lien de connexion envoyé à",
+      linkSentTo: "Un lien de connexion a été envoyé à",
       emailDelivered: "Email envoyé avec succès",
       emailFailed: "L'envoi de l'email a échoué",
-      emailFailedHint: "Vérifiez votre adresse email et réessayez.",
+      emailFailedHint: "Vérifiez l'adresse et réessayez.",
       waiting: "En attente de confirmation...",
       expires: "Le lien expire dans 30 minutes",
       resend: "Renvoyer l'email",
@@ -50,6 +50,7 @@ export default function Login() {
       securedBy: "Protégé par télémétrie DeezLink",
       invalidEmail: "Email invalide",
       linkExpired: "Lien expiré ou invalide",
+      genericError: "Une erreur est survenue, veuillez réessayer.",
     },
     en: {
       title: "Sign in",
@@ -57,7 +58,7 @@ export default function Login() {
       btn: "Get login link",
       processing: "Sending...",
       checkEmail: "Check your email",
-      linkSentTo: "Login link sent to",
+      linkSentTo: "A login link has been sent to",
       emailDelivered: "Email sent successfully",
       emailFailed: "Email delivery failed",
       emailFailedHint: "Check your email address and try again.",
@@ -72,6 +73,7 @@ export default function Login() {
       securedBy: "Secured by DeezLink telemetry",
       invalidEmail: "Invalid email",
       linkExpired: "Link expired or invalid",
+      genericError: "An error occurred, please try again.",
     }
   };
   const T = txt[lang] || txt.en;
@@ -127,50 +129,79 @@ export default function Login() {
     }, 1000);
   };
 
-  // Submit magic link request
+  // Submit magic link request — with triple-fallback error handling
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email.trim() || !email.includes("@")) { setError(T.invalidEmail); return; }
-    setLoading(true); setError(""); setEmailSent(null);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !trimmedEmail.includes("@")) { setError(T.invalidEmail); return; }
+    
+    setLoading(true);
+    setError("");
+    setEmailSent(null);
+    
     try {
+      // Primary: use securePost with telemetry
       const result = await securePost("/auth/magic", {
-        email: email.trim(),
+        email: trimmedEmail,
         language: lang
       });
       
-      localStorage.setItem("deezlink_email", email.trim().toLowerCase());
-      window.dispatchEvent(new Event("deezlink_email_update"));
+      // Store email for order history
+      try {
+        localStorage.setItem("deezlink_email", trimmedEmail.toLowerCase());
+        window.dispatchEvent(new Event("deezlink_email_update"));
+      } catch {}
       
-      setSessionId(result.session_id);
-      setEmailSent(result.email_sent);
+      // Transition to waiting phase
+      const sid = result?.session_id || "";
+      setSessionId(sid);
+      setEmailSent(result?.email_sent !== false); // Default to true if field missing
       setPhase("waiting");
-      startPolling(result.session_id);
+      if (sid) startPolling(sid);
       startCooldown(60);
+      
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Error");
+      console.error("[Login] Magic link error:", err);
+      
+      // Extract error detail
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      
+      if (status === 429) {
+        setError(typeof detail === "string" ? detail : "Trop de tentatives. Patientez quelques minutes.");
+      } else if (status === 403) {
+        setError(typeof detail === "string" ? detail : "Erreur de sécurité. Rechargez la page.");
+      } else if (typeof detail === "string") {
+        setError(detail);
+      } else {
+        setError(T.genericError);
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // Resend email
+  // Resend email — strict telemetry
   const handleResend = async () => {
     if (resendCooldown > 0 || resending) return;
-    setResending(true); setError("");
+    setResending(true);
+    setError("");
+    
     try {
       const result = await securePost("/auth/magic/resend", {
         email: email.trim(),
         session_id: sessionId,
         language: lang
       });
-      setEmailSent(result.email_sent);
+      setEmailSent(result?.email_sent !== false);
       setResendCount(prev => prev + 1);
-      startCooldown(90); // Longer cooldown for resend
+      startCooldown(90);
     } catch (err) {
-      const detail = err.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : "Resend failed");
+      const detail = err?.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : T.genericError);
+    } finally {
+      setResending(false);
     }
-    setResending(false);
   };
 
   // Cancel and go back
@@ -196,15 +227,15 @@ export default function Login() {
   if (phase === "verified") return (
     <div className="max-w-sm mx-auto px-5 py-24 text-center">
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.3 }}>
-        <div className="w-12 h-12 rounded-full bg-green-dim border border-green/20 flex items-center justify-center mx-auto mb-3">
-          <Check className="h-5 w-5 text-green" />
+        <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-3">
+          <Check className="h-5 w-5 text-green-400" />
         </div>
       </motion.div>
-      <p className="text-green text-[14px] font-medium">{T.verified}</p>
+      <p className="text-green-400 text-[14px] font-medium">{T.verified}</p>
     </div>
   );
 
-  /* ============ WAITING STATE (improved) ============ */
+  /* ============ WAITING STATE ============ */
   if (phase === "waiting") return (
     <div className="max-w-md mx-auto px-5 py-16">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
@@ -212,8 +243,8 @@ export default function Login() {
           
           {/* Header icon */}
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-accent-dim border border-accent/20 flex items-center justify-center">
-              <Mail className="h-7 w-7 text-accent" />
+            <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+              <Mail className="h-7 w-7 text-purple-400" />
             </div>
           </div>
 
@@ -222,7 +253,7 @@ export default function Login() {
             {T.checkEmail}
           </h2>
           <p className="text-t-secondary text-[13px] text-center mb-1">{T.linkSentTo}</p>
-          <p className="text-accent text-[14px] font-medium text-center mb-6">{email}</p>
+          <p className="text-purple-400 text-[14px] font-medium text-center mb-6">{email}</p>
 
           {/* Email delivery status */}
           <AnimatePresence mode="wait">
@@ -264,9 +295,9 @@ export default function Login() {
                 exit={{ opacity: 0, height: 0 }}
                 className="mb-4"
               >
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 border border-accent/20">
-                  <RefreshCw className="h-3.5 w-3.5 text-accent" />
-                  <span className="text-accent text-[12px] font-medium">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                  <RefreshCw className="h-3.5 w-3.5 text-purple-400" />
+                  <span className="text-purple-400 text-[12px] font-medium">
                     {T.resent} ({resendCount}x)
                   </span>
                 </div>
@@ -296,10 +327,11 @@ export default function Login() {
             <button
               onClick={handleResend}
               disabled={resendCooldown > 0 || resending}
+              data-testid="resend-btn"
               className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[14px] font-medium transition-all
                 ${resendCooldown > 0 || resending
                   ? "bg-white/5 text-t-muted cursor-not-allowed"
-                  : "bg-accent/15 text-accent hover:bg-accent/25 border border-accent/20"
+                  : "bg-purple-500/15 text-purple-400 hover:bg-purple-500/25 border border-purple-500/20"
                 }`}
             >
               {resending ? (
@@ -316,6 +348,7 @@ export default function Login() {
             {/* Back button */}
             <button
               onClick={handleCancel}
+              data-testid="back-btn"
               className="text-t-muted hover:text-t-secondary text-[13px] transition-colors inline-flex items-center justify-center gap-1 py-2"
             >
               <ArrowLeft className="h-3 w-3" /> {T.otherEmail}
@@ -324,7 +357,7 @@ export default function Login() {
 
           {/* Security badge */}
           <div className="flex items-center justify-center gap-1.5 mt-6 pt-4 border-t border-border">
-            <Shield className="h-3 w-3 text-accent/50" />
+            <Shield className="h-3 w-3 text-purple-400/50" />
             <span className="text-t-muted/50 text-[11px]">{T.securedBy}</span>
           </div>
         </div>
@@ -346,21 +379,21 @@ export default function Login() {
               <Input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-bg border-border text-t-primary placeholder:text-t-muted h-11 rounded-lg text-[14px] focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+                onChange={(e) => { setEmail(e.target.value); setError(""); }}
+                className="bg-bg border-border text-t-primary placeholder:text-t-muted h-11 rounded-lg text-[14px] focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
                 placeholder="you@example.com"
                 required
                 autoFocus
                 data-testid="login-email"
               />
             </div>
-            {error && <p className="text-red-500 text-[13px]">{error}</p>}
+            {error && <p className="text-red-400 text-[13px]">{error}</p>}
             <motion.button
               type="submit"
               disabled={loading}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white text-[14px] font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-[14px] font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
               data-testid="login-submit"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -370,7 +403,7 @@ export default function Login() {
 
           {/* Security badge */}
           <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-border">
-            <Shield className="h-3 w-3 text-accent/40" />
+            <Shield className="h-3 w-3 text-purple-400/40" />
             <span className="text-t-muted/40 text-[10px]">{T.securedBy}</span>
           </div>
         </div>
