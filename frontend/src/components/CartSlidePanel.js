@@ -58,27 +58,28 @@ export default function CartSlidePanel({ isOpen, onClose }) {
   };
 
   const handleCheckout = () => {
-    // Total de liens sur tout le panier (quantity = cart count, linkCount = liens par pack)
-    const totalLinks = cart.reduce((sum, it) => {
-      const links = it.linkCount ?? it.quantity ?? 1;
-      const count = it.quantity ?? 1;
-      // Si linkCount existe, quantity = cart count ; sinon quantity = nb de liens
-      return sum + (it.linkCount ? links * count : links);
-    }, 0);
+    if (cart.length === 0) return;
 
-    if (cart.length === 1) {
-      const item = cart[0];
-      const hasPackId = typeof item.id === "string" && item.id.length > 0 && !item.id.startsWith("custom");
-      const count = item.quantity ?? 1;
-      if (hasPackId && count === 1) {
-        navigate(`/checkout/${item.id}`);
-      } else {
-        navigate(`/checkout/custom_${Math.max(totalLinks, 1)}`);
-      }
-    } else if (cart.length > 1) {
+    // Build items: pack_id -> count (cart quantity). Filter packs that look like real IDs.
+    const items = cart
+      .filter((it) => typeof it.id === "string" && it.id.length > 0 && !it.id.startsWith("custom"))
+      .map((it) => ({ pack_id: it.id, count: it.quantity || 1 }));
+
+    if (items.length === 0) {
+      // Fallback for legacy/custom-only carts
+      const totalLinks = cart.reduce((sum, it) => sum + ((it.linkCount ?? it.quantity ?? 1) * (it.quantity || 1)), 0);
       navigate(`/checkout/custom_${Math.max(totalLinks, 1)}`);
-    } else {
+      onClose();
       return;
+    }
+
+    if (items.length === 1 && items[0].count === 1) {
+      // Single pack, single copy → route directly to pack checkout
+      navigate(`/checkout/${items[0].pack_id}`);
+    } else {
+      // Multi-pack (or same pack with count > 1) → sum exact pack prices
+      try { sessionStorage.setItem("deezlink_multi_cart", JSON.stringify(items)); } catch { /* ignore */ }
+      navigate(`/checkout/multi`);
     }
     onClose();
   };

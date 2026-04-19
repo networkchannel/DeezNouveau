@@ -2327,6 +2327,158 @@ async def create_custom_order(request: Request):
         "status": order["status"],
     }
 
+@api_router.post("/orders/create-multi")
+async def create_multi_order(request: Request):
+    """Multi-pack order: sums exact pack prices (no volume pricing) from a cart."""
+    ctx = await extract_telemetry_and_data(request)
+    data = ctx["data"]
+    if not data:
+        data = await parse_body(request)
+
+    items = data.get("items") or []
+    email = (data.get("email") or "").strip().lower()
+    captcha_token = data.get("captcha_token", "")
+    language = data.get("language", "en")
+
+    if not email or not isinstance(items, list) or len(items) == 0:
+        raise HTTPException(status_code=400, detail="email and items are required")
+
+    # Captcha gating
+    if ip_scorer.requires_captcha(ctx["client_ip"]):
+        if not captcha_token or not click_captcha.verify_token(
+            captcha_token, fingerprint=ctx.get("fingerprint", ""), ip=ctx["client_ip"]
+        ):
+            raise HTTPException(status_code=403, detail={"code": "CAPTCHA_REQUIRED", "message": "Captcha verification required."})
+
+    if not ctx["telemetry_valid"]:
+        await db.security_logs.insert_one({
+            "event": "multi_order_blocked_telemetry",
+            "ip": ctx["client_ip"], "email": email,
+            "score": ctx["telemetry_score"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+        raise HTTPException(status_code=403, detail={"code": "TELEMETRY_REQUIRED", "message": "Invalid session. Please refresh."})
+
+    # Resolve packs: build a map pack_id -> PACKS entry
+    pack_map = {p["id"]: p for p in PACKS}
+
+    total_price = 0.0
+    total_quantity = 0
+    breakdown = []
+    for it in items:
+        pid = it.get("pack_id") or it.get("id")
+        count = int(it.get("count") or it.get("quantity") or 1)
+        if count < 1 or count > 50:
+            raise HTTPException(status_code=400, detail=f"Invalid count for pack {pid}")
+        pack = pack_map.get(pid)
+        if not pack:
+            raise HTTPException(status_code=400, detail=f"Unknown pack id: {pid}")
+        total_price += float(pack["price"]) * count
+        total_quantity += int(pack["quantity"]) * count
+        breakdown.append({
+            "pack_id": pid,
+            "name_key": pack.get("name_key"),
+            "count": count,
+            "pack_quantity": int(pack["quantity"]),
+            "pack_price": float(pack["price"]),
+            "line_total": round(float(pack["price"]) * count, 2),
+        })
+
+    # Cap total to avoid abuse
+    if total_quantity > 500:
+        raise HTTPException(status_code=400, detail="Total quantity exceeds allowed limit")
+
+    # Loyalty discount
+    loyalty_discount = 0.0
+    existing_user = await db.users.find_one({"email": email})
+    if existing_user:
+        lp = int(existing_user.get("loyalty_points", 0))
+        loyalty_discount = min(round(lp * 0.01, 2), round(total_price * 0.2, 2))
+    final_price = round(total_price - loyalty_discount, 2)
+
+    order_id = str(uuid.uuid4())[:8].upper()
+    order = {
+        "order_id": order_id,
+        "pack_id": "multi",
+        "items": breakdown,
+        "quantity": total_quantity,
+        "price": final_price,
+        "original_price": round(total_price, 2),
+        "loyalty_discount": loyalty_discount,
+        "currency": "EUR",
+        "email": email,
+        "status": "pending",
+        "payment_url": None,
+        "track_id": None,
+        "links": [],
+        "language": language,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    if OXAPAY_API_KEY:
+        try:
+            site_url = os.environ.get('SITE_URL', 'https://clone-learn-secure.preview.emergentagent.com')
+            backend_url = os.environ.get('REACT_APP_BACKEND_URL', site_url)
+            payload = {
+                "merchant": OXAPAY_API_KEY,
+                "amount": final_price,
+                "currency": "EUR",
+                "orderId": order_id,
+                "description": f"DeezLink - Deezer Premium x{total_quantity}",
+                "callbackUrl": f"{backend_url}/api/webhooks/oxapay",
+                "returnUrl": f"{site_url}/order/{order_id}",
+                "feePaidByPayer": 0,
+                "lifeTime": 60,
+            }
+            async with httpx.AsyncClient(timeout=10.0) as http_client:
+                resp = await http_client.post(f"{OXAPAY_BASE_URL}/merchants/request", json=payload)
+                rdata = resp.json()
+                if rdata.get("result") == 100:
+                    order["payment_url"] = rdata.get("payLink", "")
+                    order["track_id"] = rdata.get("trackId", "")
+                else:
+                    order["status"] = "payment_error"
+                    order["payment_url"] = f"/order/{order_id}?error=payment"
+        except Exception as e:
+            logger.error(f"OxaPay multi request failed: {e}")
+            order["status"] = "payment_error"
+            order["payment_url"] = f"/order/{order_id}?error=payment"
+    else:
+        order["status"] = "payment_error"
+        order["payment_url"] = f"/order/{order_id}?error=no_payment_configured"
+
+    await db.orders.insert_one(order)
+
+    # A/B tracking: conversion
+    ab_data = data.get("ab") if isinstance(data, dict) else None
+    if ab_data and ab_data.get("variant") in ("a", "b") and ab_data.get("experiment"):
+        try:
+            await db.ab_events.insert_one({
+                "experiment": ab_data["experiment"],
+                "variant": ab_data["variant"],
+                "event": "conversion",
+                "session_id": ab_data.get("session_id") or "",
+                "pack_id": "multi",
+                "order_id": order_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            logger.error(f"ab multi conversion track failed: {e}")
+
+    return {
+        "order_id": order_id,
+        "payment_url": order["payment_url"],
+        "price": final_price,
+        "original_price": round(total_price, 2),
+        "quantity": total_quantity,
+        "items": breakdown,
+        "loyalty_discount": loyalty_discount,
+        "status": order["status"],
+    }
+
+
+
 @api_router.get("/orders/{order_id}")
 async def get_order(order_id: str):
     order = await db.orders.find_one({"order_id": order_id}, {"_id": 0})

@@ -35,10 +35,26 @@ export default function Checkout() {
   const [requireCaptcha, setRequireCaptcha] = useState(false);
 
   const isCustom = packId === "custom" || packId?.startsWith("custom_");
+  const isMulti = packId === "multi";
   const parsedQty = isCustom
     ? parseInt(searchParams.get("qty") || packId.replace(/^custom_?/, "") || "", 10)
     : 0;
   const customQty = isCustom ? (Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1) : 0;
+
+  // Multi-pack items (from cart via sessionStorage)
+  const [multiItems, setMultiItems] = useState(null);
+  useEffect(() => {
+    if (!isMulti) return;
+    try {
+      const raw = sessionStorage.getItem("deezlink_multi_cart");
+      if (!raw) { navigate("/offers"); return; }
+      const items = JSON.parse(raw);
+      if (!Array.isArray(items) || items.length === 0) { navigate("/offers"); return; }
+      setMultiItems(items);
+    } catch {
+      navigate("/offers");
+    }
+  }, [isMulti, navigate]);
 
   useEffect(() => {
     const updateCaptchaRequirement = (state) => setRequireCaptcha(state.requireCaptcha);
@@ -48,7 +64,30 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    if (isCustom) {
+    if (isMulti) {
+      // Multi pack: compute aggregated pack (price=sum, quantity=sum of link counts)
+      if (!multiItems) return;
+      axios.get(`${API}/packs`).then((r) => {
+        const all = r.data.packs || r.data;
+        const byId = Object.fromEntries((all || []).map((p) => [p.id, p]));
+        let totalPrice = 0;
+        let totalQty = 0;
+        const lines = [];
+        for (const it of multiItems) {
+          const pd = byId[it.pack_id || it.id];
+          if (!pd) continue;
+          const count = it.count ?? 1;
+          totalPrice += pd.price * count;
+          totalQty += pd.quantity * count;
+          lines.push({ pack_id: pd.id, name_key: pd.name_key, count, pack_quantity: pd.quantity, pack_price: pd.price, line_total: +(pd.price * count).toFixed(2) });
+        }
+        if (lines.length === 0) {
+          setError(lang === "fr" ? "Panier invalide." : "Invalid cart.");
+          return;
+        }
+        setPack({ name_key: "multi", quantity: totalQty, price: +totalPrice.toFixed(2), unit_price: totalQty ? +(totalPrice / totalQty).toFixed(2) : 0, multi_lines: lines });
+      }).catch(() => setError(lang === "fr" ? "Impossible de charger les packs." : "Failed to load packs."));
+    } else if (isCustom) {
       axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => {
         setCustomPricing(r.data);
         setPack({ name_key: "custom", quantity: r.data.quantity, price: r.data.total, unit_price: r.data.unit_price });
@@ -71,7 +110,7 @@ export default function Checkout() {
         setError(lang === "fr" ? "Impossible de charger les packs." : "Failed to load packs.");
       });
     }
-  }, [packId, isCustom, customQty, navigate, lang]);
+  }, [packId, isCustom, isMulti, multiItems, customQty, navigate, lang]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,13 +134,20 @@ export default function Checkout() {
       } catch { /* ignore */ }
 
       let data;
-      if (isCustom) {
+      if (isMulti && pack?.multi_lines) {
+        data = await securePost("/orders/create-multi", {
+          ...payload,
+          items: pack.multi_lines.map((l) => ({ pack_id: l.pack_id, count: l.count })),
+        });
+      } else if (isCustom) {
         data = await securePost("/orders/create-custom", { ...payload, quantity: customQty });
       } else {
         data = await securePost("/orders/create", { ...payload, pack_id: packId });
       }
       localStorage.setItem("deezlink_email", email.trim().toLowerCase());
       window.dispatchEvent(new Event("deezlink_email_update"));
+      // Clear the multi cart AFTER successful creation
+      if (isMulti) sessionStorage.removeItem("deezlink_multi_cart");
       if (data.payment_url && !data.payment_url.startsWith("/")) {
         window.location.href = data.payment_url;
       } else {
@@ -245,23 +291,46 @@ export default function Checkout() {
                 </span>
               </div>
 
-              {/* Product row */}
-              <div className="flex items-center gap-3 pb-5 mb-5 border-b border-white/[0.06]">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shrink-0 shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7)]">
-                  <Headphones className="h-5 w-5 text-white" />
+              {/* Product row(s) */}
+              {isMulti && pack.multi_lines ? (
+                <div className="pb-5 mb-5 border-b border-white/[0.06] space-y-3">
+                  {pack.multi_lines.map((l, i) => (
+                    <div key={i} className="flex items-center gap-3" data-testid={`multi-line-${l.pack_id}`}>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shrink-0">
+                        <Headphones className="h-4 w-4 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-white font-semibold text-[14px] truncate">
+                          {t(l.name_key || "pack_starter")} <span className="text-white/50 font-normal">× {l.count}</span>
+                        </div>
+                        <div className="text-white/45 text-[11px]">
+                          {l.pack_quantity * l.count}{" "}{lang === "fr" ? "liens" : "links"} · {l.pack_price.toFixed(2)}€ / pack
+                        </div>
+                      </div>
+                      <div className="text-white font-semibold text-[14px] tabular-nums">
+                        {l.line_total.toFixed(2)}€
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-white font-semibold text-[15px] truncate" data-testid="pack-name">
-                    Deezer Premium · {displayQty}x
+              ) : (
+                <div className="flex items-center gap-3 pb-5 mb-5 border-b border-white/[0.06]">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shrink-0 shadow-[0_8px_24px_-8px_rgba(139,92,246,0.7)]">
+                    <Headphones className="h-5 w-5 text-white" />
                   </div>
-                  <div className="text-white/50 text-[12px]">
-                    {packLabel}{unitPrice > 0 ? ` · ${unitPrice.toFixed(2)}€ ${T.perLink}` : ""}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-white font-semibold text-[15px] truncate" data-testid="pack-name">
+                      Deezer Premium · {displayQty}x
+                    </div>
+                    <div className="text-white/50 text-[12px]">
+                      {packLabel}{unitPrice > 0 ? ` · ${unitPrice.toFixed(2)}€ ${T.perLink}` : ""}
+                    </div>
+                  </div>
+                  <div className="text-white font-display font-bold text-lg tabular-nums" data-testid="pack-subtotal">
+                    {displayPrice?.toFixed(2)}€
                   </div>
                 </div>
-                <div className="text-white font-display font-bold text-lg tabular-nums" data-testid="pack-subtotal">
-                  {displayPrice?.toFixed(2)}€
-                </div>
-              </div>
+              )}
 
               {/* Total */}
               <div className="rounded-2xl bg-gradient-to-br from-violet-900/30 to-transparent border border-violet-500/20 p-5 mb-5">
