@@ -64,7 +64,22 @@ offers gift cards, and provides a loyalty program.
     album mosaic using Deezer trending, no text overlay), metrics bar (3 stats),
     features grid (6), pricing (3 packs with clean violet badges), FAQ accordion
   - All garish `from-purple/pink/orange` gradients replaced with unified violet
-- **Jan 19, 2026 — Checkout refonte + OxaPay fee fix**: (voir section précédente)
+- **Jan 19, 2026 — Multi-pack cart + exact price alignment**:
+  - Nouveau endpoint `POST /api/orders/create-multi` qui somme EXACTEMENT les
+    prix des packs du panier (plus de tarif volumique imposé sur multi-cart).
+    Valide chaque `pack_id`, limite count ≤ 50 et total_quantity ≤ 500,
+    gère captcha/telemetry/AB tracking, paie via OxaPay avec `feePaidByPayer:0`.
+  - `Offers.addToCart` préserve `linkCount: pack.quantity` (séparé du cart count).
+  - `CartSlidePanel.handleCheckout` :
+    - 1 item × 1 → `/checkout/{pack_id}` (comportement single existant)
+    - sinon → stocke les items en `sessionStorage.deezlink_multi_cart` et
+      navigue vers `/checkout/multi`
+  - `Checkout.js` gère le mode multi : lit sessionStorage, résout les packs
+    via `/api/packs`, affiche un breakdown 3 lignes (pack_starter ×1 · 1 link
+    · 5.00€/pack · 5.00€) et le total strictement égal à la somme cart.
+  - Corrigé le fallback NaN sur `customQty` et remplacé les redirects silencieux
+    par un message d'erreur visible avec bouton "Back to offers".
+  - testing_agent_v3 iteration_7: 16/16 PASS (backend 100%, frontend 100%)
 - **Jan 19, 2026 — Admin dashboards + OxaPay monitoring**:
   - Bug résolu : OxaPay affichait 5.075€ pour un pack 5€ (frais 1.5% ajoutés au
     payeur). Ajout de `feePaidByPayer: 0` + `lifeTime: 60` sur `/api/orders/create`
