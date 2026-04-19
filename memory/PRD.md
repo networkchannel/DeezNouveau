@@ -59,23 +59,29 @@ offers gift cards, and provides a loyalty program.
   - Global design tokens rewritten (`/app/frontend/src/index.css`, `tailwind.config.js`)
   - `AnimatedBackground` simplified to violet halo + grid + noise
   - `Header` redesigned to floating pill-shaped nav with central links + right CTA
-  - `Footer` redesigned with a top "Ready to listen" CTA banner
-  - `Landing` fully rewritten: hero (badge pills + big display title + 2 CTAs +
-    album mosaic using Deezer trending), metrics bar, features grid, how-it-works,
-    pricing (3 packs), testimonials (6), FAQ accordion
+  - `Footer` redesigned with a top "Ready to listen" CTA banner (Home-only)
+  - `Landing` fully rewritten: hero (pill + big display title + 2 CTAs +
+    album mosaic using Deezer trending, no text overlay), metrics bar (3 stats),
+    features grid (6), pricing (3 packs with clean violet badges), FAQ accordion
   - All garish `from-purple/pink/orange` gradients replaced with unified violet
-    across `Offers`, `GiftCards`, `CustomQuantity`, `Checkout`, `CartSlidePanel`
-  - Packs color palette in `Offers.js` unified to violet variants
-  - Backend unchanged (same APIs), installed `slowapi` missing dep
+- **Jan 19, 2026 — Follow-up tweaks**:
+  - Admin red Shield icon restored in header right side (admin users only)
+  - Mobile header: tighter padding, Lang icon always visible, mobile menu with
+    Get Started CTA pill
+  - Subtle hover animations on all cards: `card-surface` translateY(-3px) +
+    violet border; same on pricing packs in Offers/Landing
+  - Checkout flow fix: backend `PACKS` aligned to frontend pack IDs
+    (single / pack_3 / pack_5 / pack_10) instead of the legacy solo/duo/family
+  - Badges cleaned: plain violet pill without shadow/icon (no more "pink bars")
 
-## Verified working
-- `/` (Landing) — hero + all sections render correctly
-- `/offers` — pack cards with new violet `btn-primary`
-- `/gift-cards` — amount selection + violet card preview
-- `/login` — magic-link form
-- `/api/stats/public` — returns orders/links counts
-- `/api/deezer/trending` — returns tracks/artists/albums (consumed by hero)
-- Testing agent: backend 100% / frontend 100% — no issues
+## Verified working (as of Jan 19)
+- All pages load: `/`, `/offers`, `/gift-cards`, `/login`, `/checkout/:pack_id`
+- All 4 checkout flows: single / pack_3 / pack_5 / pack_10 → correct pack
+  details + email field + OxaPay crypto pay button
+- Cart slide panel, gift cards, FAQ accordion, mobile nav
+- Backend APIs: `/api/packs`, `/api/stats/public`, `/api/deezer/trending`,
+  `/api/pricing/calculate`, `/api/security/*`
+- Testing agent: backend 100% / frontend 100% (iteration_3)
 
 ## Prioritized backlog
 
