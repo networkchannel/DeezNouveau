@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PricingModal from "@/components/PricingModal";
-import { Sparkles, Github, MessageCircle } from "lucide-react";
+import { Github, MessageCircle } from "lucide-react";
 
 export default function Footer() {
   const { i18n } = useTranslation();
   const lang = i18n.language || "fr";
   const location = useLocation();
-  const isHome = location.pathname === "/";
   const [pricingOpen, setPricingOpen] = useState(false);
 
   return (
@@ -16,40 +15,12 @@ export default function Footer() {
       <footer className="relative mt-16 sm:mt-24 border-t border-white/[0.06] bg-[#050505]/80 backdrop-blur-xl" data-testid="main-footer">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10">
 
-          {/* CTA Big bar — only on Home */}
-          {isHome && (
-            <div className="relative overflow-hidden rounded-[2rem] border border-violet-500/20 p-8 sm:p-14 mb-16"
-                 style={{
-                   background:
-                     "radial-gradient(ellipse at center, rgba(139,92,246,0.18) 0%, rgba(10,10,14,0.9) 60%)"
-                 }}
-            >
-              <div className="absolute -top-1/2 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full blur-3xl bg-violet-600/20 pointer-events-none" />
-              <div className="relative z-10 text-center">
-                <h2 className="display-md text-white mb-3">
-                  {lang === "fr" ? "Prêt à écouter sans limites ?" : "Ready to listen without limits?"}
-                </h2>
-                <p className="text-white/60 text-[15px] max-w-xl mx-auto mb-6">
-                  {lang === "fr"
-                    ? "Rejoignez des milliers d'utilisateurs. Paiement crypto anonyme, livraison instantanée."
-                    : "Join thousands of users. Anonymous crypto payment, instant delivery."}
-                </p>
-                <Link to="/offers" className="btn-primary" data-testid="footer-cta-btn">
-                  {lang === "fr" ? "Voir les offres" : "Get Started Now"}
-                </Link>
-              </div>
-            </div>
-          )}
-
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center">
-                  <Sparkles className="h-3.5 w-3.5 text-white" />
-                </div>
                 <span className="text-white font-display font-bold text-[17px] tracking-tight">
-                  deez<span className="text-violet-400">link</span>
+                  deez<span className="text-violet-500">link</span>
                 </span>
               </div>
               <p className="text-[13px] text-white/50 leading-relaxed max-w-xs">

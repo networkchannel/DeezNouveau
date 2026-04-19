@@ -5,6 +5,13 @@
 > dans le style de cette boutique, avec le même style de bouton et de fond:
 > https://crystality.win/"
 
+## Latest updates (Feb 2026)
+- **[2026-02]** Removed Sparkles logo icon next to "deezlink" brand (Header + Footer)
+- **[2026-02]** "link" in "deezlink" upgraded to `text-violet-500` (brighter) in both Header and Footer
+- **[2026-02]** Relocated "Ready to listen without limits?" CTA from Footer to Landing.js, now below the FAQ section
+- **[2026-02]** Simplified Lenis config: `lerp: 0.12`, `wheelMultiplier: 1.0`, `syncTouch: false` — scroll now responsive & smooth (was perceived as broken due to over-tuned inertia `lerp: 0.06` + `wheelMultiplier: 0.7`)
+
+
 User choices captured:
 - Clone the repo and work directly on it
 - Full redesign (visual + UX/animations)

@@ -13,14 +13,13 @@ export function initSmoothScroll() {
 
   lenisInstance = new Lenis({
     autoRaf: true,
-    duration: 2.0,                        // longer, more noticeable glide
-    easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // ease-out expo
     smoothWheel: true,
-    syncTouch: true,
-    syncTouchLerp: 0.075,
-    wheelMultiplier: 0.7,                  // each wheel tick = smaller, so glide is longer
-    touchMultiplier: 1.5,
-    lerp: 0.06,                            // even lower lerp = more visible interpolation
+    syncTouch: false,
+    wheelMultiplier: 1.0,
+    touchMultiplier: 1.6,
+    lerp: 0.12,                            // responsive but still smooth
     orientation: "vertical",
     gestureOrientation: "vertical",
     infinite: false,

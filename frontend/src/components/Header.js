@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart, User, LogIn, Sparkles, Shield } from "lucide-react";
+import { Globe, Menu, X, ShoppingCart, User, LogIn, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -72,15 +72,9 @@ export default function Header() {
           data-testid="main-header"
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 pl-1 pr-1 shrink-0 group" data-testid="logo-link">
-            <div className="relative">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_-4px_rgba(139,92,246,0.7)] group-hover:scale-105 transition-transform">
-                <Sparkles className="h-4 w-4 text-white" />
-              </div>
-              <div className="absolute inset-0 rounded-xl bg-violet-500/40 blur-xl -z-10" />
-            </div>
+          <Link to="/" className="flex items-center gap-2 pl-2 pr-1 shrink-0 group" data-testid="logo-link">
             <span className="text-white font-display font-bold text-[16px] sm:text-[18px] tracking-tight">
-              deez<span className="text-violet-400">link</span>
+              deez<span className="text-violet-500">link</span>
             </span>
           </Link>
 
