@@ -23,6 +23,7 @@ import AdminAB from "@/pages/AdminAB";
 import AdminOxaPay from "@/pages/AdminOxaPay";
 import Profile from "@/pages/Profile";
 import ScrollToTop from "@/components/ScrollToTop";
+import ScrollProgress from "@/components/ScrollProgress";
 import PageTransition from "@/components/PageTransition";
 
 function AnimatedRoutes() {
@@ -66,6 +67,7 @@ function App() {
       <CartProvider>
         <BrowserRouter>
           <ScrollToTop />
+          <ScrollProgress />
           <div className="min-h-screen bg-[#050505] flex flex-col relative">
             {/* Violet halo background + subtle grid */}
             <AnimatedBackground />

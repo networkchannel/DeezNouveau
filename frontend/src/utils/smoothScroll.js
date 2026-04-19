@@ -13,19 +13,28 @@ export function initSmoothScroll() {
 
   lenisInstance = new Lenis({
     autoRaf: true,
-    duration: 1.6,                        // longer glide
-    easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic (soft deceleration)
+    duration: 2.0,                        // longer, more noticeable glide
+    easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic
     smoothWheel: true,
-    syncTouch: true,                       // unified touch + mouse feel on mobile
-    syncTouchLerp: 0.08,
-    wheelMultiplier: 0.85,                 // slightly slower per wheel tick
+    syncTouch: true,
+    syncTouchLerp: 0.075,
+    wheelMultiplier: 0.7,                  // each wheel tick = smaller, so glide is longer
     touchMultiplier: 1.5,
-    lerp: 0.08,                            // lower = more glide/inertia
+    lerp: 0.06,                            // even lower lerp = more visible interpolation
     orientation: "vertical",
     gestureOrientation: "vertical",
     infinite: false,
     autoResize: true,
   });
+
+  // Expose for debug
+  if (typeof window !== "undefined") {
+    window.__LENIS__ = lenisInstance;
+  }
+
+  // Log once so dev can confirm Lenis is alive
+  // eslint-disable-next-line no-console
+  console.log("[Lenis] smooth scroll initialized", lenisInstance);
 
   return lenisInstance;
 }
