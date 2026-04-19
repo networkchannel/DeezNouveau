@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart, User, LogIn, Shield, Sparkles } from "lucide-react";
+import { Globe, Menu, X, ShoppingCart, User, LogIn, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -65,28 +65,28 @@ export default function Header() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-          className={`max-w-6xl mx-auto flex items-center justify-between gap-3 rounded-full transition-all duration-300 border ${
+          className={`max-w-6xl mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-full transition-all duration-300 border ${
             scrolled
               ? "bg-[rgba(10,10,14,0.85)] border-white/10 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)]"
               : "bg-[rgba(10,10,14,0.55)] border-white/[0.06] backdrop-blur-lg"
-          } px-3 sm:px-4 py-2 sm:py-2`}
+          } px-3 sm:px-4 py-2`}
           data-testid="main-header"
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 pl-2 pr-1 shrink-0 group" data-testid="logo-link">
+          <Link to="/" className="flex items-center gap-2 pl-1 pr-1 shrink-0 group" data-testid="logo-link">
             <div className="relative">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_-4px_rgba(139,92,246,0.7)] group-hover:scale-105 transition-transform">
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
               <div className="absolute inset-0 rounded-xl bg-violet-500/40 blur-xl -z-10" />
             </div>
-            <span className="text-white font-display font-bold text-[17px] sm:text-[18px] tracking-tight">
+            <span className="text-white font-display font-bold text-[16px] sm:text-[18px] tracking-tight">
               deez<span className="text-violet-400">link</span>
             </span>
           </Link>
 
           {/* Desktop Nav — centered */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          <nav className="hidden md:flex items-center justify-center gap-1">
             {navLinks.map((l) => (
               <Link
                 key={l.to}
@@ -104,7 +104,7 @@ export default function Header() {
           </nav>
 
           {/* Right side */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 justify-self-end">
             {/* Cart */}
             <button
               onClick={() => setCartOpen(true)}
@@ -152,22 +152,13 @@ export default function Header() {
               <Link
                 to="/login"
                 data-testid="login-btn"
-                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-[13px] font-semibold hover:bg-white/90 transition-all shadow-[0_4px_16px_-4px_rgba(255,255,255,0.2)]"
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-[13px] font-semibold hover:bg-white/90 transition-all"
               >
                 <LogIn className="h-3.5 w-3.5" />
                 {lang === "fr" ? "Connexion" : "Sign in"}
               </Link>
-            ) : isAdminUser ? (
-              <Link
-                to="/admin"
-                data-testid="admin-btn"
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 text-[12px] font-semibold hover:bg-red-500/25 transition-all"
-              >
-                <Shield className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Admin</span>
-              </Link>
             ) : (
-              <Link to="/profile" data-testid="profile-btn" className="p-1">
+              <Link to={isAdminUser ? "/admin" : "/profile"} data-testid="profile-btn" className="p-1">
                 <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 hover:bg-violet-500/25 transition-all">
                   <User className="h-4 w-4" />
                 </div>
@@ -177,7 +168,7 @@ export default function Header() {
             {/* Primary CTA on desktop */}
             <button
               onClick={() => navigate("/offers")}
-              className="hidden md:inline-flex btn-primary !py-2 !px-5 !text-[13px]"
+              className="hidden lg:inline-flex btn-primary !py-2 !px-4 !text-[13px]"
               data-testid="header-cta-btn"
             >
               {lang === "fr" ? "Commencer" : "Get Started"}

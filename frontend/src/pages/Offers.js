@@ -166,9 +166,9 @@ export default function Offers() {
           </div>
         </motion.div>
 
-        {/* Packs Grid — Horizontal scroll on mobile, grid on desktop */}
-        <div className="mb-12 -mx-4 sm:mx-0">
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 sm:px-0 pb-4 sm:pb-0 pt-4 scrollbar-hide">
+        {/* Packs Grid */}
+        <div className="mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 pt-6">
             {packs.map((pack, i) => {
             const Icon = pack.icon;
             const unitPrice = (pack.price / pack.quantity).toFixed(2);
@@ -178,42 +178,42 @@ export default function Offers() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.08 }}
-                className="group relative min-w-[280px] sm:min-w-0 snap-center flex flex-col h-full"
+                className="group relative flex flex-col h-full"
               >
                 {pack.badge && (
-                  <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-10">
-                    <span className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold text-white bg-gradient-to-r ${pack.color} shadow-lg ${pack.shadow} whitespace-nowrap`}>
-                      <Zap className="h-3.5 w-3.5" />
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-white bg-violet-500 shadow-[0_4px_16px_-4px_rgba(139,92,246,0.8)] whitespace-nowrap">
+                      <Zap className="h-3 w-3" />
                       {pack.badge}
                     </span>
                   </div>
                 )}
-                <div className={`glass backdrop-blur-xl rounded-2xl border border-border overflow-hidden flex flex-col h-full transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/[0.05] group-hover:-translate-y-1 ${pack.badge ? 'ring-1 ring-purple-500/30' : ''}`}>
-                  {/* Gradient Top Strip */}
-                  <div className={`h-1.5 bg-gradient-to-r ${pack.color}`} />
-                  
+                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40 shadow-[0_20px_60px_-20px_rgba(139,92,246,0.35)]' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-all duration-300 group-hover:border-violet-500/30 group-hover:-translate-y-1`}>
+                  {/* Top accent bar */}
+                  <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-700 rounded-t-2xl" />
+
                   {/* Content */}
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
                     {/* Icon + Name */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${pack.color} flex items-center justify-center shadow-lg ${pack.shadow}`}>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_-4px_rgba(139,92,246,0.7)]">
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-t-primary font-semibold text-base">{pack.name}</h3>
-                        <p className="text-t-muted text-xs">{pack.desc}</p>
+                        <h3 className="text-white font-semibold text-[15px]">{pack.name}</h3>
+                        <p className="text-white/45 text-[11px]">{pack.desc}</p>
                       </div>
                     </div>
 
                     {/* Price */}
-                    <div className="mb-4">
+                    <div className="mb-5">
                       <div className="flex items-baseline gap-1">
-                        <span className={`text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r ${pack.color}`}>
+                        <span className="text-4xl font-display font-bold text-white tracking-tight">
                           {pack.price}€
                         </span>
                       </div>
-                      <p className="text-t-muted text-xs mt-1">
-                        {unitPrice}€ / {lang === "fr" ? "lien" : "link"} · {pack.quantity} {pack.quantity > 1 ? (lang === "fr" ? "liens" : "links") : (lang === "fr" ? "lien" : "link")} Deezer Premium
+                      <p className="text-white/45 text-[12px] mt-1">
+                        {unitPrice}€ / {lang === "fr" ? "lien" : "link"} · {pack.quantity}x Deezer Premium
                       </p>
                     </div>
 
@@ -224,8 +224,8 @@ export default function Offers() {
                         { icon: Zap, text: lang === "fr" ? "Livraison instantanée" : "Instant delivery" },
                         { icon: Shield, text: lang === "fr" ? "Paiement crypto sécurisé" : "Secure crypto payment" },
                       ].map((d, j) => (
-                        <div key={j} className="flex items-center gap-2 text-sm text-t-secondary">
-                          <d.icon className="h-3.5 w-3.5 text-t-muted shrink-0" />
+                        <div key={j} className="flex items-center gap-2 text-[13px] text-white/65">
+                          <d.icon className="h-3.5 w-3.5 text-violet-400/80 shrink-0" />
                           <span>{d.text}</span>
                         </div>
                       ))}
@@ -233,18 +233,17 @@ export default function Offers() {
 
                     {/* Buttons */}
                     <div className="space-y-2 mt-auto">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      <button
                         onClick={() => navigate(`/checkout/${pack.id}`)}
-                        className={`w-full py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r ${pack.color} shadow-lg ${pack.shadow} hover:shadow-xl transition-all flex items-center justify-center gap-2`}
+                        className={pack.badge ? "btn-primary w-full !py-3" : "btn-secondary w-full !py-3"}
                         data-testid={`buy-${pack.id}`}
                       >
                         {lang === "fr" ? "Acheter" : "Buy now"}
                         <ArrowRight className="h-4 w-4" />
-                      </motion.button>
+                      </button>
                       <button
                         onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity })}
-                        className="w-full py-2.5 rounded-xl text-xs font-medium text-t-secondary hover:text-t-primary bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
+                        className="w-full py-2.5 rounded-full text-[12px] font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
                       >
                         {lang === "fr" ? "Ajouter au panier" : "Add to cart"}
                       </button>

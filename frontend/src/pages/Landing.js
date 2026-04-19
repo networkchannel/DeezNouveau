@@ -7,7 +7,6 @@ import {
   Headphones, Music, Zap, Check, ArrowRight, Shield, Gift,
   Download, Volume2, Radio, Sparkles, Clock, Users, Lock,
   Star, Heart, CreditCard, ChevronDown, Infinity as InfinityIcon,
-  MessageCircle
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -151,22 +150,6 @@ export default function Landing() {
     { icon: Heart, title: lang === "fr" ? "Paroles synchronisées" : "Synced lyrics", desc: lang === "fr" ? "Chantez chaque note avec les paroles." : "Sing every note with live lyrics." },
   ];
 
-  const steps = [
-    { num: "01", title: lang === "fr" ? "Choisissez un pack" : "Pick a pack", desc: lang === "fr" ? "Sélectionnez le nombre de liens souhaité." : "Select the number of links you want.", icon: CreditCard },
-    { num: "02", title: lang === "fr" ? "Payez en crypto" : "Pay with crypto", desc: lang === "fr" ? "BTC, ETH, USDT, LTC — anonyme." : "BTC, ETH, USDT, LTC — anonymous.", icon: Lock },
-    { num: "03", title: lang === "fr" ? "Recevez vos liens" : "Get your links", desc: lang === "fr" ? "Livraison instantanée par email." : "Instant email delivery.", icon: Zap },
-    { num: "04", title: lang === "fr" ? "Activez & écoutez" : "Activate & listen", desc: lang === "fr" ? "Un clic, c'est prêt. Profitez." : "One click, done. Enjoy.", icon: Headphones },
-  ];
-
-  const testimonials = [
-    { name: "Léo M.", handle: "@leo.m", text: lang === "fr" ? "Livré en 2 minutes chrono. La qualité audio est incroyable, j'ai même plus besoin de revenir à Spotify." : "Delivered in 2 minutes flat. Audio quality is unreal, haven't looked back to Spotify." },
-    { name: "Amel K.", handle: "@amelk", text: lang === "fr" ? "Service parfait depuis 8 mois. Le support répond en moins d'une heure, même le dimanche." : "Flawless service for 8 months. Support replies within the hour, even on Sundays." },
-    { name: "Darius", handle: "@dariusx", text: lang === "fr" ? "Le paiement crypto c'est le game changer. Vraiment aucune info perso demandée." : "The crypto payment is a game changer. Literally zero personal info asked." },
-    { name: "Noa R.", handle: "@noa_r", text: lang === "fr" ? "J'ai pris le pack Premium, ça me fait tenir plus d'un an à moitié prix. Parfait." : "Bought the Premium pack — lasts over a year at half the price. Perfect." },
-    { name: "Lise G.", handle: "@lisey", text: lang === "fr" ? "Interface ultra clean. On comprend tout de suite. Les liens marchent toujours." : "Clean interface. Everything makes sense instantly. Links always work." },
-    { name: "Théo", handle: "@theodz", text: lang === "fr" ? "Honnêtement je pensais que c'était louche. Ça marche, c'est légit. Recommandé." : "Honestly thought it was sketch. It works. Legit. Recommend." },
-  ];
-
   const faqs = [
     { q: lang === "fr" ? "Les liens sont-ils garantis ?" : "Are the links guaranteed?",
       a: lang === "fr" ? "Chaque lien est garanti 30 jours minimum. Si un lien ne fonctionne pas, nous le remplaçons gratuitement." : "Every link is guaranteed for at least 30 days. If a link doesn't work, we replace it for free." },
@@ -200,16 +183,6 @@ export default function Landing() {
                 <span className="pill" data-testid="hero-pill-new">
                   <span className="pill-dot" />
                   {T.newDrop}
-                </span>
-                <span className="pill" data-testid="hero-pill-trust">
-                  <div className="flex -space-x-1.5">
-                    {[1,2,3].map((i) => (
-                      <div key={i} className="w-4 h-4 rounded-full border border-[#0f0f14]" style={{
-                        background: `linear-gradient(135deg, hsl(${260 + i*15} 80% 60%), hsl(${280 + i*20} 75% 45%))`
-                      }} />
-                    ))}
-                  </div>
-                  {T.trusted}
                 </span>
               </div>
 
@@ -330,10 +303,9 @@ export default function Landing() {
       {/* ═════════ METRICS BAR ═════════ */}
       <section className="relative px-4 sm:px-6 mb-20 sm:mb-28">
         <div className="max-w-6xl mx-auto">
-          <div className="rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-2 md:grid-cols-4 divide-x divide-white/[0.05] overflow-hidden">
+          <div className="rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-3 divide-x divide-white/[0.05] overflow-hidden">
             {[
               { value: stats.links ? `${stats.links.toLocaleString()}+` : "10,000+", label: T.statLinks },
-              { value: stats.orders ? `${stats.orders.toLocaleString()}+` : "4,500+", label: T.statOrders },
               { value: "<5 min", label: T.statTime },
               { value: "24/7", label: T.statSupport },
             ].map((s, i) => (
@@ -374,33 +346,6 @@ export default function Landing() {
                   <h3 className="text-white text-[17px] font-semibold mb-2 tracking-tight">{f.title}</h3>
                   <p className="text-white/55 text-[14px] leading-relaxed">{f.desc}</p>
                 </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ═════════ HOW IT WORKS ═════════ */}
-      <section className="relative px-4 sm:px-6 py-14 sm:py-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-12 sm:mb-14 max-w-2xl">
-            <div className="pill mb-4"><span className="pill-dot pill-dot-violet" />{T.howLabel}</div>
-            <h2 className="display-lg text-white mb-3">{T.howTitle}</h2>
-            <p className="text-white/55 text-[16px]">{T.howSub}</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            {steps.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <div key={i} className="card-surface p-6 relative">
-                  <div className="text-[10px] font-mono text-violet-400/80 mb-4">{s.num}</div>
-                  <div className="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4">
-                    <Icon className="h-5 w-5 text-white" />
-                  </div>
-                  <h3 className="text-white text-[17px] font-semibold mb-2 tracking-tight">{s.title}</h3>
-                  <p className="text-white/55 text-[14px] leading-relaxed">{s.desc}</p>
-                </div>
               );
             })}
           </div>
@@ -483,46 +428,6 @@ export default function Landing() {
               {lang === "fr" ? "Voir toutes les offres & quantités personnalisées" : "See all offers & custom quantities"}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ═════════ TESTIMONIALS ═════════ */}
-      <section className="relative px-4 sm:px-6 py-14 sm:py-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-12 sm:mb-14 max-w-2xl">
-            <div className="pill mb-4"><span className="pill-dot" />{T.testsLabel}</div>
-            <h2 className="display-lg text-white mb-3">{T.testsTitle}</h2>
-            <p className="text-white/55 text-[16px]">{T.testsSub}</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {testimonials.map((tm, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: i * 0.05 }}
-                className="card-surface p-6"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-violet-800 flex items-center justify-center text-white font-bold text-sm">
-                    {tm.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-white text-[14px] font-semibold">{tm.name}</div>
-                    <div className="text-white/40 text-[12px]">{tm.handle}</div>
-                  </div>
-                  <div className="ml-auto flex gap-0.5">
-                    {[1,2,3,4,5].map((s) => (
-                      <Star key={s} className="h-3 w-3 fill-violet-400 text-violet-400" />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-white/70 text-[14px] leading-relaxed">"{tm.text}"</p>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
