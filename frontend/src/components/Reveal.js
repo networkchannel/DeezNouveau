@@ -1,12 +1,16 @@
 import { motion } from "framer-motion";
 
+// Détection tactile — on allège les animations sur mobile pour éviter les crashes
+const isTouchDevice =
+  typeof window !== "undefined" &&
+  (window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ||
+    ("ontouchstart" in window && navigator.maxTouchPoints > 0));
+
 /**
  * Reveal wrapper — fades in and slides up when entering the viewport.
  * Respects prefers-reduced-motion (auto via framer-motion / CSS override).
- *
- * Usage:
- *   <Reveal><YourSection /></Reveal>
- *   <Reveal delay={0.1} y={30}>...</Reveal>
+ * Sur mobile tactile : animation simplifiée (fade seul, pas de translateY) pour
+ * éviter les crashes liés à trop d'animations simultanées au scroll.
  */
 export default function Reveal({
   children,
@@ -19,18 +23,23 @@ export default function Reveal({
   as = "div",
 }) {
   const MotionTag = motion[as] || motion.div;
+  // Sur mobile on simplifie : fade uniquement, durée réduite, délai nul
+  const mobileProps = isTouchDevice
+    ? {
+        initial: { opacity: 0 },
+        whileInView: { opacity: 1 },
+        viewport: { once: true, margin: "-40px" },
+        transition: { duration: 0.4, delay: 0 },
+      }
+    : {
+        initial: { opacity: 0, y },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once, margin },
+        transition: { duration, delay, ease: [0.2, 0.8, 0.2, 1] },
+      };
+
   return (
-    <MotionTag
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin }}
-      transition={{
-        duration,
-        delay,
-        ease: [0.2, 0.8, 0.2, 1],
-      }}
-    >
+    <MotionTag className={className} {...mobileProps}>
       {children}
     </MotionTag>
   );
@@ -38,22 +47,19 @@ export default function Reveal({
 
 /**
  * Stagger children — use as parent, pass Reveal items as children for staggered reveal.
- *
- *   <StaggerGroup>
- *     <StaggerItem>Card 1</StaggerItem>
- *     <StaggerItem>Card 2</StaggerItem>
- *   </StaggerGroup>
  */
 export function StaggerGroup({ children, stagger = 0.08, className = "", margin = "-80px" }) {
+  // Sur mobile : pas de stagger (tout apparaît ensemble), moins de calculs
+  const staggerDelay = isTouchDevice ? 0.04 : stagger;
   return (
     <motion.div
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin }}
+      viewport={{ once: true, margin: isTouchDevice ? "-40px" : margin }}
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: stagger } },
+        visible: { transition: { staggerChildren: staggerDelay } },
       }}
     >
       {children}
@@ -62,18 +68,19 @@ export function StaggerGroup({ children, stagger = 0.08, className = "", margin 
 }
 
 export function StaggerItem({ children, y = 24, duration = 0.55, className = "" }) {
-  return (
-    <motion.div
-      className={className}
-      variants={{
+  // Sur mobile : fade uniquement, pas de translateY
+  const variants = isTouchDevice
+    ? {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.35 } },
+      }
+    : {
         hidden: { opacity: 0, y },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { duration, ease: [0.2, 0.8, 0.2, 1] },
-        },
-      }}
-    >
+        visible: { opacity: 1, y: 0, transition: { duration, ease: [0.2, 0.8, 0.2, 1] } },
+      };
+
+  return (
+    <motion.div className={className} variants={variants}>
       {children}
     </motion.div>
   );
