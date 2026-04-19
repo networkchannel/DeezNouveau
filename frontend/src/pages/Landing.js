@@ -372,7 +372,7 @@ export default function Landing() {
               >
                 {pack.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className="px-3 py-1 rounded-full bg-violet-500 text-white text-[11px] font-semibold border border-violet-400/60">
+                    <span className="inline-flex items-center px-3 py-[5px] rounded-full bg-violet-500 text-white text-[11px] font-semibold whitespace-nowrap">
                       {pack.badge}
                     </span>
                   </div>
