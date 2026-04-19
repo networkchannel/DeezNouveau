@@ -457,17 +457,17 @@ export default function Landing() {
             <p className="text-white/55 text-[16px]">{T.featuresSub}</p>
           </Reveal>
 
-          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" stagger={0.08}>
+          <StaggerGroup className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5" stagger={0.08}>
             {features.map((f, i) => {
               const Icon = f.icon;
               return (
-                <StaggerItem key={i} className="card-surface p-6 group hover:border-violet-500/30 transition-all" y={24}>
+                <StaggerItem key={i} className="card-surface p-4 sm:p-6 group hover:border-violet-500/30 transition-all" y={24}>
                   <div data-testid={`feature-${i}`}>
-                    <div className="w-11 h-11 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-violet-500/25 transition-all">
-                      <Icon className="h-5 w-5 text-violet-300" />
+                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-105 group-hover:bg-violet-500/25 transition-all">
+                      <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-violet-300" />
                     </div>
-                    <h3 className="text-white text-[17px] font-semibold mb-2 tracking-tight">{f.title}</h3>
-                    <p className="text-white/55 text-[14px] leading-relaxed">{f.desc}</p>
+                    <h3 className="text-white text-[14px] sm:text-[17px] font-semibold mb-1.5 sm:mb-2 tracking-tight">{f.title}</h3>
+                    <p className="text-white/55 text-[12px] sm:text-[14px] leading-relaxed">{f.desc}</p>
                   </div>
                 </StaggerItem>
               );
