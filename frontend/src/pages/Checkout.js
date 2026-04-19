@@ -35,9 +35,10 @@ export default function Checkout() {
   const [requireCaptcha, setRequireCaptcha] = useState(false);
 
   const isCustom = packId === "custom" || packId?.startsWith("custom_");
-  const customQty = isCustom
-    ? parseInt(searchParams.get("qty") || packId.replace("custom_", "") || "1", 10)
+  const parsedQty = isCustom
+    ? parseInt(searchParams.get("qty") || packId.replace(/^custom_?/, "") || "", 10)
     : 0;
+  const customQty = isCustom ? (Number.isFinite(parsedQty) && parsedQty > 0 ? parsedQty : 1) : 0;
 
   useEffect(() => {
     const updateCaptchaRequirement = (state) => setRequireCaptcha(state.requireCaptcha);
@@ -51,15 +52,26 @@ export default function Checkout() {
       axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => {
         setCustomPricing(r.data);
         setPack({ name_key: "custom", quantity: r.data.quantity, price: r.data.total, unit_price: r.data.unit_price });
-      }).catch(() => navigate("/offers"));
+      }).catch((err) => {
+        setError(err.response?.data?.detail || (lang === "fr" ? "Quantité invalide." : "Invalid quantity."));
+      });
     } else {
       axios.get(`${API}/packs`).then((r) => {
         const all = r.data.packs || r.data;
         const found = Array.isArray(all) ? all.find((p) => p.id === packId) : null;
-        if (found) setPack(found); else navigate("/offers");
-      }).catch(() => navigate("/offers"));
+        if (found) {
+          setPack(found);
+        } else {
+          setError(lang === "fr"
+            ? `Pack introuvable : "${packId}". Retour aux offres…`
+            : `Pack not found: "${packId}". Redirecting…`);
+          setTimeout(() => navigate("/offers"), 1500);
+        }
+      }).catch(() => {
+        setError(lang === "fr" ? "Impossible de charger les packs." : "Failed to load packs.");
+      });
     }
-  }, [packId, isCustom, customQty, navigate]);
+  }, [packId, isCustom, customQty, navigate, lang]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,8 +122,17 @@ export default function Checkout() {
 
   if (!pack) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-6 w-6 text-violet-400 animate-spin" />
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        {error ? (
+          <div className="max-w-md w-full card-surface p-8 text-center">
+            <div className="text-red-400 text-sm mb-4" data-testid="checkout-load-error">{error}</div>
+            <button onClick={() => navigate("/offers")} className="btn-primary">
+              {lang === "fr" ? "Retour aux offres" : "Back to offers"}
+            </button>
+          </div>
+        ) : (
+          <Loader2 className="h-6 w-6 text-violet-400 animate-spin" />
+        )}
       </div>
     );
   }

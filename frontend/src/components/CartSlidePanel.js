@@ -58,11 +58,27 @@ export default function CartSlidePanel({ isOpen, onClose }) {
   };
 
   const handleCheckout = () => {
+    // Total de liens sur tout le panier (quantity = cart count, linkCount = liens par pack)
+    const totalLinks = cart.reduce((sum, it) => {
+      const links = it.linkCount ?? it.quantity ?? 1;
+      const count = it.quantity ?? 1;
+      // Si linkCount existe, quantity = cart count ; sinon quantity = nb de liens
+      return sum + (it.linkCount ? links * count : links);
+    }, 0);
+
     if (cart.length === 1) {
-      navigate(`/checkout/${cart[0].id}`);
+      const item = cart[0];
+      const hasPackId = typeof item.id === "string" && item.id.length > 0 && !item.id.startsWith("custom");
+      const count = item.quantity ?? 1;
+      if (hasPackId && count === 1) {
+        navigate(`/checkout/${item.id}`);
+      } else {
+        navigate(`/checkout/custom_${Math.max(totalLinks, 1)}`);
+      }
+    } else if (cart.length > 1) {
+      navigate(`/checkout/custom_${Math.max(totalLinks, 1)}`);
     } else {
-      // For multiple items, we'll need to handle multi-checkout
-      navigate("/checkout/custom");
+      return;
     }
     onClose();
   };

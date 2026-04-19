@@ -245,7 +245,7 @@ export default function Offers() {
                         <ArrowRight className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity })}
+                        onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity, linkCount: pack.quantity })}
                         className="w-full py-2.5 rounded-full text-[12px] font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
                       >
                         {lang === "fr" ? "Ajouter au panier" : "Add to cart"}
