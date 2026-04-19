@@ -7,6 +7,7 @@ import {
   Check, Copy, Loader2, ExternalLink, Download,
   CheckCircle2, Clock, AlertCircle, ArrowRight, Sparkles, FileText, Share2
 } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
@@ -49,28 +50,28 @@ function StatusBadge({ status, lang }) {
   const config = {
     completed: {
       icon: CheckCircle2,
-      label: lang === "fr" ? "Terminee" : "Completed",
+      label: L({ fr: "Terminee", en: "Completed", es: "Completado", pt: "Concluído", de: "Abgeschlossen", tr: "Tamamlandı", nl: "Voltooid", ar: "مكتمل" }, lang),
       bg: "bg-emerald-500/10 border-emerald-500/20",
       text: "text-emerald-400",
       dot: "bg-emerald-400",
     },
     pending: {
       icon: Clock,
-      label: lang === "fr" ? "En attente de paiement" : "Awaiting payment",
+      label: L({ fr: "En attente de paiement", en: "Awaiting payment", es: "Esperando pago", pt: "Aguardando pagamento", de: "Warte auf Zahlung", tr: "Ödeme bekleniyor", nl: "Wacht op betaling", ar: "في انتظار الدفع" }, lang),
       bg: "bg-amber-500/10 border-amber-500/20",
       text: "text-amber-400",
       dot: "bg-amber-400 animate-pulse",
     },
     payment_mock: {
       icon: Sparkles,
-      label: lang === "fr" ? "Mode test" : "Test mode",
+      label: L({ fr: "Mode test", en: "Test mode", es: "Modo de prueba", pt: "Modo de teste", de: "Testmodus", tr: "Test modu", nl: "Testmodus", ar: "وضع الاختبار" }, lang),
       bg: "bg-violet-500/10 border-violet-500/20",
       text: "text-violet-400",
       dot: "bg-violet-400",
     },
     failed: {
       icon: AlertCircle,
-      label: lang === "fr" ? "Echouee" : "Failed",
+      label: L({ fr: "Echouee", en: "Failed", es: "Fallido", pt: "Falhou", de: "Fehlgeschlagen", tr: "Başarısız", nl: "Mislukt", ar: "فشل" }, lang),
       bg: "bg-red-500/10 border-red-500/20",
       text: "text-red-400",
       dot: "bg-red-400",
@@ -213,14 +214,14 @@ export default function OrderConfirmation() {
 
   const downloadLinks = () => {
     if (!order?.links?.length) return;
-    const header = `DeezLink - ${lang === "fr" ? "Commande" : "Order"} #${orderId}\n`;
+    const header = `DeezLink - ${L({ fr: "Commande", en: "Order", es: "Pedido", pt: "Pedido", de: "Bestellung", tr: "Sipariş", nl: "Bestelling", ar: "الطلب" }, lang)} #${orderId}\n`;
     const separator = "=".repeat(50) + "\n";
-    const date = new Date(order.created_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+    const date = new Date(order.created_at).toLocaleDateString(lang, {
       year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit"
     });
-    const info = `${lang === "fr" ? "Date" : "Date"}: ${date}\n${lang === "fr" ? "Pack" : "Pack"}: ${order.pack_id} (${order.quantity} ${lang === "fr" ? "liens" : "links"})\n${lang === "fr" ? "Prix" : "Price"}: ${order.price}EUR\n`;
-    const linksText = order.links.map((l, i) => `\n${lang === "fr" ? "Lien" : "Link"} ${i + 1}:\n${l}`).join("\n");
-    const footer = `\n\n${separator}${lang === "fr" ? "Merci pour votre achat !" : "Thank you for your purchase!"}\nhttps://deezlink.com`;
+    const info = `${L({ fr: "Date", en: "Date", es: "Fecha", pt: "Data", de: "Datum", tr: "Tarih", nl: "Datum", ar: "التاريخ" }, lang)}: ${date}\n${L({ fr: "Pack", en: "Pack", es: "Pack", pt: "Pack", de: "Pack", tr: "Paket", nl: "Pakket", ar: "باقة" }, lang)}: ${order.pack_id} (${order.quantity} ${L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)})\n${L({ fr: "Prix", en: "Price", es: "Precio", pt: "Preço", de: "Preis", tr: "Fiyat", nl: "Prijs", ar: "السعر" }, lang)}: ${order.price}EUR\n`;
+    const linksText = order.links.map((l, i) => `\n${L({ fr: "Lien", en: "Link", es: "Enlace", pt: "Link", de: "Link", tr: "Bağlantı", nl: "Link", ar: "رابط" }, lang)} ${i + 1}:\n${l}`).join("\n");
+    const footer = `\n\n${separator}${L({ fr: "Merci pour votre achat !", en: "Thank you for your purchase!", es: "¡Gracias por tu compra!", pt: "Obrigado pela sua compra!", de: "Vielen Dank für Ihren Einkauf!", tr: "Satın aldığınız için teşekkürler!", nl: "Bedankt voor uw aankoop!", ar: "شكرًا على عملية الشراء!" }, lang)}\nhttps://deezlink.com`;
     const content = header + separator + info + separator + linksText + footer;
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -250,7 +251,7 @@ export default function OrderConfirmation() {
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-center">
         <Loader2 className="h-6 w-6 animate-spin text-accent mx-auto mb-3" />
-        <p className="text-white/40 text-[13px]">{lang === "fr" ? "Chargement..." : "Loading..."}</p>
+        <p className="text-white/40 text-[13px]">{L({ fr: "Chargement...", en: "Loading...", es: "Cargando...", pt: "Carregando...", de: "Lädt...", tr: "Yükleniyor...", nl: "Laden...", ar: "جارٍ التحميل..." }, lang)}</p>
       </div>
     </div>
   );
@@ -262,10 +263,10 @@ export default function OrderConfirmation() {
         <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
           <AlertCircle className="h-7 w-7 text-red-400" />
         </div>
-        <h2 className="text-white font-semibold text-lg mb-2">{lang === "fr" ? "Commande introuvable" : "Order not found"}</h2>
-        <p className="text-white/40 text-[13px] mb-6">{lang === "fr" ? "Verifiez le lien ou contactez le support" : "Check the link or contact support"}</p>
+        <h2 className="text-white font-semibold text-lg mb-2">{L({ fr: "Commande introuvable", en: "Order not found", es: "Pedido no encontrado", pt: "Pedido não encontrado", de: "Bestellung nicht gefunden", tr: "Sipariş bulunamadı", nl: "Bestelling niet gevonden", ar: "الطلب غير موجود" }, lang)}</h2>
+        <p className="text-white/40 text-[13px] mb-6">{L({ fr: "Verifiez le lien ou contactez le support", en: "Check the link or contact support", es: "Verifica el enlace o contacta al soporte", pt: "Verifique o link ou contate o suporte", de: "Link prüfen oder Support kontaktieren", tr: "Bağlantıyı kontrol edin veya destekle iletişime geçin", nl: "Controleer de link of neem contact op met support", ar: "تحقق من الرابط أو اتصل بالدعم" }, lang)}</p>
         <Link to="/" className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-white text-[13px] font-medium px-5 py-2.5 rounded-xl transition-colors">
-          {lang === "fr" ? "Retour a l'accueil" : "Back to home"} <ArrowRight className="h-3.5 w-3.5" />
+          {L({ fr: "Retour a l'accueil", en: "Back to home", es: "Volver al inicio", pt: "Voltar ao início", de: "Zurück zur Startseite", tr: "Ana sayfaya dön", nl: "Terug naar home", ar: "العودة للرئيسية" }, lang)} <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
     </div>
@@ -273,7 +274,7 @@ export default function OrderConfirmation() {
 
   const isCompleted = order.status === "completed";
   const hasLinks = order.links && order.links.length > 0;
-  const formattedDate = new Date(order.created_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", {
+  const formattedDate = new Date(order.created_at).toLocaleDateString(lang, {
     day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
   });
 
@@ -308,12 +309,19 @@ export default function OrderConfirmation() {
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
             </motion.div>
             <h1 className="text-white font-bold text-2xl mb-2">
-              {lang === "fr" ? "Paiement confirme !" : "Payment confirmed!"}
+              {L({ fr: "Paiement confirme !", en: "Payment confirmed!", es: "¡Pago confirmado!", pt: "Pagamento confirmado!", de: "Zahlung bestätigt!", tr: "Ödeme onaylandı!", nl: "Betaling bevestigd!", ar: "تم تأكيد الدفع!" }, lang)}
             </h1>
             <p className="text-white/50 text-[14px]">
-              {lang === "fr"
-                ? `${order.quantity} lien${order.quantity > 1 ? "s" : ""} Deezer Premium pret${order.quantity > 1 ? "s" : ""}`
-                : `${order.quantity} Deezer Premium link${order.quantity > 1 ? "s" : ""} ready`}
+              {L({
+                fr: `${order.quantity} lien${order.quantity > 1 ? "s" : ""} Deezer Premium prêt${order.quantity > 1 ? "s" : ""}`,
+                en: `${order.quantity} Deezer Premium link${order.quantity > 1 ? "s" : ""} ready`,
+                es: `${order.quantity} enlace${order.quantity > 1 ? "s" : ""} Deezer Premium listo${order.quantity > 1 ? "s" : ""}`,
+                pt: `${order.quantity} link${order.quantity > 1 ? "s" : ""} Deezer Premium pronto${order.quantity > 1 ? "s" : ""}`,
+                de: `${order.quantity} Deezer Premium Link${order.quantity > 1 ? "s" : ""} bereit`,
+                tr: `${order.quantity} Deezer Premium bağlantı${order.quantity > 1 ? "sı" : "sı"} hazır`,
+                nl: `${order.quantity} Deezer Premium link${order.quantity > 1 ? "s" : ""} klaar`,
+                ar: `${order.quantity} ${order.quantity > 1 ? "روابط" : "رابط"} Deezer Premium جاهز`,
+              }, lang)}
             </p>
           </motion.div>
         )}
@@ -329,10 +337,10 @@ export default function OrderConfirmation() {
               <Clock className="h-7 w-7 text-amber-400 animate-pulse" />
             </div>
             <h1 className="text-white font-bold text-xl mb-2">
-              {lang === "fr" ? "En attente de paiement" : "Awaiting payment"}
+              {L({ fr: "En attente de paiement", en: "Awaiting payment", es: "Esperando pago", pt: "Aguardando pagamento", de: "Warte auf Zahlung", tr: "Ödeme bekleniyor", nl: "Wacht op betaling", ar: "في انتظار الدفع" }, lang)}
             </h1>
             <p className="text-white/40 text-[13px]">
-              {lang === "fr" ? "Vos liens seront disponibles apres confirmation" : "Your links will be available after confirmation"}
+              {L({ fr: "Vos liens seront disponibles apres confirmation", en: "Your links will be available after confirmation", es: "Tus enlaces estarán disponibles tras la confirmación", pt: "Seus links estarão disponíveis após a confirmação", de: "Ihre Links sind nach der Bestätigung verfügbar", tr: "Bağlantılarınız onaydan sonra kullanılabilir", nl: "Uw links zijn beschikbaar na bevestiging", ar: "ستتوفر روابطك بعد التأكيد" }, lang)}
             </p>
           </motion.div>
         )}
@@ -347,7 +355,7 @@ export default function OrderConfirmation() {
           <div className="px-5 py-4 flex items-center justify-between">
             <div>
               <p className="text-white/30 text-[11px] font-mono tracking-wider uppercase mb-1">
-                {lang === "fr" ? "Commande" : "Order"} #{orderId}
+                {L({ fr: "Commande", en: "Order", es: "Pedido", pt: "Pedido", de: "Bestellung", tr: "Sipariş", nl: "Bestelling", ar: "الطلب" }, lang)} #{orderId}
               </p>
               <p className="text-white/40 text-[12px]">{formattedDate}</p>
             </div>
@@ -364,7 +372,7 @@ export default function OrderConfirmation() {
                     {order.pack_id === "solo" ? "Solo" : order.pack_id === "duo" ? "Duo" : order.pack_id === "family" ? "Family" : order.pack_id}
                   </p>
                   <p className="text-white/40 text-[12px]">
-                    {order.quantity} {lang === "fr" ? "lien" : "link"}{order.quantity > 1 ? "s" : ""} · Deezer Premium
+                    {order.quantity} {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)}{order.quantity > 1 ? "s" : ""} · Deezer Premium
                   </p>
                 </div>
               </div>
@@ -374,7 +382,7 @@ export default function OrderConfirmation() {
               <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-amber-400" />
                 <span className="text-amber-400/80 text-[12px]">
-                  +{order.loyalty_points_earned} {lang === "fr" ? "points fidélité gagnés" : "loyalty points earned"}
+                  +{order.loyalty_points_earned} {L({ fr: "points fidélité gagnés", en: "loyalty points earned", es: "puntos de fidelidad ganados", pt: "pontos de fidelidade ganhos", de: "Treuepunkte gesammelt", tr: "kazanılan sadakat puanı", nl: "loyaliteitspunten verdiend", ar: "نقاط ولاء مكتسبة" }, lang)}
                 </span>
               </div>
             )}
@@ -395,12 +403,10 @@ export default function OrderConfirmation() {
               </div>
               <div>
                 <p className="text-violet-300 font-medium text-[14px] mb-1">
-                  {lang === "fr" ? "Mode test actif" : "Test mode active"}
+                  {L({ fr: "Mode test actif", en: "Test mode active", es: "Modo de prueba activo", pt: "Modo de teste ativo", de: "Testmodus aktiv", tr: "Test modu aktif", nl: "Testmodus actief", ar: "وضع الاختبار مفعّل" }, lang)}
                 </p>
                 <p className="text-white/40 text-[13px] leading-relaxed">
-                  {lang === "fr"
-                    ? "Cliquez pour simuler la confirmation de paiement et recevoir vos liens."
-                    : "Click to simulate payment confirmation and receive your links."}
+                  {L({ fr: "Cliquez pour simuler la confirmation de paiement et recevoir vos liens.", en: "Click to simulate payment confirmation and receive your links.", es: "Haz clic para simular la confirmación del pago y recibir tus enlaces.", pt: "Clique para simular a confirmação do pagamento e receber seus links.", de: "Klicken, um die Zahlungsbestätigung zu simulieren und Links zu erhalten.", tr: "Ödeme onayını simüle etmek ve bağlantılarınızı almak için tıklayın.", nl: "Klik om betalingsbevestiging te simuleren en links te ontvangen.", ar: "انقر لمحاكاة تأكيد الدفع واستلام روابطك." }, lang)}
                 </p>
               </div>
             </div>
@@ -412,9 +418,9 @@ export default function OrderConfirmation() {
               className="w-full bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-[14px] font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {confirming ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> {lang === "fr" ? "Confirmation..." : "Confirming..."}</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> {L({ fr: "Confirmation...", en: "Confirming...", es: "Confirmando...", pt: "Confirmando...", de: "Bestätigen...", tr: "Onaylanıyor...", nl: "Bevestigen...", ar: "جارٍ التأكيد..." }, lang)}</>
               ) : (
-                <><CheckCircle2 className="h-4 w-4" /> {lang === "fr" ? "Confirmer le paiement test" : "Confirm test payment"}</>
+                <><CheckCircle2 className="h-4 w-4" /> {L({ fr: "Confirmer le paiement test", en: "Confirm test payment", es: "Confirmar pago de prueba", pt: "Confirmar pagamento de teste", de: "Testzahlung bestätigen", tr: "Test ödemesini onayla", nl: "Testbetaling bevestigen", ar: "تأكيد دفع الاختبار" }, lang)}</>
               )}
             </motion.button>
           </motion.div>
@@ -433,7 +439,7 @@ export default function OrderConfirmation() {
               <div className="flex items-center gap-2.5">
                 <div className="w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="text-white font-medium text-[14px]">
-                  {lang === "fr" ? "Vos liens d'activation" : "Your activation links"}
+                  {L({ fr: "Vos liens d'activation", en: "Your activation links", es: "Tus enlaces de activación", pt: "Seus links de ativação", de: "Ihre Aktivierungslinks", tr: "Aktivasyon bağlantılarınız", nl: "Uw activeringslinks", ar: "روابط التفعيل الخاصة بك" }, lang)}
                 </span>
                 <span className="text-white/30 text-[12px]">({order.links.length})</span>
               </div>
@@ -466,8 +472,8 @@ export default function OrderConfirmation() {
               >
                 {copiedAll ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                 {copiedAll
-                  ? (lang === "fr" ? "Copie !" : "Copied!")
-                  : (lang === "fr" ? "Copier tout" : "Copy all")}
+                  ? (L({ fr: "Copie !", en: "Copied!", es: "¡Copiado!", pt: "Copiado!", de: "Kopiert!", tr: "Kopyalandı!", nl: "Gekopieerd!", ar: "تم النسخ!" }, lang))
+                  : (L({ fr: "Copier tout", en: "Copy all", es: "Copiar todo", pt: "Copiar tudo", de: "Alles kopieren", tr: "Tümünü kopyala", nl: "Alles kopiëren", ar: "نسخ الكل" }, lang))}
               </motion.button>
 
               <motion.button
@@ -477,7 +483,7 @@ export default function OrderConfirmation() {
                 className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-all"
               >
                 <Download className="h-3.5 w-3.5" />
-                {lang === "fr" ? "Telecharger .txt" : "Download .txt"}
+                {L({ fr: "Telecharger .txt", en: "Download .txt", es: "Descargar .txt", pt: "Baixar .txt", de: ".txt herunterladen", tr: ".txt indir", nl: ".txt downloaden", ar: "تنزيل .txt" }, lang)}
               </motion.button>
 
               <motion.button
@@ -485,7 +491,7 @@ export default function OrderConfirmation() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.08] border border-white/[0.06] transition-all"
-                title={lang === "fr" ? "Partager" : "Share"}
+                title={L({ fr: "Partager", en: "Share", es: "Compartir", pt: "Compartilhar", de: "Teilen", tr: "Paylaş", nl: "Delen", ar: "مشاركة" }, lang)}
               >
                 <Share2 className="h-3.5 w-3.5" />
               </motion.button>
@@ -503,7 +509,7 @@ export default function OrderConfirmation() {
           >
             <Loader2 className="h-5 w-5 animate-spin text-white/30 mx-auto mb-3" />
             <p className="text-white/40 text-[13px]">
-              {lang === "fr" ? "Les liens apparaitront ici apres confirmation du paiement" : "Links will appear here after payment confirmation"}
+              {L({ fr: "Les liens apparaitront ici apres confirmation du paiement", en: "Links will appear here after payment confirmation", es: "Los enlaces aparecerán aquí tras la confirmación del pago", pt: "Os links aparecerão aqui após a confirmação do pagamento", de: "Links erscheinen hier nach Zahlungsbestätigung", tr: "Bağlantılar ödeme onayından sonra burada görünecek", nl: "Links verschijnen hier na betalingsbevestiging", ar: "ستظهر الروابط هنا بعد تأكيد الدفع" }, lang)}
             </p>
           </motion.div>
         )}
@@ -519,14 +525,14 @@ export default function OrderConfirmation() {
             <div className="flex items-center gap-2 mb-4">
               <FileText className="h-4 w-4 text-white/40" />
               <span className="text-white/60 font-medium text-[13px]">
-                {lang === "fr" ? "Comment utiliser vos liens" : "How to use your links"}
+                {L({ fr: "Comment utiliser vos liens", en: "How to use your links", es: "Cómo usar tus enlaces", pt: "Como usar seus links", de: "So verwenden Sie Ihre Links", tr: "Bağlantılarınızı nasıl kullanırsınız", nl: "Hoe uw links te gebruiken", ar: "كيفية استخدام روابطك" }, lang)}
               </span>
             </div>
             <div className="space-y-3">
               {[
-                lang === "fr" ? "Cliquez sur un lien ou copiez-le" : "Click a link or copy it",
-                lang === "fr" ? "Connectez-vous a votre compte Deezer" : "Sign in to your Deezer account",
-                lang === "fr" ? "Profitez de Deezer Premium !" : "Enjoy Deezer Premium!",
+                L({ fr: "Cliquez sur un lien ou copiez-le", en: "Click a link or copy it", es: "Haz clic en un enlace o cópialo", pt: "Clique em um link ou copie", de: "Auf einen Link klicken oder kopieren", tr: "Bir bağlantıya tıklayın veya kopyalayın", nl: "Klik op een link of kopieer hem", ar: "انقر على رابط أو انسخه" }, lang),
+                L({ fr: "Connectez-vous a votre compte Deezer", en: "Sign in to your Deezer account", es: "Inicia sesión en tu cuenta Deezer", pt: "Entre em sua conta Deezer", de: "Bei Ihrem Deezer-Konto anmelden", tr: "Deezer hesabınıza giriş yapın", nl: "Log in bij uw Deezer-account", ar: "سجل الدخول إلى حساب Deezer" }, lang),
+                L({ fr: "Profitez de Deezer Premium !", en: "Enjoy Deezer Premium!", es: "¡Disfruta Deezer Premium!", pt: "Aproveite Deezer Premium!", de: "Genießen Sie Deezer Premium!", tr: "Deezer Premium'un tadını çıkarın!", nl: "Geniet van Deezer Premium!", ar: "استمتع بـ Deezer Premium!" }, lang),
               ].map((step, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -548,9 +554,16 @@ export default function OrderConfirmation() {
             className="text-center mb-6"
           >
             <p className="text-white/30 text-[12px]">
-              {lang === "fr"
-                ? `Les liens ont aussi ete envoyes a ${order.email}`
-                : `Links were also sent to ${order.email}`}
+              {L({
+                fr: `Les liens ont aussi été envoyés à ${order.email}`,
+                en: `Links were also sent to ${order.email}`,
+                es: `Los enlaces también se enviaron a ${order.email}`,
+                pt: `Os links também foram enviados para ${order.email}`,
+                de: `Die Links wurden auch an ${order.email} gesendet`,
+                tr: `Bağlantılar ayrıca ${order.email} adresine gönderildi`,
+                nl: `De links zijn ook verzonden naar ${order.email}`,
+                ar: `تم إرسال الروابط أيضًا إلى ${order.email}`,
+              }, lang)}
             </p>
           </motion.div>
         )}
@@ -566,21 +579,21 @@ export default function OrderConfirmation() {
             to="/"
             className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors"
           >
-            {lang === "fr" ? "Accueil" : "Home"}
+            {L({ fr: "Accueil", en: "Home", es: "Inicio", pt: "Início", de: "Startseite", tr: "Ana Sayfa", nl: "Home", ar: "الرئيسية" }, lang)}
           </Link>
           <span className="text-white/10">|</span>
           <Link
             to="/history"
             className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors"
           >
-            {lang === "fr" ? "Mes commandes" : "My Orders"}
+            {L({ fr: "Mes commandes", en: "My Orders", es: "Mis pedidos", pt: "Meus pedidos", de: "Meine Bestellungen", tr: "Siparişlerim", nl: "Mijn bestellingen", ar: "طلباتي" }, lang)}
           </Link>
           <span className="text-white/10">|</span>
           <Link
             to="/offers"
             className="inline-flex items-center gap-1.5 text-accent/60 hover:text-accent text-[13px] transition-colors"
           >
-            {lang === "fr" ? "Commander encore" : "Order again"} <ArrowRight className="h-3 w-3" />
+            {L({ fr: "Commander encore", en: "Order again", es: "Pedir de nuevo", pt: "Pedir novamente", de: "Erneut bestellen", tr: "Tekrar sipariş ver", nl: "Opnieuw bestellen", ar: "اطلب مجددًا" }, lang)} <ArrowRight className="h-3 w-3" />
           </Link>
         </motion.div>
       </div>

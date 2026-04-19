@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { securePost } from "@/utils/secureApi";
+import { pickLang as L } from "@/utils/langPick";
 
 export default function CartSlidePanel({ isOpen, onClose }) {
   const { cart, removeFromCart, updateQuantity, getTotal, getTotalItems } = useCart();
@@ -116,7 +117,7 @@ export default function CartSlidePanel({ isOpen, onClose }) {
               <div className="flex items-center gap-3">
                 <ShoppingBag className="h-5 w-5 text-accent" />
                 <h2 className="text-lg font-bold text-t-primary">
-                  {lang === "fr" ? "Panier" : "Cart"}
+                  {L({ fr: "Panier", en: "Cart", es: "Carrito", pt: "Carrinho", de: "Warenkorb", tr: "Sepet", nl: "Winkelwagen", ar: "السلة" }, lang)}
                 </h2>
                 {getTotalItems() > 0 && (
                   <span className="text-xs bg-accent text-white px-2 py-0.5 rounded-full">
@@ -164,7 +165,7 @@ export default function CartSlidePanel({ isOpen, onClose }) {
                             {t(item.name_key)}
                           </h3>
                           <p className="text-xs text-t-muted">
-                            {item.quantity} {lang === "fr" ? "x" : "×"} {item.price.toFixed(0)}€
+                            {item.quantity} × {item.price.toFixed(0)}€
                           </p>
                         </div>
                         <button
@@ -206,7 +207,7 @@ export default function CartSlidePanel({ isOpen, onClose }) {
                 {/* Gift Card Input */}
                 <div>
                   <label className="text-xs text-t-muted mb-2 block">
-                    {lang === "fr" ? "Code carte cadeau" : "Gift card code"}
+                    {L({ fr: "Code carte cadeau", en: "Gift card code", es: "Código tarjeta regalo", pt: "Código cartão presente", de: "Geschenkkarten-Code", tr: "Hediye kartı kodu", nl: "Cadeaukaartcode", ar: "رمز بطاقة الهدية" }, lang)}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -271,7 +272,7 @@ export default function CartSlidePanel({ isOpen, onClose }) {
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCheckout}
                   className="w-full bg-accent hover:bg-accent-hover text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-accent-glow">
-                  {lang === "fr" ? "Passer commande" : "Checkout"}
+                  {L({ fr: "Passer commande", en: "Checkout", es: "Finalizar compra", pt: "Finalizar pedido", de: "Zur Kasse", tr: "Ödemeye geç", nl: "Afrekenen", ar: "إتمام الطلب" }, lang)}
                 </motion.button>
               </div>
             )}

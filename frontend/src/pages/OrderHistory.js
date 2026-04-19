@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { Package, Clock, Lock, ArrowRight } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
@@ -35,18 +36,16 @@ export default function OrderHistory() {
             <Lock className="h-7 w-7 text-purple-400" />
           </div>
           <h2 className="text-t-primary font-semibold text-[20px] mb-2">
-            {lang === "fr" ? "Connexion requise" : "Login required"}
+            {L({ fr: "Connexion requise", en: "Login required", es: "Inicio de sesión requerido", pt: "Login necessário", de: "Anmeldung erforderlich", tr: "Giriş gerekli", nl: "Inloggen vereist", ar: "مطلوب تسجيل الدخول" }, lang)}
           </h2>
           <p className="text-t-secondary text-[14px] mb-6">
-            {lang === "fr" 
-              ? "Connectez-vous pour accéder à votre historique de commandes."
-              : "Sign in to access your order history."}
+            {L({ fr: "Connectez-vous pour accéder à votre historique de commandes.", en: "Sign in to access your order history.", es: "Inicia sesión para ver tu historial de pedidos.", pt: "Entre para acessar seu histórico de pedidos.", de: "Melden Sie sich an, um Ihren Bestellverlauf zu sehen.", tr: "Sipariş geçmişinize erişmek için giriş yapın.", nl: "Log in om uw bestelgeschiedenis te bekijken.", ar: "سجل الدخول للوصول إلى سجل طلباتك." }, lang)}
           </p>
           <button
             onClick={() => navigate("/login")}
             className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white text-[14px] font-medium rounded-xl transition-colors"
           >
-            {lang === "fr" ? "Se connecter" : "Sign in"}
+            {L({ fr: "Se connecter", en: "Sign in", es: "Entrar", pt: "Entrar", de: "Anmelden", tr: "Giriş yap", nl: "Inloggen", ar: "تسجيل الدخول" }, lang)}
             <ArrowRight className="h-4 w-4" />
           </button>
         </motion.div>
@@ -74,7 +73,7 @@ export default function OrderHistory() {
           <div className="text-center py-16">
             <Package className="h-8 w-8 text-t-muted mx-auto mb-3" />
             <p className="text-t-muted text-[14px]">
-              {lang === "fr" ? "Aucune commande" : "No orders yet"}
+              {L({ fr: "Aucune commande", en: "No orders yet", es: "Sin pedidos aún", pt: "Nenhum pedido ainda", de: "Noch keine Bestellungen", tr: "Henüz sipariş yok", nl: "Nog geen bestellingen", ar: "لا توجد طلبات بعد" }, lang)}
             </p>
           </div>
         ) : (
@@ -95,7 +94,7 @@ export default function OrderHistory() {
                     </p>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-t-muted text-[12px]">
-                        {order.quantity} {lang === "fr" ? "liens" : "links"}
+                        {order.quantity} {L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}
                       </span>
                       <span className="text-t-muted text-[12px] flex items-center gap-1">
                         <Clock className="h-3 w-3" />

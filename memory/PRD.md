@@ -6,7 +6,8 @@
 > https://crystality.win/"
 
 ## Latest updates (Feb 2026)
-- **[2026-02]** Scroll fluide aligné avec la référence Micord : Lenis simplifié en `{ autoRaf: true, anchors: { offset: -80 } }` — comportement = défaut Lenis. Les liens `href="#anchor"` déclenchent désormais un smooth-scroll natif via Lenis.
+- **[2026-02]** **Traductions 8 langues étendues aux pages secondaires** : Offers, GiftCards, Profile, OrderHistory, OrderConfirmation, CartSlidePanel, PricingModal, CustomQuantity (FR/EN/ES/PT/DE/TR/NL/AR) via helper `pickLang`
+- **[2026-02]** Scroll fluide aligné avec Micord : Lenis simplifié en `{ autoRaf: true, anchors: { offset: -80 } }`
 - **[2026-02]** Hero "deezlink" : "link" coloré en `text-violet-500` dans le gros titre Landing
 - **[2026-02]** Remise fidélité affichée dans Checkout : badge vert "−X% · Tier" avec sous-total barré + total final (lit `user.loyalty_tier` depuis `/api/auth/me`)
 - **[2026-02]** Traductions complètes 8 langues (FR/EN/ES/PT/DE/TR/NL/AR) via helper `pickLang` dans : Landing (hero, features, pricing, FAQ, CTA), Checkout (summary, steps, errors), Header (nav, CTAs), Footer (nav, legal, payment), FloatingCTA

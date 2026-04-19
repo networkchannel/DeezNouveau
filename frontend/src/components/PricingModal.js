@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const TIERS = [
   { min: 1, max: 9, price: "5,00" },
@@ -32,11 +33,11 @@ export default function PricingModal({ isOpen, onClose, lang = "fr" }) {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="glass backdrop-blur-xl rounded-2xl border border-border max-w-2xl w-full max-h-[80vh] overflow-hidden">
-              
+
               {/* Header */}
               <div className="flex items-center justify-between p-6 border-b border-border">
                 <h2 className="text-xl font-bold text-t-primary">
-                  {lang === "fr" ? "Tarifs Dégressifs" : "Volume Pricing"}
+                  {L({ fr: "Tarifs Dégressifs", en: "Volume Pricing", es: "Precios por Volumen", pt: "Preços por Volume", de: "Mengenrabatt", tr: "Hacim Fiyatlandırması", nl: "Volumeprijzen", ar: "تسعير بالحجم" }, lang)}
                 </h2>
                 <button
                   onClick={onClose}
@@ -48,9 +49,7 @@ export default function PricingModal({ isOpen, onClose, lang = "fr" }) {
               {/* Content */}
               <div className="p-6">
                 <p className="text-sm text-t-secondary mb-6">
-                  {lang === "fr"
-                    ? "Plus vous achetez, moins vous payez par lien. Profitez de nos tarifs dégressifs !"
-                    : "The more you buy, the less you pay per link. Take advantage of our volume pricing!"}
+                  {L({ fr: "Plus vous achetez, moins vous payez par lien. Profitez de nos tarifs dégressifs !", en: "The more you buy, the less you pay per link. Take advantage of our volume pricing!", es: "Cuanto más compras, menos pagas por enlace. ¡Aprovecha nuestros precios por volumen!", pt: "Quanto mais você compra, menos paga por link. Aproveite nossos preços por volume!", de: "Je mehr Sie kaufen, desto weniger zahlen Sie pro Link. Profitieren Sie von unseren Mengenrabatten!", tr: "Ne kadar çok alırsan, bağlantı başına o kadar az ödersin. Hacim fiyatlarımızdan yararlanın!", nl: "Hoe meer u koopt, hoe minder u per link betaalt. Profiteer van onze volumeprijzen!", ar: "كلما اشتريت أكثر، دفعت أقل لكل رابط. استفد من تسعير الحجم!" }, lang)}
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -72,7 +71,7 @@ export default function PricingModal({ isOpen, onClose, lang = "fr" }) {
                           {tier.price}€
                         </p>
                         <p className="text-[10px] text-t-muted mt-1">
-                          / {lang === "fr" ? "lien" : "link"}
+                          / {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)}
                         </p>
                       </motion.div>
                     );
@@ -82,9 +81,7 @@ export default function PricingModal({ isOpen, onClose, lang = "fr" }) {
                 {/* Best deal highlight */}
                 <div className="mt-6 p-4 rounded-xl bg-accent/10 border border-accent/20">
                   <p className="text-sm text-accent font-semibold text-center">
-                    💰 {lang === "fr" 
-                      ? "Meilleur tarif : 1,50€/lien pour 500+ liens" 
-                      : "Best deal: 1.50€/link for 500+ links"}
+                    💰 {L({ fr: "Meilleur tarif : 1,50€/lien pour 500+ liens", en: "Best deal: 1.50€/link for 500+ links", es: "Mejor precio: 1,50€/enlace por 500+ enlaces", pt: "Melhor preço: 1,50€/link para 500+ links", de: "Bestpreis: 1,50€/Link bei 500+ Links", tr: "En iyi fiyat: 1,50€/bağlantı 500+ için", nl: "Beste prijs: 1,50€/link voor 500+ links", ar: "أفضل سعر: 1.50€/رابط لـ 500+ روابط" }, lang)}
                   </p>
                 </div>
               </div>

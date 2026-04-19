@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { securePost } from "@/utils/secureApi";
 import { Gift, Check, AlertCircle, Sparkles, Copy, ArrowRight, Headphones, Music, Zap } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const PRESET_AMOUNTS = [10, 25, 50, 100];
 
@@ -24,7 +25,7 @@ export default function GiftCards() {
 
   const handleValidate = async () => {
     if (!purchaserEmail || !purchaserEmail.includes("@")) {
-      setError(lang === "fr" ? "Email requis" : "Email required");
+      setError(L({ fr: "Email requis", en: "Email required", es: "Email obligatorio", pt: "Email obrigatório", de: "E-Mail erforderlich", tr: "E-posta gerekli", nl: "E-mail vereist", ar: "البريد مطلوب" }, lang));
       return;
     }
     setLoading(true);
@@ -42,7 +43,7 @@ export default function GiftCards() {
         setSuccess(true);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || (lang === "fr" ? "Erreur" : "Error"));
+      setError(err.response?.data?.detail || (L({ fr: "Erreur", en: "Error", es: "Error", pt: "Erro", de: "Fehler", tr: "Hata", nl: "Fout", ar: "خطأ" }, lang)));
     } finally {
       setLoading(false);
     }
@@ -85,14 +86,14 @@ export default function GiftCards() {
               <Check className="h-10 w-10 text-emerald-400" />
             </motion.div>
             <h2 className="text-2xl sm:text-3xl font-bold text-t-primary mb-2">
-              {lang === "fr" ? "Carte cadeau créée !" : "Gift card created!"}
+              {L({ fr: "Carte cadeau créée !", en: "Gift card created!", es: "¡Tarjeta regalo creada!", pt: "Cartão presente criado!", de: "Geschenkkarte erstellt!", tr: "Hediye kartı oluşturuldu!", nl: "Cadeaukaart aangemaakt!", ar: "تم إنشاء بطاقة الهدية!" }, lang)}
             </h2>
             <p className="text-t-muted text-sm">{amount}EUR · Deezer Premium</p>
           </div>
 
           <div className="glass backdrop-blur-xl rounded-2xl border border-border p-6 mb-6">
             <p className="text-t-muted text-xs font-mono uppercase tracking-wider mb-4">
-              {lang === "fr" ? "Code de la carte cadeau" : "Gift card code"}
+              {L({ fr: "Code de la carte cadeau", en: "Gift card code", es: "Código de la tarjeta regalo", pt: "Código do cartão presente", de: "Geschenkkarten-Code", tr: "Hediye kartı kodu", nl: "Cadeaukaartcode", ar: "رمز بطاقة الهدية" }, lang)}
             </p>
             <div className="flex items-center gap-3 mb-4">
               <p className="flex-1 text-3xl font-mono font-bold text-violet-300 tracking-wide break-all">
@@ -113,7 +114,7 @@ export default function GiftCards() {
             </div>
             <p className="text-amber-400/70 text-xs flex items-center gap-2 bg-amber-500/10 rounded-lg px-3 py-2">
               <AlertCircle className="h-4 w-4" />
-              {lang === "fr" ? "Sauvegardez ce code en lieu sûr" : "Save this code in a safe place"}
+              {L({ fr: "Sauvegardez ce code en lieu sûr", en: "Save this code in a safe place", es: "Guarda este código en lugar seguro", pt: "Guarde este código em local seguro", de: "Code an sicherem Ort speichern", tr: "Bu kodu güvenli bir yerde saklayın", nl: "Bewaar deze code op een veilige plek", ar: "احفظ الرمز في مكان آمن" }, lang)}
             </p>
           </div>
 
@@ -124,7 +125,7 @@ export default function GiftCards() {
             className="w-full py-3.5 text-sm font-medium text-t-secondary hover:text-t-primary transition-colors flex items-center justify-center gap-2 glass backdrop-blur-xl rounded-xl border border-border hover:border-white/20"
           >
             <Gift className="h-4 w-4" />
-            {lang === "fr" ? "Créer une autre carte" : "Create another card"}
+            {L({ fr: "Créer une autre carte", en: "Create another card", es: "Crear otra tarjeta", pt: "Criar outro cartão", de: "Weitere Karte erstellen", tr: "Başka kart oluştur", nl: "Nog een kaart maken", ar: "إنشاء بطاقة أخرى" }, lang)}
           </motion.button>
         </motion.div>
       </div>
@@ -143,15 +144,13 @@ export default function GiftCards() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-medium mb-6">
             <Gift className="h-4 w-4" />
-            {lang === "fr" ? "Carte Cadeau" : "Gift Card"}
+            {L({ fr: "Carte Cadeau", en: "Gift Card", es: "Tarjeta Regalo", pt: "Cartão Presente", de: "Geschenkkarte", tr: "Hediye Kartı", nl: "Cadeaukaart", ar: "بطاقة هدية" }, lang)}
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-t-primary mb-4">
-            {lang === "fr" ? "Offrez Deezer Premium" : "Gift Deezer Premium"}
+            {L({ fr: "Offrez Deezer Premium", en: "Gift Deezer Premium", es: "Regala Deezer Premium", pt: "Presenteie Deezer Premium", de: "Deezer Premium verschenken", tr: "Deezer Premium hediye et", nl: "Deezer Premium cadeau geven", ar: "أهدِ Deezer Premium" }, lang)}
           </h1>
           <p className="text-base sm:text-lg text-t-secondary max-w-xl mx-auto leading-relaxed">
-            {lang === "fr"
-              ? "Créez une carte cadeau personnalisée pour offrir Deezer Premium à vos proches"
-              : "Create a personalized gift card to offer Deezer Premium to your loved ones"}
+            {L({ fr: "Créez une carte cadeau personnalisée pour offrir Deezer Premium à vos proches", en: "Create a personalized gift card to offer Deezer Premium to your loved ones", es: "Crea una tarjeta regalo personalizada para regalar Deezer Premium a tus seres queridos", pt: "Crie um cartão presente personalizado para presentear Deezer Premium aos entes queridos", de: "Erstellen Sie eine personalisierte Geschenkkarte, um Deezer Premium an Ihre Lieben zu verschenken", tr: "Sevdiklerinize Deezer Premium hediye etmek için kişiselleştirilmiş hediye kartı oluşturun", nl: "Maak een gepersonaliseerde cadeaukaart om Deezer Premium aan uw dierbaren te geven", ar: "أنشئ بطاقة هدية مخصصة لإهداء Deezer Premium لأحبائك" }, lang)}
           </p>
         </motion.div>
 
@@ -166,7 +165,7 @@ export default function GiftCards() {
               {/* Amount Selection */}
               <div className="glass backdrop-blur-xl rounded-2xl border border-border p-6 sm:p-8 mb-6">
                 <p className="text-t-secondary text-sm font-medium uppercase tracking-wider mb-5">
-                  {lang === "fr" ? "Choisissez le montant" : "Choose amount"}
+                  {L({ fr: "Choisissez le montant", en: "Choose amount", es: "Elige el monto", pt: "Escolha o valor", de: "Betrag wählen", tr: "Tutarı seçin", nl: "Kies bedrag", ar: "اختر المبلغ" }, lang)}
                 </p>
 
                 {/* Preset buttons */}
@@ -200,7 +199,7 @@ export default function GiftCards() {
                       setCustomAmount(e.target.value);
                       if (e.target.value) setAmount(Number(e.target.value));
                     }}
-                    placeholder={lang === "fr" ? "Montant personnalisé" : "Custom amount"}
+                    placeholder={L({ fr: "Montant personnalisé", en: "Custom amount", es: "Monto personalizado", pt: "Valor personalizado", de: "Eigener Betrag", tr: "Özel tutar", nl: "Aangepast bedrag", ar: "مبلغ مخصص" }, lang)}
                     min="5"
                     max="500"
                     className="w-full bg-white/[0.04] border border-white/[0.08] text-t-primary rounded-xl px-4 py-4 text-base placeholder:text-t-muted focus:border-purple-400/40 focus:ring-2 focus:ring-purple-400/20 outline-none transition-all"
@@ -210,7 +209,7 @@ export default function GiftCards() {
                   </span>
                 </div>
                 <p className="text-t-muted text-xs mt-3">
-                  {lang === "fr" ? "De 5€ à 500€" : "From 5€ to 500€"}
+                  {L({ fr: "De 5€ à 500€", en: "From 5€ to 500€", es: "De 5€ a 500€", pt: "De 5€ a 500€", de: "Von 5€ bis 500€", tr: "5€ ile 500€ arası", nl: "Van 5€ tot 500€", ar: "من 5€ إلى 500€" }, lang)}
                 </p>
               </div>
 
@@ -232,7 +231,7 @@ export default function GiftCards() {
                     {amount}
                     <span className="text-white/70 text-2xl ml-2">EUR</span>
                   </p>
-                  <p className="text-white/70 text-sm">Deezer Premium · {lang === "fr" ? "1 mois minimum garanti" : "1 month minimum guaranteed"}</p>
+                  <p className="text-white/70 text-sm">Deezer Premium · {L({ fr: "1 mois minimum garanti", en: "1 month minimum guaranteed", es: "1 mes mínimo garantizado", pt: "1 mês mínimo garantido", de: "Mind. 1 Monat garantiert", tr: "Min. 1 ay garantili", nl: "Min. 1 maand gegarandeerd", ar: "شهر واحد مضمون كحد أدنى" }, lang)}</p>
                 </div>
               </div>
 
@@ -244,7 +243,7 @@ export default function GiftCards() {
                 whileTap={{ scale: 0.98 }}
                 className="btn-primary w-full !py-4"
               >
-                {lang === "fr" ? "Continuer" : "Continue"}
+                {L({ fr: "Continuer", en: "Continue", es: "Continuar", pt: "Continuar", de: "Weiter", tr: "Devam", nl: "Doorgaan", ar: "متابعة" }, lang)}
                 <ArrowRight className="h-5 w-5" />
               </motion.button>
             </motion.div>
@@ -266,7 +265,7 @@ export default function GiftCards() {
                   <span className="text-t-muted text-sm">Deezer Premium</span>
                 </div>
                 <span className="text-t-muted text-xs group-hover:text-t-secondary transition-colors">
-                  {lang === "fr" ? "Modifier" : "Edit"}
+                  {L({ fr: "Modifier", en: "Edit", es: "Modificar", pt: "Editar", de: "Ändern", tr: "Düzenle", nl: "Bewerken", ar: "تعديل" }, lang)}
                 </span>
               </button>
 
@@ -274,7 +273,7 @@ export default function GiftCards() {
               <div className="glass backdrop-blur-xl rounded-2xl border border-border p-6 sm:p-8 space-y-5 mb-6">
                 <div>
                   <label className="text-t-secondary text-sm font-medium mb-3 block">
-                    {lang === "fr" ? "Votre email" : "Your email"} *
+                    {L({ fr: "Votre email", en: "Your email", es: "Tu email", pt: "Seu email", de: "Ihre E-Mail", tr: "E-postanız", nl: "Je e-mail", ar: "بريدك الإلكتروني" }, lang)} *
                   </label>
                   <input
                     type="email"
@@ -282,14 +281,14 @@ export default function GiftCards() {
                     onChange={(e) => setPurchaserEmail(e.target.value)}
                     required
                     className="w-full bg-white/[0.04] border border-white/[0.08] text-t-primary rounded-xl px-4 py-3.5 text-base placeholder:text-t-muted focus:border-purple-400/40 focus:ring-2 focus:ring-purple-400/20 outline-none transition-all"
-                    placeholder={lang === "fr" ? "vous@email.com" : "you@email.com"}
+                    placeholder={L({ fr: "vous@email.com", en: "you@email.com", es: "tu@email.com", pt: "voce@email.com", de: "du@email.com", tr: "sen@email.com", nl: "jij@email.com", ar: "anta@email.com" }, lang)}
                   />
                 </div>
 
                 <div>
                   <label className="text-t-secondary text-sm font-medium mb-3 block">
-                    {lang === "fr" ? "Destinataire" : "Recipient"}{" "}
-                    <span className="text-t-muted">({lang === "fr" ? "optionnel" : "optional"})</span>
+                    {L({ fr: "Destinataire", en: "Recipient", es: "Destinatario", pt: "Destinatário", de: "Empfänger", tr: "Alıcı", nl: "Ontvanger", ar: "المستلم" }, lang)}{" "}
+                    <span className="text-t-muted">({L({ fr: "optionnel", en: "optional", es: "opcional", pt: "opcional", de: "optional", tr: "isteğe bağlı", nl: "optioneel", ar: "اختياري" }, lang)})</span>
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input
@@ -297,7 +296,7 @@ export default function GiftCards() {
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
                       className="w-full bg-white/[0.04] border border-white/[0.08] text-t-primary rounded-xl px-4 py-3.5 text-base placeholder:text-t-muted focus:border-purple-400/40 focus:ring-2 focus:ring-purple-400/20 outline-none transition-all"
-                      placeholder={lang === "fr" ? "Nom" : "Name"}
+                      placeholder={L({ fr: "Nom", en: "Name", es: "Nombre", pt: "Nome", de: "Name", tr: "İsim", nl: "Naam", ar: "الاسم" }, lang)}
                     />
                     <input
                       type="email"
@@ -311,8 +310,8 @@ export default function GiftCards() {
 
                 <div>
                   <label className="text-t-secondary text-sm font-medium mb-3 block">
-                    {lang === "fr" ? "Message" : "Message"}{" "}
-                    <span className="text-t-muted">({lang === "fr" ? "optionnel" : "optional"})</span>
+                    {L({ fr: "Message", en: "Message", es: "Mensaje", pt: "Mensagem", de: "Nachricht", tr: "Mesaj", nl: "Bericht", ar: "رسالة" }, lang)}{" "}
+                    <span className="text-t-muted">({L({ fr: "optionnel", en: "optional", es: "opcional", pt: "opcional", de: "optional", tr: "isteğe bağlı", nl: "optioneel", ar: "اختياري" }, lang)})</span>
                   </label>
                   <textarea
                     value={message}
@@ -320,7 +319,7 @@ export default function GiftCards() {
                     maxLength={150}
                     rows={3}
                     className="w-full bg-white/[0.04] border border-white/[0.08] text-t-primary rounded-xl px-4 py-3.5 text-base placeholder:text-t-muted focus:border-purple-400/40 focus:ring-2 focus:ring-purple-400/20 outline-none resize-none transition-all"
-                    placeholder={lang === "fr" ? "Un petit message..." : "A short message..."}
+                    placeholder={L({ fr: "Un petit message...", en: "A short message...", es: "Un pequeño mensaje...", pt: "Uma mensagem curta...", de: "Eine kurze Nachricht...", tr: "Kısa bir mesaj...", nl: "Een kort bericht...", ar: "رسالة قصيرة..." }, lang)}
                   />
                   <p className="text-t-muted text-xs mt-2 text-right">{message.length}/150</p>
                 </div>
@@ -348,12 +347,12 @@ export default function GiftCards() {
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {lang === "fr" ? "Création..." : "Creating..."}
+                    {L({ fr: "Création...", en: "Creating...", es: "Creando...", pt: "Criando...", de: "Erstellen...", tr: "Oluşturuluyor...", nl: "Aanmaken...", ar: "جارٍ الإنشاء..." }, lang)}
                   </>
                 ) : (
                   <>
                     <Check className="h-5 w-5" />
-                    {lang === "fr" ? "Créer la carte" : "Create card"} · {amount}€
+                    {L({ fr: "Créer la carte", en: "Create card", es: "Crear tarjeta", pt: "Criar cartão", de: "Karte erstellen", tr: "Kart oluştur", nl: "Kaart aanmaken", ar: "إنشاء البطاقة" }, lang)} · {amount}€
                   </>
                 )}
               </motion.button>

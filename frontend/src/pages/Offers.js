@@ -6,24 +6,17 @@ import { useState, useEffect } from "react";
 import { secureGet } from "@/utils/secureApi";
 import { useAbTest } from "@/hooks/useAbTest";
 import { Headphones, Music, Zap, Star, Crown, Check, ArrowRight, Infinity, Shield, Package, X, Sparkles, TrendingDown } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const DEEZER_FEATURES = {
-  fr: [
-    "Écoute hors ligne illimitée",
-    "Qualité audio HiFi (FLAC)",
-    "Zéro publicité",
-    "Skip illimité",
-    "Mode Flow personnalisé",
-    "120M+ de titres",
-  ],
-  en: [
-    "Unlimited offline listening",
-    "HiFi audio quality (FLAC)",
-    "Zero ads",
-    "Unlimited skips",
-    "Personalized Flow mode",
-    "120M+ tracks",
-  ]
+  fr: ["Écoute hors ligne illimitée", "Qualité audio HiFi (FLAC)", "Zéro publicité", "Skip illimité", "Mode Flow personnalisé", "120M+ de titres"],
+  en: ["Unlimited offline listening", "HiFi audio quality (FLAC)", "Zero ads", "Unlimited skips", "Personalized Flow mode", "120M+ tracks"],
+  es: ["Escucha sin conexión ilimitada", "Calidad HiFi (FLAC)", "Cero anuncios", "Saltos ilimitados", "Modo Flow personalizado", "120M+ canciones"],
+  pt: ["Escuta offline ilimitada", "Qualidade HiFi (FLAC)", "Zero anúncios", "Pulos ilimitados", "Modo Flow personalizado", "120M+ faixas"],
+  de: ["Unbegrenztes Offline-Hören", "HiFi-Qualität (FLAC)", "Keine Werbung", "Unbegrenzte Skips", "Personalisierter Flow-Modus", "120M+ Titel"],
+  tr: ["Sınırsız çevrimdışı dinleme", "HiFi ses kalitesi (FLAC)", "Sıfır reklam", "Sınırsız atlama", "Kişiselleştirilmiş Flow modu", "120M+ parça"],
+  nl: ["Onbeperkt offline luisteren", "HiFi audio (FLAC)", "Geen advertenties", "Onbeperkt skippen", "Gepersonaliseerde Flow-modus", "120M+ tracks"],
+  ar: ["استماع بدون اتصال غير محدود", "جودة HiFi (FLAC)", "بدون إعلانات", "تخطي غير محدود", "وضع Flow مخصص", "+120 مليون أغنية"],
 };
 
 export default function Offers() {
@@ -39,8 +32,8 @@ export default function Offers() {
   // A/B test: pack_10 badge wording
   const { variant: abVariant, sessionId: abSession, trackClick: abTrackClick } = useAbTest("best_value_label");
   const bestValueLabel = abVariant === "a"
-    ? (lang === "fr" ? "Meilleur prix" : "Best value")
-    : (lang === "fr" ? "Le plus choisi" : "Most chosen");
+    ? L({ fr: "Meilleur prix", en: "Best value", es: "Mejor precio", pt: "Melhor preço", de: "Bester Wert", tr: "En iyi değer", nl: "Beste prijs", ar: "أفضل قيمة" }, lang)
+    : L({ fr: "Le plus choisi", en: "Most chosen", es: "Más elegido", pt: "Mais escolhido", de: "Am häufigsten gewählt", tr: "En çok tercih edilen", nl: "Meest gekozen", ar: "الأكثر اختيارًا" }, lang);
 
   useEffect(() => {
     fetchStock();
@@ -80,47 +73,47 @@ export default function Offers() {
   const packs = [
     {
       id: "single",
-      name: lang === "fr" ? "Starter" : "Starter",
+      name: "Starter",
       quantity: 1,
       price: 5,
       icon: Music,
       color: "from-violet-400 to-violet-700",
       shadow: "shadow-violet-500/20",
       badge: null,
-      desc: lang === "fr" ? "Idéal pour essayer" : "Great to try",
+      desc: L({ fr: "Idéal pour essayer", en: "Great to try", es: "Ideal para probar", pt: "Ideal para experimentar", de: "Ideal zum Ausprobieren", tr: "Denemek için ideal", nl: "Ideaal om te proberen", ar: "مثالي للتجربة" }, lang),
     },
     {
       id: "pack_3",
-      name: lang === "fr" ? "Essentiel" : "Essential",
+      name: L({ fr: "Essentiel", en: "Essential", es: "Essential", pt: "Essential", de: "Essential", tr: "Essential", nl: "Essential", ar: "Essential" }, lang),
       quantity: 3,
       price: 12,
       icon: Headphones,
       color: "from-violet-500 to-violet-800",
       shadow: "shadow-violet-500/25",
       badge: null,
-      desc: lang === "fr" ? "Le plus équilibré" : "Best balanced",
+      desc: L({ fr: "Le plus équilibré", en: "Best balanced", es: "Más equilibrado", pt: "Mais equilibrado", de: "Am ausgewogensten", tr: "En dengeli", nl: "Meest gebalanceerd", ar: "الأكثر توازنًا" }, lang),
     },
     {
       id: "pack_5",
-      name: lang === "fr" ? "Premium" : "Premium",
+      name: "Premium",
       quantity: 5,
       price: 20,
       icon: Star,
       color: "from-violet-400 via-violet-500 to-violet-700",
       shadow: "shadow-violet-500/30",
-      badge: lang === "fr" ? "Populaire" : "Popular",
-      desc: lang === "fr" ? "Le choix préféré" : "Most popular choice",
+      badge: L({ fr: "Populaire", en: "Popular", es: "Popular", pt: "Popular", de: "Beliebt", tr: "Popüler", nl: "Populair", ar: "شائع" }, lang),
+      desc: L({ fr: "Le choix préféré", en: "Most popular choice", es: "Elección favorita", pt: "Escolha favorita", de: "Beliebteste Wahl", tr: "En popüler seçim", nl: "Populairste keuze", ar: "الخيار المفضل" }, lang),
     },
     {
       id: "pack_10",
-      name: lang === "fr" ? "Business" : "Business",
+      name: "Business",
       quantity: 10,
       price: 35,
       icon: Crown,
       color: "from-violet-500 via-violet-600 to-violet-900",
       shadow: "shadow-violet-500/35",
       badge: bestValueLabel,
-      desc: lang === "fr" ? "Pour les pros" : "For pros",
+      desc: L({ fr: "Pour les pros", en: "For pros", es: "Para profesionales", pt: "Para profissionais", de: "Für Profis", tr: "Profesyoneller için", nl: "Voor profs", ar: "للمحترفين" }, lang),
     },
   ];
 
@@ -138,14 +131,24 @@ export default function Offers() {
           <h1 className="text-3xl sm:text-5xl font-bold text-t-primary mb-4">
             {lang === "fr" ? (
               <>Liens d'activation <span className="text-gradient-violet">Deezer Premium</span></>
+            ) : lang === "es" ? (
+              <>Enlaces de activación <span className="text-gradient-violet">Deezer Premium</span></>
+            ) : lang === "pt" ? (
+              <>Links de ativação <span className="text-gradient-violet">Deezer Premium</span></>
+            ) : lang === "de" ? (
+              <><span className="text-gradient-violet">Deezer Premium</span> Aktivierungslinks</>
+            ) : lang === "tr" ? (
+              <><span className="text-gradient-violet">Deezer Premium</span> Aktivasyon Bağlantıları</>
+            ) : lang === "nl" ? (
+              <><span className="text-gradient-violet">Deezer Premium</span> Activeringslinks</>
+            ) : lang === "ar" ? (
+              <>روابط تفعيل <span className="text-gradient-violet">Deezer Premium</span></>
             ) : (
               <><span className="text-gradient-violet">Deezer Premium</span> Activation Links</>
             )}
           </h1>
           <p className="text-t-secondary text-base sm:text-lg max-w-xl mx-auto">
-            {lang === "fr"
-              ? "Activez Deezer Premium sur n'importe quel compte. Livraison instantanée par email."
-              : "Activate Deezer Premium on any account. Instant email delivery."}
+            {L({ fr: "Activez Deezer Premium sur n'importe quel compte. Livraison instantanée par email.", en: "Activate Deezer Premium on any account. Instant email delivery.", es: "Activa Deezer Premium en cualquier cuenta. Entrega instantánea por email.", pt: "Ative o Deezer Premium em qualquer conta. Entrega instantânea por email.", de: "Aktivieren Sie Deezer Premium auf jedem Konto. Sofortige E-Mail-Lieferung.", tr: "Deezer Premium'u herhangi bir hesapta etkinleştirin. Anında e-posta teslimi.", nl: "Activeer Deezer Premium op elk account. Directe e-maillevering.", ar: "فعّل Deezer Premium على أي حساب. توصيل فوري عبر البريد." }, lang)}
           </p>
         </motion.div>
 
@@ -158,9 +161,9 @@ export default function Offers() {
             </div>
             <div>
               <h3 className="text-t-primary font-semibold text-base">
-                {lang === "fr" ? "Inclus dans chaque lien" : "Included with every link"}
+                {L({ fr: "Inclus dans chaque lien", en: "Included with every link", es: "Incluido en cada enlace", pt: "Incluído em cada link", de: "In jedem Link enthalten", tr: "Her bağlantıda dahildir", nl: "Inbegrepen bij elke link", ar: "متضمن في كل رابط" }, lang)}
               </h3>
-              <p className="text-t-muted text-xs">{lang === "fr" ? "Toutes les fonctionnalités Deezer Premium" : "All Deezer Premium features"}</p>
+              <p className="text-t-muted text-xs">{L({ fr: "Toutes les fonctionnalités Deezer Premium", en: "All Deezer Premium features", es: "Todas las funciones Deezer Premium", pt: "Todos os recursos Deezer Premium", de: "Alle Deezer Premium Funktionen", tr: "Tüm Deezer Premium özellikleri", nl: "Alle Deezer Premium-functies", ar: "جميع ميزات Deezer Premium" }, lang)}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -213,7 +216,7 @@ export default function Offers() {
                         </span>
                       </div>
                       <p className="text-white/45 text-[12px] mt-1">
-                        {unitPrice}€ / {lang === "fr" ? "lien" : "link"} · {pack.quantity}x Deezer Premium
+                        {unitPrice}€ / {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)} · {pack.quantity}x Deezer Premium
                       </p>
                     </div>
 
@@ -221,8 +224,8 @@ export default function Offers() {
                     <div className="space-y-2 mb-5 flex-1">
                       {[
                         { icon: Headphones, text: `${pack.quantity}x Deezer Premium` },
-                        { icon: Zap, text: lang === "fr" ? "Livraison instantanée" : "Instant delivery" },
-                        { icon: Shield, text: lang === "fr" ? "Paiement crypto sécurisé" : "Secure crypto payment" },
+                        { icon: Zap, text: L({ fr: "Livraison instantanée", en: "Instant delivery", es: "Entrega instantánea", pt: "Entrega instantânea", de: "Sofortige Lieferung", tr: "Anında teslimat", nl: "Directe levering", ar: "توصيل فوري" }, lang) },
+                        { icon: Shield, text: L({ fr: "Paiement crypto sécurisé", en: "Secure crypto payment", es: "Pago cripto seguro", pt: "Pagamento cripto seguro", de: "Sichere Krypto-Zahlung", tr: "Güvenli kripto ödeme", nl: "Veilige crypto-betaling", ar: "دفع كريبتو آمن" }, lang) },
                       ].map((d, j) => (
                         <div key={j} className="flex items-center gap-2 text-[13px] text-white/65">
                           <d.icon className="h-3.5 w-3.5 text-violet-400/80 shrink-0" />
@@ -241,14 +244,14 @@ export default function Offers() {
                         className={pack.badge ? "btn-primary w-full !py-3" : "btn-secondary w-full !py-3"}
                         data-testid={`buy-${pack.id}`}
                       >
-                        {lang === "fr" ? "Acheter" : "Buy now"}
+                        {L({ fr: "Acheter", en: "Buy now", es: "Comprar ahora", pt: "Comprar agora", de: "Jetzt kaufen", tr: "Şimdi al", nl: "Nu kopen", ar: "اشتر الآن" }, lang)}
                         <ArrowRight className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity, linkCount: pack.quantity })}
                         className="w-full py-2.5 rounded-full text-[12px] font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
                       >
-                        {lang === "fr" ? "Ajouter au panier" : "Add to cart"}
+                        {L({ fr: "Ajouter au panier", en: "Add to cart", es: "Añadir al carrito", pt: "Adicionar ao carrinho", de: "In den Warenkorb", tr: "Sepete ekle", nl: "In winkelwagen", ar: "أضف إلى السلة" }, lang)}
                       </button>
                     </div>
                   </div>
@@ -268,12 +271,10 @@ export default function Offers() {
             </div>
           </div>
           <h3 className="text-t-primary font-bold text-xl mb-2">
-            {lang === "fr" ? "Besoin de plus ?" : "Need more?"}
+            {L({ fr: "Besoin de plus ?", en: "Need more?", es: "¿Necesitas más?", pt: "Precisa mais?", de: "Mehr nötig?", tr: "Daha fazlası gerek mi?", nl: "Meer nodig?", ar: "تحتاج المزيد؟" }, lang)}
           </h3>
           <p className="text-t-secondary text-sm mb-5 max-w-md mx-auto">
-            {lang === "fr"
-              ? "Commandez la quantité exacte dont vous avez besoin. Plus vous commandez, moins c'est cher."
-              : "Order the exact amount you need. Volume discounts available."}
+            {L({ fr: "Commandez la quantité exacte dont vous avez besoin. Plus vous commandez, moins c'est cher.", en: "Order the exact amount you need. Volume discounts available.", es: "Pide la cantidad exacta que necesitas. Descuentos por volumen disponibles.", pt: "Peça a quantidade exata que precisa. Descontos por volume disponíveis.", de: "Bestellen Sie die genaue Menge, die Sie brauchen. Mengenrabatte verfügbar.", tr: "İhtiyacınız olan tam miktarı sipariş edin. Hacim indirimleri mevcut.", nl: "Bestel precies de hoeveelheid die u nodig heeft. Volumekortingen beschikbaar.", ar: "اطلب الكمية التي تحتاجها بالضبط. خصومات الحجم متاحة." }, lang)}
           </p>
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -281,7 +282,7 @@ export default function Offers() {
             className="inline-flex items-center gap-2 px-8 py-3 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] hover:border-white/[0.2] rounded-xl text-t-primary text-sm font-medium transition-all"
           >
             <Package className="h-4 w-4 text-accent" />
-            {lang === "fr" ? "Quantité personnalisée" : "Custom quantity"}
+            {L({ fr: "Quantité personnalisée", en: "Custom quantity", es: "Cantidad personalizada", pt: "Quantidade personalizada", de: "Eigene Menge", tr: "Özel miktar", nl: "Aangepaste hoeveelheid", ar: "كمية مخصصة" }, lang)}
           </motion.button>
         </motion.div>
 
@@ -306,7 +307,7 @@ export default function Offers() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-t-primary flex items-center gap-2">
                     <Package className="h-6 w-6 text-accent" />
-                    {lang === "fr" ? "Quantité personnalisée" : "Custom quantity"}
+                    {L({ fr: "Quantité personnalisée", en: "Custom quantity", es: "Cantidad personalizada", pt: "Quantidade personalizada", de: "Eigene Menge", tr: "Özel miktar", nl: "Aangepaste hoeveelheid", ar: "كمية مخصصة" }, lang)}
                   </h2>
                   <button
                     onClick={() => setShowCustomModal(false)}
@@ -320,7 +321,7 @@ export default function Offers() {
                   {/* Left: Quantity selection */}
                   <div>
                     <h3 className="text-t-secondary text-sm font-medium mb-4">
-                      {lang === "fr" ? "Choisissez la quantité" : "Choose quantity"}
+                      {L({ fr: "Choisissez la quantité", en: "Choose quantity", es: "Elige la cantidad", pt: "Escolha a quantidade", de: "Menge wählen", tr: "Miktarı seçin", nl: "Kies hoeveelheid", ar: "اختر الكمية" }, lang)}
                     </h3>
 
                     {/* Preset buttons */}
@@ -362,7 +363,7 @@ export default function Offers() {
                       className="w-full h-2 bg-zinc-800 rounded-full mb-2"
                     />
                     <p className="text-xs text-t-muted">
-                      {lang === "fr" ? "Stock disponible : " : "Available stock: "}
+                      {L({ fr: "Stock disponible : ", en: "Available stock: ", es: "Stock disponible: ", pt: "Estoque disponível: ", de: "Verfügbarer Bestand: ", tr: "Mevcut stok: ", nl: "Beschikbare voorraad: ", ar: "المخزون المتاح: " }, lang)}
                       <span className="text-green font-semibold">{availableStock}</span>
                     </p>
                   </div>
@@ -370,7 +371,7 @@ export default function Offers() {
                   {/* Right: Summary */}
                   <div>
                     <h3 className="text-t-secondary text-sm font-medium mb-4">
-                      {lang === "fr" ? "Résumé" : "Summary"}
+                      {L({ fr: "Résumé", en: "Summary", es: "Resumen", pt: "Resumo", de: "Zusammenfassung", tr: "Özet", nl: "Samenvatting", ar: "الملخص" }, lang)}
                     </h3>
 
                     <div className="bg-white/[0.03] rounded-2xl p-4 mb-4">
@@ -378,25 +379,25 @@ export default function Offers() {
                         <span className="text-5xl font-bold text-violet-300">
                           {customQuantity}
                         </span>
-                        <span className="text-t-muted">{lang === "fr" ? "liens" : "links"}</span>
+                        <span className="text-t-muted">{L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}</span>
                       </div>
                       <p className="text-t-secondary text-sm mb-4">
-                        Deezer Premium · {lang === "fr" ? "1 mois minimum garanti" : "1 month minimum guaranteed"}
+                        Deezer Premium · {L({ fr: "1 mois minimum garanti", en: "1 month minimum guaranteed", es: "1 mes mínimo garantizado", pt: "1 mês mínimo garantido", de: "Mind. 1 Monat garantiert", tr: "Min. 1 ay garantili", nl: "Min. 1 maand gegarandeerd", ar: "شهر واحد مضمون كحد أدنى" }, lang)}
                       </p>
 
                       <div className="space-y-2 mb-4 pb-4 border-b border-white/[0.08]">
                         <div className="flex justify-between text-sm">
-                          <span className="text-t-secondary">{lang === "fr" ? "Prix unitaire" : "Unit price"}</span>
+                          <span className="text-t-secondary">{L({ fr: "Prix unitaire", en: "Unit price", es: "Precio unitario", pt: "Preço unitário", de: "Stückpreis", tr: "Birim fiyat", nl: "Stuksprijs", ar: "سعر الوحدة" }, lang)}</span>
                           <span className="text-t-primary font-semibold">{getUnitPrice(customQuantity).toFixed(2)}€</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-t-secondary">{lang === "fr" ? "Quantité" : "Quantity"}</span>
+                          <span className="text-t-secondary">{L({ fr: "Quantité", en: "Quantity", es: "Cantidad", pt: "Quantidade", de: "Menge", tr: "Miktar", nl: "Hoeveelheid", ar: "الكمية" }, lang)}</span>
                           <span className="text-t-primary font-semibold">×{customQuantity}</span>
                         </div>
                       </div>
 
                       <div className="flex justify-between items-baseline">
-                        <span className="text-t-secondary text-sm">{lang === "fr" ? "Total" : "Total"}</span>
+                        <span className="text-t-secondary text-sm">{L({ fr: "Total", en: "Total", es: "Total", pt: "Total", de: "Gesamt", tr: "Toplam", nl: "Totaal", ar: "المجموع" }, lang)}</span>
                         <div className="text-3xl font-bold text-violet-300">
                           {(customQuantity * getUnitPrice(customQuantity)).toFixed(2)}€
                         </div>
@@ -410,7 +411,7 @@ export default function Offers() {
                       whileTap={{ scale: 0.98 }}
                       className="btn-primary w-full !py-3"
                     >
-                      {lang === "fr" ? "Commander" : "Order now"}
+                      {L({ fr: "Commander", en: "Order now", es: "Pedir ahora", pt: "Pedir agora", de: "Jetzt bestellen", tr: "Şimdi sipariş ver", nl: "Nu bestellen", ar: "اطلب الآن" }, lang)}
                       <ArrowRight className="h-5 w-5" />
                     </motion.button>
                   </div>
@@ -420,7 +421,7 @@ export default function Offers() {
                 <div className="mt-6 pt-6 border-t border-white/[0.08]">
                   <h3 className="text-t-secondary text-sm font-medium mb-3 flex items-center gap-2">
                     <TrendingDown className="h-4 w-4 text-green" />
-                    {lang === "fr" ? "Tarifs dégressifs" : "Volume discounts"}
+                    {L({ fr: "Tarifs dégressifs", en: "Volume discounts", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
                   </h3>
                   <div className="grid grid-cols-5 gap-2">
                     {[

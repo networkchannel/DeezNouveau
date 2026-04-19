@@ -9,6 +9,7 @@ import {
   Loader2, Check, Edit3, LogOut, ArrowRight, User, Mail, Crown, ShoppingBag,
   Wallet, Star, Trophy, Gift, Clock, ChevronRight, Shield, Sparkles, Heart, TrendingUp
 } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
@@ -102,7 +103,7 @@ export default function Profile() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <h1 className="text-t-primary font-semibold text-lg">{profile.name || (lang === "fr" ? "Utilisateur" : "User")}</h1>
+                      <h1 className="text-t-primary font-semibold text-lg">{profile.name || L({ fr: "Utilisateur", en: "User", es: "Usuario", pt: "Usuário", de: "Benutzer", tr: "Kullanıcı", nl: "Gebruiker", ar: "مستخدم" }, lang)}</h1>
                       <button onClick={() => setEditingName(true)} className="text-t-muted hover:text-accent transition-colors">
                         <Edit3 className="h-3.5 w-3.5" />
                       </button>
@@ -126,7 +127,7 @@ export default function Profile() {
               {profile.created_at && (
                 <div className="flex items-center gap-2 text-t-muted/60 text-xs mt-1.5">
                   <Clock className="h-3 w-3" />
-                  <span>{lang === "fr" ? "Membre depuis" : "Member since"} {new Date(profile.created_at).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", { year: 'numeric', month: 'long' })}</span>
+                  <span>{L({ fr: "Membre depuis", en: "Member since", es: "Miembro desde", pt: "Membro desde", de: "Mitglied seit", tr: "Üyelik", nl: "Lid sinds", ar: "عضو منذ" }, lang)} {new Date(profile.created_at).toLocaleDateString(lang, { year: 'numeric', month: 'long' })}</span>
                 </div>
               )}
             </div>
@@ -135,8 +136,8 @@ export default function Profile() {
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: lang === "fr" ? "Commandes" : "Orders", value: profile.completed_orders, icon: ShoppingBag, color: "text-purple-400", bg: "bg-purple-500/10" },
-              { label: lang === "fr" ? "Dépensé" : "Spent", value: `${profile.total_spent || 0}€`, icon: Wallet, color: "text-green", bg: "bg-green/10" },
+              { label: L({ fr: "Commandes", en: "Orders", es: "Pedidos", pt: "Pedidos", de: "Bestellungen", tr: "Siparişler", nl: "Bestellingen", ar: "الطلبات" }, lang), value: profile.completed_orders, icon: ShoppingBag, color: "text-purple-400", bg: "bg-purple-500/10" },
+              { label: L({ fr: "Dépensé", en: "Spent", es: "Gastado", pt: "Gasto", de: "Ausgegeben", tr: "Harcanan", nl: "Uitgegeven", ar: "المُنفق" }, lang), value: `${profile.total_spent || 0}€`, icon: Wallet, color: "text-green", bg: "bg-green/10" },
               { label: "Points", value: profile.loyalty_points || 0, icon: Star, color: "text-yellow-400", bg: "bg-yellow-500/10" },
             ].map((s, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
@@ -159,7 +160,7 @@ export default function Profile() {
                   <TrendingUp className={`h-4 w-4 ${tier.text}`} />
                 </div>
                 <div>
-                  <span className="text-t-primary text-sm font-medium">{lang === "fr" ? "Progression fidélité" : "Loyalty Progress"}</span>
+                  <span className="text-t-primary text-sm font-medium">{L({ fr: "Progression fidélité", en: "Loyalty Progress", es: "Progreso fidelidad", pt: "Progresso fidelidade", de: "Treue-Fortschritt", tr: "Sadakat ilerlemesi", nl: "Loyaliteitsvoortgang", ar: "تقدم الولاء" }, lang)}</span>
                   {profile.loyalty_tier?.discount > 0 && (
                     <span className="ml-2 text-green text-xs font-semibold bg-green/10 px-1.5 py-0.5 rounded">-{profile.loyalty_tier.discount}%</span>
                   )}
@@ -182,11 +183,11 @@ export default function Profile() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-t-muted">{tier.label}</span>
                 <span className="text-t-muted">
-                  {profile.points_to_next} pts {lang === "fr" ? "avant" : "until"} <span className="text-t-secondary font-medium">{profile.next_tier.name}</span>
+                  {profile.points_to_next} pts {L({ fr: "avant", en: "until", es: "hasta", pt: "até", de: "bis", tr: "öncesi", nl: "tot", ar: "حتى" }, lang)} <span className="text-t-secondary font-medium">{profile.next_tier.name}</span>
                 </span>
               </div>
             ) : (
-              <p className="text-center text-xs text-t-muted">{lang === "fr" ? "Niveau maximum atteint !" : "Max level reached!"}</p>
+              <p className="text-center text-xs text-t-muted">{L({ fr: "Niveau maximum atteint !", en: "Max level reached!", es: "¡Nivel máximo alcanzado!", pt: "Nível máximo atingido!", de: "Höchstes Level erreicht!", tr: "En yüksek seviyeye ulaşıldı!", nl: "Maximaal niveau bereikt!", ar: "تم الوصول إلى الحد الأقصى!" }, lang)}</p>
             )}
           </motion.div>
 
@@ -198,8 +199,8 @@ export default function Profile() {
                 <ShoppingBag className="h-4 w-4 text-purple-400" />
               </div>
               <div className="flex-1">
-                <span className="text-t-primary text-sm font-medium">{lang === "fr" ? "Mes commandes" : "My orders"}</span>
-                <p className="text-t-muted text-[11px]">{lang === "fr" ? "Voir l'historique complet" : "View full history"}</p>
+                <span className="text-t-primary text-sm font-medium">{L({ fr: "Mes commandes", en: "My orders", es: "Mis pedidos", pt: "Meus pedidos", de: "Meine Bestellungen", tr: "Siparişlerim", nl: "Mijn bestellingen", ar: "طلباتي" }, lang)}</span>
+                <p className="text-t-muted text-[11px]">{L({ fr: "Voir l'historique complet", en: "View full history", es: "Ver historial completo", pt: "Ver histórico completo", de: "Vollständigen Verlauf anzeigen", tr: "Tüm geçmişi gör", nl: "Volledige geschiedenis bekijken", ar: "عرض السجل الكامل" }, lang)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-t-muted group-hover:text-t-secondary transition-colors" />
             </Link>
@@ -209,8 +210,8 @@ export default function Profile() {
                 <Heart className="h-4 w-4 text-accent" />
               </div>
               <div className="flex-1">
-                <span className="text-t-primary text-sm font-medium">{lang === "fr" ? "Acheter des liens" : "Buy links"}</span>
-                <p className="text-t-muted text-[11px]">{lang === "fr" ? "Découvrir nos offres" : "Explore our offers"}</p>
+                <span className="text-t-primary text-sm font-medium">{L({ fr: "Acheter des liens", en: "Buy links", es: "Comprar enlaces", pt: "Comprar links", de: "Links kaufen", tr: "Bağlantı satın al", nl: "Links kopen", ar: "شراء الروابط" }, lang)}</span>
+                <p className="text-t-muted text-[11px]">{L({ fr: "Découvrir nos offres", en: "Explore our offers", es: "Explora nuestras ofertas", pt: "Explore nossas ofertas", de: "Unsere Angebote entdecken", tr: "Tekliflerimizi keşfet", nl: "Ontdek onze aanbiedingen", ar: "استكشف عروضنا" }, lang)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-t-muted group-hover:text-t-secondary transition-colors" />
             </Link>
@@ -220,8 +221,8 @@ export default function Profile() {
                 <Gift className="h-4 w-4 text-pink-400" />
               </div>
               <div className="flex-1">
-                <span className="text-t-primary text-sm font-medium">{lang === "fr" ? "Cartes cadeau" : "Gift cards"}</span>
-                <p className="text-t-muted text-[11px]">{lang === "fr" ? "Offrir Deezer Premium" : "Gift Deezer Premium"}</p>
+                <span className="text-t-primary text-sm font-medium">{L({ fr: "Cartes cadeau", en: "Gift cards", es: "Tarjetas regalo", pt: "Cartões presente", de: "Geschenkkarten", tr: "Hediye kartları", nl: "Cadeaukaarten", ar: "بطاقات الهدية" }, lang)}</span>
+                <p className="text-t-muted text-[11px]">{L({ fr: "Offrir Deezer Premium", en: "Gift Deezer Premium", es: "Regalar Deezer Premium", pt: "Presentear Deezer Premium", de: "Deezer Premium verschenken", tr: "Deezer Premium hediye et", nl: "Deezer Premium cadeau geven", ar: "إهداء Deezer Premium" }, lang)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-t-muted group-hover:text-t-secondary transition-colors" />
             </Link>
@@ -232,7 +233,7 @@ export default function Profile() {
             <button onClick={() => { logout(); navigate("/"); }}
               className="w-full flex items-center justify-center gap-2 text-t-muted hover:text-red-400 text-sm py-3.5 transition-colors rounded-xl hover:bg-red-500/5">
               <LogOut className="h-4 w-4" />
-              {lang === "fr" ? "Déconnexion" : "Sign out"}
+              {L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
             </button>
           </motion.div>
 

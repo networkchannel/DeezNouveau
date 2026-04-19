@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { secureGet } from "@/utils/secureApi";
 import { Package, Check, AlertCircle, Sparkles, ArrowRight, Zap, TrendingDown, Shield, Headphones } from "lucide-react";
+import { pickLang as L } from "@/utils/langPick";
 
 export default function CustomQuantity() {
   const { t, i18n } = useTranslation();
@@ -48,10 +49,7 @@ export default function CustomQuantity() {
 
   const handleCheckout = () => {
     if (quantity < 1 || quantity > maxQuantity) {
-      setError(lang === "fr" 
-        ? `Quantité invalide (min: 1, max: ${maxQuantity})`
-        : `Invalid quantity (min: 1, max: ${maxQuantity})`
-      );
+      setError(L({ fr: `Quantité invalide (min: 1, max: ${maxQuantity})`, en: `Invalid quantity (min: 1, max: ${maxQuantity})`, es: `Cantidad inválida (min: 1, max: ${maxQuantity})`, pt: `Quantidade inválida (min: 1, max: ${maxQuantity})`, de: `Ungültige Menge (min: 1, max: ${maxQuantity})`, tr: `Geçersiz miktar (min: 1, max: ${maxQuantity})`, nl: `Ongeldige hoeveelheid (min: 1, max: ${maxQuantity})`, ar: `كمية غير صالحة (الحد الأدنى: 1، الأقصى: ${maxQuantity})` }, lang));
       return;
     }
     navigate(`/checkout/custom_${quantity}`);
@@ -70,15 +68,13 @@ export default function CustomQuantity() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-medium mb-6">
             <Package className="h-4 w-4" />
-            {lang === "fr" ? "Commande Personnalisée" : "Custom Order"}
+            {L({ fr: "Commande Personnalisée", en: "Custom Order", es: "Pedido Personalizado", pt: "Pedido Personalizado", de: "Eigene Bestellung", tr: "Özel Sipariş", nl: "Aangepaste bestelling", ar: "طلب مخصص" }, lang)}
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-t-primary mb-4">
-            {lang === "fr" ? "Quantité personnalisée" : "Custom quantity"}
+            {L({ fr: "Quantité personnalisée", en: "Custom quantity", es: "Cantidad personalizada", pt: "Quantidade personalizada", de: "Eigene Menge", tr: "Özel miktar", nl: "Aangepaste hoeveelheid", ar: "كمية مخصصة" }, lang)}
           </h1>
           <p className="text-base sm:text-lg text-t-secondary max-w-2xl mx-auto leading-relaxed">
-            {lang === "fr"
-              ? "Commandez exactement le nombre de liens dont vous avez besoin. Plus vous commandez, plus le prix unitaire diminue."
-              : "Order exactly the number of links you need. The more you order, the lower the unit price."}
+            {L({ fr: "Commandez exactement le nombre de liens dont vous avez besoin. Plus vous commandez, plus le prix unitaire diminue.", en: "Order exactly the number of links you need. The more you order, the lower the unit price.", es: "Pide exactamente la cantidad de enlaces que necesitas. Cuanto más pidas, menor el precio unitario.", pt: "Peça exatamente a quantidade de links que precisa. Quanto mais pedir, menor o preço unitário.", de: "Bestellen Sie genau die Anzahl von Links, die Sie brauchen. Je mehr, desto günstiger pro Stück.", tr: "Tam ihtiyacınız olan bağlantı sayısını sipariş edin. Ne kadar fazla sipariş verirseniz, birim fiyat o kadar düşer.", nl: "Bestel precies het aantal links dat u nodig heeft. Hoe meer u bestelt, hoe lager de stuksprijs.", ar: "اطلب العدد المطلوب بالضبط من الروابط. كلما طلبت أكثر، انخفض سعر الوحدة." }, lang)}
           </p>
         </motion.div>
 
@@ -92,7 +88,7 @@ export default function CustomQuantity() {
           >
             <h3 className="text-t-primary font-semibold text-lg mb-5 flex items-center gap-2">
               <Package className="h-5 w-5 text-accent" />
-              {lang === "fr" ? "Choisissez la quantité" : "Choose quantity"}
+              {L({ fr: "Choisissez la quantité", en: "Choose quantity", es: "Elige la cantidad", pt: "Escolha a quantidade", de: "Menge wählen", tr: "Miktarı seçin", nl: "Kies hoeveelheid", ar: "اختر الكمية" }, lang)}
             </h3>
 
             {/* Preset buttons */}
@@ -118,7 +114,7 @@ export default function CustomQuantity() {
             {/* Custom input */}
             <div className="mb-4">
               <label className="text-t-secondary text-sm font-medium mb-2 block">
-                {lang === "fr" ? "Ou entrez un nombre" : "Or enter a number"}
+                {L({ fr: "Ou entrez un nombre", en: "Or enter a number", es: "O introduce un número", pt: "Ou digite um número", de: "Oder Zahl eingeben", tr: "Veya bir sayı girin", nl: "Of voer een nummer in", ar: "أو أدخل رقمًا" }, lang)}
               </label>
               <input
                 type="number"
@@ -148,10 +144,10 @@ export default function CustomQuantity() {
             </div>
 
             <p className="text-t-muted text-xs bg-white/[0.03] rounded-lg px-3 py-2">
-              {lang === "fr" ? "Stock disponible : " : "Available stock: "}
+              {L({ fr: "Stock disponible : ", en: "Available stock: ", es: "Stock disponible: ", pt: "Estoque disponível: ", de: "Verfügbarer Bestand: ", tr: "Mevcut stok: ", nl: "Beschikbare voorraad: ", ar: "المخزون المتاح: " }, lang)}
               <span className="text-green font-semibold">{availableStock}</span> liens
               {availableStock < 1000 && " · "}
-              {availableStock < 1000 && (lang === "fr" ? "Max limité au stock" : "Max limited by stock")}
+              {availableStock < 1000 && (L({ fr: "Max limité au stock", en: "Max limited by stock", es: "Máx. limitado por stock", pt: "Máx. limitado pelo estoque", de: "Max. durch Bestand begrenzt", tr: "Maks. stokla sınırlı", nl: "Max. beperkt door voorraad", ar: "الحد الأقصى مقيد بالمخزون" }, lang))}
             </p>
           </motion.div>
 
@@ -164,7 +160,7 @@ export default function CustomQuantity() {
           >
             <h3 className="text-t-primary font-semibold text-lg mb-5 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-accent" />
-              {lang === "fr" ? "Résumé" : "Summary"}
+              {L({ fr: "Résumé", en: "Summary", es: "Resumen", pt: "Resumo", de: "Zusammenfassung", tr: "Özet", nl: "Samenvatting", ar: "الملخص" }, lang)}
             </h3>
 
             {/* Quantity display */}
@@ -174,33 +170,33 @@ export default function CustomQuantity() {
                   {quantity}
                 </span>
                 <span className="text-t-muted text-lg">
-                  {lang === "fr" ? "liens" : "links"}
+                  {L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}
                 </span>
               </div>
-              <p className="text-t-secondary text-sm">Deezer Premium · {lang === "fr" ? "1 mois minimum garanti" : "1 month minimum guaranteed"}</p>
+              <p className="text-t-secondary text-sm">Deezer Premium · {L({ fr: "1 mois minimum garanti", en: "1 month minimum guaranteed", es: "1 mes mínimo garantizado", pt: "1 mês mínimo garantido", de: "Mind. 1 Monat garantiert", tr: "Min. 1 ay garantili", nl: "Min. 1 maand gegarandeerd", ar: "شهر واحد مضمون كحد أدنى" }, lang)}</p>
             </div>
 
             {/* Pricing */}
             <div className="space-y-3 mb-6 pb-6 border-b border-white/[0.08]">
               <div className="flex justify-between text-sm">
-                <span className="text-t-secondary">{lang === "fr" ? "Prix unitaire" : "Unit price"}</span>
+                <span className="text-t-secondary">{L({ fr: "Prix unitaire", en: "Unit price", es: "Precio unitario", pt: "Preço unitário", de: "Stückpreis", tr: "Birim fiyat", nl: "Stuksprijs", ar: "سعر الوحدة" }, lang)}</span>
                 <span className="text-t-primary font-semibold">{unitPrice.toFixed(2)}€</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-t-secondary">{lang === "fr" ? "Quantité" : "Quantity"}</span>
+                <span className="text-t-secondary">{L({ fr: "Quantité", en: "Quantity", es: "Cantidad", pt: "Quantidade", de: "Menge", tr: "Miktar", nl: "Hoeveelheid", ar: "الكمية" }, lang)}</span>
                 <span className="text-t-primary font-semibold">×{quantity}</span>
               </div>
             </div>
 
             {/* Total */}
             <div className="flex justify-between items-baseline mb-6">
-              <span className="text-t-secondary text-sm">{lang === "fr" ? "Total" : "Total"}</span>
+              <span className="text-t-secondary text-sm">{L({ fr: "Total", en: "Total", es: "Total", pt: "Total", de: "Gesamt", tr: "Toplam", nl: "Totaal", ar: "المجموع" }, lang)}</span>
               <div className="text-right">
                 <div className="text-4xl font-bold text-violet-300">
                   {totalPrice}€
                 </div>
                 <p className="text-t-muted text-xs mt-1">
-                  {lang === "fr" ? "Économie : " : "Savings: "}
+                  {L({ fr: "Économie : ", en: "Savings: ", es: "Ahorro: ", pt: "Economia: ", de: "Ersparnis: ", tr: "Tasarruf: ", nl: "Besparing: ", ar: "التوفير: " }, lang)}
                   <span className="text-green font-semibold">
                     {((4.0 - unitPrice) * quantity).toFixed(2)}€
                   </span>
@@ -211,9 +207,9 @@ export default function CustomQuantity() {
             {/* Features */}
             <div className="space-y-2 mb-6">
               {[
-                { icon: Headphones, text: lang === "fr" ? "Deezer Premium complet" : "Full Deezer Premium" },
-                { icon: Zap, text: lang === "fr" ? "Livraison instantanée" : "Instant delivery" },
-                { icon: Shield, text: lang === "fr" ? "Paiement crypto sécurisé" : "Secure crypto payment" },
+                { icon: Headphones, text: L({ fr: "Deezer Premium complet", en: "Full Deezer Premium", es: "Deezer Premium completo", pt: "Deezer Premium completo", de: "Vollständiges Deezer Premium", tr: "Tam Deezer Premium", nl: "Volledig Deezer Premium", ar: "Deezer Premium كامل" }, lang) },
+                { icon: Zap, text: L({ fr: "Livraison instantanée", en: "Instant delivery", es: "Entrega instantánea", pt: "Entrega instantânea", de: "Sofortige Lieferung", tr: "Anında teslimat", nl: "Directe levering", ar: "توصيل فوري" }, lang) },
+                { icon: Shield, text: L({ fr: "Paiement crypto sécurisé", en: "Secure crypto payment", es: "Pago cripto seguro", pt: "Pagamento cripto seguro", de: "Sichere Krypto-Zahlung", tr: "Güvenli kripto ödeme", nl: "Veilige crypto-betaling", ar: "دفع كريبتو آمن" }, lang) },
               ].map((feat, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-t-secondary">
                   <feat.icon className="h-4 w-4 text-green shrink-0" />
@@ -240,11 +236,11 @@ export default function CustomQuantity() {
               {loading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {lang === "fr" ? "Chargement..." : "Loading..."}
+                  {L({ fr: "Chargement...", en: "Loading...", es: "Cargando...", pt: "Carregando...", de: "Lädt...", tr: "Yükleniyor...", nl: "Laden...", ar: "جارٍ التحميل..." }, lang)}
                 </>
               ) : (
                 <>
-                  {lang === "fr" ? "Commander" : "Order now"}
+                  {L({ fr: "Commander", en: "Order now", es: "Pedir ahora", pt: "Pedir agora", de: "Jetzt bestellen", tr: "Şimdi sipariş ver", nl: "Nu bestellen", ar: "اطلب الآن" }, lang)}
                   <ArrowRight className="h-5 w-5" />
                 </>
               )}
@@ -261,7 +257,7 @@ export default function CustomQuantity() {
         >
           <h3 className="text-t-primary font-semibold text-lg mb-5 flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-green" />
-            {lang === "fr" ? "Tarifs dégressifs" : "Volume discounts"}
+            {L({ fr: "Tarifs dégressifs", en: "Volume discounts", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
@@ -283,7 +279,7 @@ export default function CustomQuantity() {
                   {tier.min}-{tier.max === 1000 ? "1000+" : tier.max}
                 </div>
                 <div className="text-t-primary font-bold text-lg">{tier.price}€</div>
-                <div className="text-t-muted text-[10px]">{lang === "fr" ? "par lien" : "per link"}</div>
+                <div className="text-t-muted text-[10px]">{L({ fr: "par lien", en: "per link", es: "por enlace", pt: "por link", de: "pro Link", tr: "bağlantı başına", nl: "per link", ar: "لكل رابط" }, lang)}</div>
               </div>
             ))}
           </div>
