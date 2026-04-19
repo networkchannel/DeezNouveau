@@ -358,9 +358,6 @@ export default function Landing() {
               className="relative overflow-hidden rounded-[2rem]"
             >
               <div className="relative aspect-[4/5] sm:aspect-square w-full max-w-[520px] ml-auto">
-                {/* Violet halo behind */}
-                <div className="absolute -inset-10 bg-gradient-to-tr from-violet-700/35 via-violet-500/20 to-transparent blur-3xl rounded-full" />
-
                 <div className="relative grid grid-cols-3 grid-rows-4 gap-2 sm:gap-3 h-full">
                   {/* Big featured card */}
                   <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden card-surface">
