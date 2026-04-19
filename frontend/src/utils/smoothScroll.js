@@ -1,7 +1,7 @@
 import Lenis from "lenis";
+import "lenis/dist/lenis.css";
 
 let lenisInstance = null;
-let rafId = null;
 
 export function initSmoothScroll() {
   if (typeof window === "undefined") return null;
@@ -12,28 +12,21 @@ export function initSmoothScroll() {
   if (prefersReduced) return null;
 
   lenisInstance = new Lenis({
-    duration: 1.1,                // smoothness length — higher = more inertia
+    autoRaf: true,                        // let Lenis run its own rAF loop
+    duration: 1.2,                        // smooth length
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // expo-out
     smoothWheel: true,
-    smoothTouch: false,           // keep native on mobile (less jank)
     wheelMultiplier: 1,
     touchMultiplier: 1.5,
+    lerp: 0.1,                            // interpolation factor (lower = more smooth)
+    orientation: "vertical",
+    gestureOrientation: "vertical",
   });
 
-  const raf = (time) => {
-    lenisInstance?.raf(time);
-    rafId = requestAnimationFrame(raf);
-  };
-  rafId = requestAnimationFrame(raf);
-
-  // Intercept scrollTo(0,0) / window.scrollTo calls that happen during route change
-  // so ScrollToTop's instant snap actually snaps instantly (not interpolated)
   return lenisInstance;
 }
 
 export function destroySmoothScroll() {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
   lenisInstance?.destroy?.();
   lenisInstance = null;
 }
@@ -49,10 +42,12 @@ export function getLenis() {
 export function smoothScrollTo(target, options = {}) {
   if (lenisInstance) {
     lenisInstance.scrollTo(target, {
-      duration: options.duration ?? 1.2,
+      duration: options.duration ?? 1.4,
       offset: options.offset ?? 0,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       immediate: options.immediate ?? false,
+      lock: false,
+      force: false,
     });
   } else {
     // Fallback to native scroll

@@ -28,6 +28,7 @@
   * { @apply border-border; }
   html {
     background: #050505;
+    overflow-x: clip;
   }
   /* With Lenis active, the lib sets .lenis class and manages scroll manually.
      When Lenis is NOT active (reduced motion), fall back to native smooth. */
@@ -47,7 +48,6 @@
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
     letter-spacing: -0.005em;
   }
   h1, h2, h3, h4 {
