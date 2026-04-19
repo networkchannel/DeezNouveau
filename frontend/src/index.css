@@ -26,7 +26,13 @@
     --radius: 1.25rem;
   }
   * { @apply border-border; }
-  html { background: #050505; }
+  html {
+    background: #050505;
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
   body {
     background: #050505;
     color: #fff;

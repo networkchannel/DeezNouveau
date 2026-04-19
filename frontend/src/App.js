@@ -21,6 +21,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminAB from "@/pages/AdminAB";
 import AdminOxaPay from "@/pages/AdminOxaPay";
 import Profile from "@/pages/Profile";
+import ScrollToTop from "@/components/ScrollToTop";
 
 function App() {
   // Initialize security + telemetry service on load
@@ -38,6 +39,7 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <div className="min-h-screen bg-[#050505] flex flex-col relative">
             {/* Violet halo background + subtle grid */}
             <AnimatedBackground />
