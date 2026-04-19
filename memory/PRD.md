@@ -64,15 +64,20 @@ offers gift cards, and provides a loyalty program.
     album mosaic using Deezer trending, no text overlay), metrics bar (3 stats),
     features grid (6), pricing (3 packs with clean violet badges), FAQ accordion
   - All garish `from-purple/pink/orange` gradients replaced with unified violet
-- **Jan 19, 2026 — Follow-up tweaks**:
-  - Admin red Shield icon restored in header right side (admin users only)
-  - Mobile header: tighter padding, Lang icon always visible, mobile menu with
-    Get Started CTA pill
-  - Subtle hover animations on all cards: `card-surface` translateY(-3px) +
-    violet border; same on pricing packs in Offers/Landing
-  - Checkout flow fix: backend `PACKS` aligned to frontend pack IDs
-    (single / pack_3 / pack_5 / pack_10) instead of the legacy solo/duo/family
-  - Badges cleaned: plain violet pill without shadow/icon (no more "pink bars")
+- **Jan 19, 2026 — Admin dashboards + OxaPay monitoring**:
+  - `/admin/ab` : live A/B stats (views/clicks/conversions/CTR/CR),
+    two-proportion z-test with auto-winner verdict when p < 0.05,
+    refresh every 15s
+  - `/admin/oxapay` : webhook event log with status badges, counters
+    (Paid/Failed/Error/Other), retry form (`POST /api/admin/orders/{id}/retry`
+    re-assigns missing links + resends email, idempotent)
+  - Webhook handler enriched: persists every event to `db.oxapay_webhooks`
+    (audit trail), idempotent on Paid/Confirmed, email send wrapped in
+    try/except to not fail webhook on SMTP issues
+  - AdminDashboard header: new quick-access pills "A/B stats" and "OxaPay"
+  - Hero mosaic: 5th artist tile added (bottom-right cell, was empty)
+  - Pricing card hover: translate moved to outer wrapper so the badge
+    follows the card instead of staying in place
 
 ## Verified working (as of Jan 19)
 - All pages load: `/`, `/offers`, `/gift-cards`, `/login`, `/checkout/:pack_id`
