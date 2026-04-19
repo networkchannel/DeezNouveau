@@ -2,21 +2,21 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 /**
- * Scrolls window to top on every route change (pathname + search).
- * Respects reduced-motion preferences; otherwise smooth scroll.
+ * Snaps window to top on every route change (pathname + search).
+ * Uses instant scroll — the page transition handles the visual fluidity.
  */
 export default function ScrollToTop() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    // Small timeout ensures layout is ready (avoids race with lazy routes / hot reload)
+    // Disable smooth scroll momentarily so we don't get mid-navigation jank
+    const html = document.documentElement;
+    const prev = html.style.scrollBehavior;
+    html.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    // Restore on next tick (so native anchor clicks remain smooth)
     const id = window.requestAnimationFrame(() => {
-      window.scrollTo({
-        top: 0,
-        left: 0,
-        behavior: prefersReducedMotion ? "auto" : "smooth",
-      });
+      html.style.scrollBehavior = prev || "";
     });
     return () => window.cancelAnimationFrame(id);
   }, [pathname, search]);

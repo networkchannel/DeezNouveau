@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import { useEffect } from "react";
@@ -22,6 +22,30 @@ import AdminAB from "@/pages/AdminAB";
 import AdminOxaPay from "@/pages/AdminOxaPay";
 import Profile from "@/pages/Profile";
 import ScrollToTop from "@/components/ScrollToTop";
+import PageTransition from "@/components/PageTransition";
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <PageTransition>
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/offers" element={<Offers />} />
+        <Route path="/gift-cards" element={<GiftCards />} />
+        <Route path="/custom-quantity" element={<CustomQuantity />} />
+        <Route path="/checkout/:packId" element={<Checkout />} />
+        <Route path="/order/:orderId" element={<OrderConfirmation />} />
+        <Route path="/history" element={<OrderHistory />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/ab" element={<AdminAB />} />
+        <Route path="/admin/oxapay" element={<AdminOxaPay />} />
+      </Routes>
+    </PageTransition>
+  );
+}
 
 function App() {
   // Initialize security + telemetry service on load
@@ -46,22 +70,8 @@ function App() {
 
             <div className="relative z-10 flex flex-col min-h-screen">
               <Header />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/offers" element={<Offers />} />
-                  <Route path="/gift-cards" element={<GiftCards />} />
-                  <Route path="/custom-quantity" element={<CustomQuantity />} />
-                  <Route path="/checkout/:packId" element={<Checkout />} />
-                  <Route path="/order/:orderId" element={<OrderConfirmation />} />
-                  <Route path="/history" element={<OrderHistory />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/admin/login" element={<AdminLogin />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/ab" element={<AdminAB />} />
-                  <Route path="/admin/oxapay" element={<AdminOxaPay />} />
-                </Routes>
+              <main className="flex-1 flex flex-col">
+                <AnimatedRoutes />
               </main>
               <Footer />
             </div>
