@@ -76,7 +76,7 @@ export default function Header() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-          className={`max-w-6xl mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-3 rounded-full transition-all duration-300 border ${
+          className={`max-w-6xl mx-auto grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 rounded-full transition-all duration-300 border ${
             scrolled
               ? "bg-[rgba(10,10,14,0.88)] border-white/10 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)]"
               : "bg-[rgba(10,10,14,0.55)] border-white/[0.06] backdrop-blur-lg"
@@ -84,7 +84,7 @@ export default function Header() {
           data-testid="main-header"
         >
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 pl-2 pr-1 shrink-0 group" data-testid="logo-link">
+          <Link to="/" className="flex items-center gap-2 pl-2 pr-1 shrink-0 group justify-self-start" data-testid="logo-link">
             <span className="text-white font-display font-bold text-[16px] sm:text-[18px] tracking-tight">
               deez<span className="text-violet-500">link</span>
             </span>

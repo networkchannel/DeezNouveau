@@ -42,13 +42,15 @@ export default function Offers() {
   const fetchStock = async () => {
     try {
       setLoadingStock(true);
-      const response = await secureGet("/admin/stats");
-      if (response?.stock_available !== undefined) {
-        setAvailableStock(response.stock_available);
+      const response = await secureGet("/stock");
+      if (response?.available !== undefined) {
+        setAvailableStock(response.available);
+      } else {
+        setAvailableStock(999); // Fallback
       }
     } catch (err) {
       console.error("Error fetching stock:", err);
-      setAvailableStock(500); // Fallback
+      setAvailableStock(999); // Fallback
     } finally {
       setLoadingStock(false);
     }
@@ -63,7 +65,7 @@ export default function Offers() {
   };
 
   const handleCustomCheckout = () => {
-    if (customQuantity < 1 || customQuantity > availableStock) return;
+    if (customQuantity < 1) return;
     setShowCustomModal(false);
     navigate(`/checkout/custom_${customQuantity}`);
   };
@@ -406,7 +408,7 @@ export default function Offers() {
 
                     <motion.button
                       onClick={handleCustomCheckout}
-                      disabled={loadingStock || customQuantity < 1 || customQuantity > availableStock}
+                      disabled={loadingStock || customQuantity < 1}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="btn-primary w-full !py-3"

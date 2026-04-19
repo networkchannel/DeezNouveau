@@ -35,21 +35,23 @@ export default function CustomQuantity() {
   const fetchStock = async () => {
     try {
       setLoading(true);
-      const response = await secureGet("/admin/stats");
-      if (response?.stock_available !== undefined) {
-        setAvailableStock(response.stock_available);
+      const response = await secureGet("/stock");
+      if (response?.available !== undefined) {
+        setAvailableStock(response.available);
+      } else {
+        setAvailableStock(999); // Fallback
       }
     } catch (err) {
       console.error("Error fetching stock:", err);
-      setAvailableStock(1000); // Fallback
+      setAvailableStock(999); // Fallback
     } finally {
       setLoading(false);
     }
   };
 
   const handleCheckout = () => {
-    if (quantity < 1 || quantity > maxQuantity) {
-      setError(L({ fr: `Quantité invalide (min: 1, max: ${maxQuantity})`, en: `Invalid quantity (min: 1, max: ${maxQuantity})`, es: `Cantidad inválida (min: 1, max: ${maxQuantity})`, pt: `Quantidade inválida (min: 1, max: ${maxQuantity})`, de: `Ungültige Menge (min: 1, max: ${maxQuantity})`, tr: `Geçersiz miktar (min: 1, max: ${maxQuantity})`, nl: `Ongeldige hoeveelheid (min: 1, max: ${maxQuantity})`, ar: `كمية غير صالحة (الحد الأدنى: 1، الأقصى: ${maxQuantity})` }, lang));
+    if (quantity < 1) {
+      setError(L({ fr: `Quantité invalide (min: 1)`, en: `Invalid quantity (min: 1)`, es: `Cantidad inválida (min: 1)`, pt: `Quantidade inválida (min: 1)`, de: `Ungültige Menge (min: 1)`, tr: `Geçersiz miktar (min: 1)`, nl: `Ongeldige hoeveelheid (min: 1)`, ar: `كمية غير صالحة (الحد الأدنى: 1)` }, lang));
       return;
     }
     navigate(`/checkout/custom_${quantity}`);

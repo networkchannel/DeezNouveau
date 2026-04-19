@@ -2729,6 +2729,13 @@ async def admin_retry_order(order_id: str, user: dict = Depends(require_admin)):
         "email_sent": email_sent,
     }
 
+# --- Public stock endpoint (accessible sans auth) ---
+@api_router.get("/stock")
+async def get_public_stock():
+    """Retourne le nombre de liens disponibles — endpoint public."""
+    available = await db.links.count_documents({"status": "available"})
+    return {"available": available}
+
 # --- Admin Routes ---
 @api_router.get("/admin/stats")
 async def admin_stats(user: dict = Depends(require_admin)):
