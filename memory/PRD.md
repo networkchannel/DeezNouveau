@@ -6,10 +6,13 @@
 > https://crystality.win/"
 
 ## Latest updates (Feb 2026)
-- **[2026-02]** Removed Sparkles logo icon next to "deezlink" brand (Header + Footer)
-- **[2026-02]** "link" in "deezlink" upgraded to `text-violet-500` (brighter) in both Header and Footer
-- **[2026-02]** Relocated "Ready to listen without limits?" CTA from Footer to Landing.js, now below the FAQ section
-- **[2026-02]** Simplified Lenis config: `lerp: 0.12`, `wheelMultiplier: 1.0`, `syncTouch: false` — scroll now responsive & smooth (was perceived as broken due to over-tuned inertia `lerp: 0.06` + `wheelMultiplier: 0.7`)
+- **[2026-02]** Scroll fluide aligné avec la référence Micord : Lenis simplifié en `{ autoRaf: true, anchors: { offset: -80 } }` — comportement = défaut Lenis. Les liens `href="#anchor"` déclenchent désormais un smooth-scroll natif via Lenis.
+- **[2026-02]** Hero "deezlink" : "link" coloré en `text-violet-500` dans le gros titre Landing
+- **[2026-02]** Remise fidélité affichée dans Checkout : badge vert "−X% · Tier" avec sous-total barré + total final (lit `user.loyalty_tier` depuis `/api/auth/me`)
+- **[2026-02]** Traductions complètes 8 langues (FR/EN/ES/PT/DE/TR/NL/AR) via helper `pickLang` dans : Landing (hero, features, pricing, FAQ, CTA), Checkout (summary, steps, errors), Header (nav, CTAs), Footer (nav, legal, payment), FloatingCTA
+- **[2026-02]** Nouveau utilitaire `/app/frontend/src/utils/langPick.js` — fallback order: requested lang → en → fr → first value
+- **[2026-02]** Logos Sparkles retirés de côté de "deezlink" dans Header + Footer
+- **[2026-02]** Card "Ready to listen without limits?" placée en dessous de la section FAQ dans Landing.js
 
 
 User choices captured:

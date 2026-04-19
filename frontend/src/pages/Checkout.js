@@ -6,9 +6,11 @@ import axios from "axios";
 import { securePost } from "@/utils/secureApi";
 import telemetryService from "@/utils/telemetryService";
 import ClickCaptchaWidget from "@/components/ClickCaptchaWidget";
+import { useAuth } from "@/context/AuthContext";
+import { pickLang as L } from "@/utils/langPick";
 import {
   ArrowLeft, Loader2, Shield, Check, Lock, Zap, Mail, Clock,
-  Bitcoin, Headphones, Award,
+  Bitcoin, Headphones, Award, Sparkles,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -22,6 +24,7 @@ const CRYPTOS = [
 
 export default function Checkout() {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth();
   const { packId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -82,17 +85,17 @@ export default function Checkout() {
           lines.push({ pack_id: pd.id, name_key: pd.name_key, count, pack_quantity: pd.quantity, pack_price: pd.price, line_total: +(pd.price * count).toFixed(2) });
         }
         if (lines.length === 0) {
-          setError(lang === "fr" ? "Panier invalide." : "Invalid cart.");
+          setError(L({ fr: "Panier invalide.", en: "Invalid cart.", es: "Carrito inválido.", pt: "Carrinho inválido.", de: "Ungültiger Warenkorb.", tr: "Geçersiz sepet.", nl: "Ongeldige winkelwagen.", ar: "سلة غير صالحة." }, lang));
           return;
         }
         setPack({ name_key: "multi", quantity: totalQty, price: +totalPrice.toFixed(2), unit_price: totalQty ? +(totalPrice / totalQty).toFixed(2) : 0, multi_lines: lines });
-      }).catch(() => setError(lang === "fr" ? "Impossible de charger les packs." : "Failed to load packs."));
+      }).catch(() => setError(L({ fr: "Impossible de charger les packs.", en: "Failed to load packs.", es: "No se pudieron cargar los packs.", pt: "Falha ao carregar os packs.", de: "Pakete konnten nicht geladen werden.", tr: "Paketler yüklenemedi.", nl: "Kan pakketten niet laden.", ar: "تعذّر تحميل الباقات." }, lang)));
     } else if (isCustom) {
       axios.get(`${API}/pricing/calculate?quantity=${customQty}`).then((r) => {
         setCustomPricing(r.data);
         setPack({ name_key: "custom", quantity: r.data.quantity, price: r.data.total, unit_price: r.data.unit_price });
       }).catch((err) => {
-        setError(err.response?.data?.detail || (lang === "fr" ? "Quantité invalide." : "Invalid quantity."));
+        setError(err.response?.data?.detail || L({ fr: "Quantité invalide.", en: "Invalid quantity.", es: "Cantidad inválida.", pt: "Quantidade inválida.", de: "Ungültige Menge.", tr: "Geçersiz miktar.", nl: "Ongeldige hoeveelheid.", ar: "كمية غير صالحة." }, lang));
       });
     } else {
       axios.get(`${API}/packs`).then((r) => {
@@ -101,13 +104,20 @@ export default function Checkout() {
         if (found) {
           setPack(found);
         } else {
-          setError(lang === "fr"
-            ? `Pack introuvable : "${packId}". Retour aux offres…`
-            : `Pack not found: "${packId}". Redirecting…`);
+          setError(L({
+            fr: `Pack introuvable : "${packId}". Retour aux offres…`,
+            en: `Pack not found: "${packId}". Redirecting…`,
+            es: `Pack no encontrado: "${packId}". Redirigiendo…`,
+            pt: `Pack não encontrado: "${packId}". Redirecionando…`,
+            de: `Pack nicht gefunden: "${packId}". Weiterleitung…`,
+            tr: `Paket bulunamadı: "${packId}". Yönlendiriliyor…`,
+            nl: `Pakket niet gevonden: "${packId}". Doorverwijzen…`,
+            ar: `الباقة غير موجودة: "${packId}". جارٍ التحويل…`,
+          }, lang));
           setTimeout(() => navigate("/offers"), 1500);
         }
       }).catch(() => {
-        setError(lang === "fr" ? "Impossible de charger les packs." : "Failed to load packs.");
+        setError(L({ fr: "Impossible de charger les packs.", en: "Failed to load packs.", es: "No se pudieron cargar los packs.", pt: "Falha ao carregar os packs.", de: "Pakete konnten nicht geladen werden.", tr: "Paketler yüklenemedi.", nl: "Kan pakketten niet laden.", ar: "تعذّر تحميل الباقات." }, lang));
       });
     }
   }, [packId, isCustom, isMulti, multiItems, customQty, navigate, lang]);
@@ -161,7 +171,7 @@ export default function Checkout() {
         setCaptchaToken("");
         setError(typeof detail === "object" ? detail.message : typeof detail === "string" ? detail : "Captcha required");
       } else {
-        setError(typeof detail === "string" ? detail : (lang === "fr" ? "Erreur. Réessaie." : "Error. Try again."));
+        setError(typeof detail === "string" ? detail : L({ fr: "Erreur. Réessaie.", en: "Error. Try again.", es: "Error. Inténtalo de nuevo.", pt: "Erro. Tente novamente.", de: "Fehler. Erneut versuchen.", tr: "Hata. Tekrar dene.", nl: "Fout. Probeer opnieuw.", ar: "خطأ. حاول مرة أخرى." }, lang));
       }
     } finally { setLoading(false); }
   };
@@ -173,7 +183,7 @@ export default function Checkout() {
           <div className="max-w-md w-full card-surface p-8 text-center">
             <div className="text-red-400 text-sm mb-4" data-testid="checkout-load-error">{error}</div>
             <button onClick={() => navigate("/offers")} className="btn-primary">
-              {lang === "fr" ? "Retour aux offres" : "Back to offers"}
+              {L({ fr: "Retour aux offres", en: "Back to offers", es: "Volver a ofertas", pt: "Voltar às ofertas", de: "Zurück zu Angeboten", tr: "Tekliflere dön", nl: "Terug naar aanbiedingen", ar: "رجوع للعروض" }, lang)}
             </button>
           </div>
         ) : (
@@ -185,63 +195,126 @@ export default function Checkout() {
 
   const displayPrice = isCustom ? customPricing?.total : pack.price;
   const displayQty = isCustom ? customQty : pack.quantity;
-  const unitPrice = displayPrice && displayQty ? (displayPrice / displayQty) : 0;
+
+  // Loyalty discount (only when logged in)
+  const loyaltyDiscountPct = user && user.loyalty_tier?.discount ? user.loyalty_tier.discount : 0;
+  const loyaltyTierName = user?.loyalty_tier?.name || "";
+  const basePrice = displayPrice || 0;
+  const loyaltySavings = loyaltyDiscountPct > 0 ? +(basePrice * loyaltyDiscountPct / 100).toFixed(2) : 0;
+  const finalPrice = loyaltyDiscountPct > 0 ? +(basePrice - loyaltySavings).toFixed(2) : basePrice;
+
+  const unitPrice = finalPrice && displayQty ? (finalPrice / displayQty) : 0;
   const packLabel = isCustom
-    ? (lang === "fr" ? "Sur mesure" : "Custom")
+    ? L({ fr: "Sur mesure", en: "Custom", es: "Personalizado", pt: "Personalizado", de: "Benutzerdefiniert", tr: "Özel", nl: "Aangepast", ar: "مخصص" }, lang)
     : t(pack.name_key || "pack_starter");
 
-  const T = {
+  const Tdict = {
     fr: {
-      back: "Retour aux offres",
-      step: "Étape 2/3 — Finaliser la commande",
-      title: "Commande",
-      summary: "Récapitulatif",
-      total: "Total à payer",
-      perLink: "par lien",
-      deliveryTime: "Livraison instantanée",
-      guarantee: "Garantie 30 jours",
-      crypto: "Paiement crypto",
-      email: "Email de livraison",
-      emailPlaceholder: "tu@exemple.com",
-      emailHint: "Tes liens d'activation seront envoyés à cet email",
-      pay: "Procéder au paiement",
-      paying: "Redirection…",
-      securePay: "Paiement sécurisé via OxaPay",
-      acceptedCrypto: "Cryptos acceptées",
-      verified: "Vérifié",
-      verifyPrompt: "Vérifie avant de payer",
+      back: "Retour aux offres", step: "Étape 2/3 — Finaliser la commande", title: "Commande", summary: "Récapitulatif",
+      subtotal: "Sous-total", loyaltyLabel: "Remise fidélité", total: "Total à payer", perLink: "par lien",
+      deliveryTime: "Livraison instantanée", guarantee: "Garantie 30 jours", crypto: "Paiement crypto",
+      email: "Email de livraison", emailPlaceholder: "tu@exemple.com", emailHint: "Tes liens d'activation seront envoyés à cet email",
+      pay: "Procéder au paiement", paying: "Redirection…", securePay: "Paiement sécurisé via OxaPay",
+      acceptedCrypto: "Cryptos acceptées", verified: "Vérifié", verifyPrompt: "Vérifie avant de payer",
       steps: ["Choix du pack", "Email & paiement", "Liens reçus"],
       whatHappens: "Ce qui se passe ensuite",
-      step1: "Tu seras redirigé vers OxaPay",
-      step2: "Tu paies en crypto de ton choix",
-      step3: "Tes liens arrivent par email en moins de 5 min",
+      step1: "Tu seras redirigé vers OxaPay", step2: "Tu paies en crypto de ton choix", step3: "Tes liens arrivent par email en moins de 5 min",
+      exact: "Montant exact — aucun frais caché", anonymous: "100% anonyme", support24: "Support 24/7",
+      liensWord: "liens",
     },
     en: {
-      back: "Back to offers",
-      step: "Step 2/3 — Complete your order",
-      title: "Order",
-      summary: "Summary",
-      total: "Total to pay",
-      perLink: "per link",
-      deliveryTime: "Instant delivery",
-      guarantee: "30-day guarantee",
-      crypto: "Crypto payment",
-      email: "Delivery email",
-      emailPlaceholder: "you@example.com",
-      emailHint: "Your activation links will be sent to this email",
-      pay: "Proceed to payment",
-      paying: "Redirecting…",
-      securePay: "Secure payment via OxaPay",
-      acceptedCrypto: "Accepted crypto",
-      verified: "Verified",
-      verifyPrompt: "Verify before paying",
+      back: "Back to offers", step: "Step 2/3 — Complete your order", title: "Order", summary: "Summary",
+      subtotal: "Subtotal", loyaltyLabel: "Loyalty discount", total: "Total to pay", perLink: "per link",
+      deliveryTime: "Instant delivery", guarantee: "30-day guarantee", crypto: "Crypto payment",
+      email: "Delivery email", emailPlaceholder: "you@example.com", emailHint: "Your activation links will be sent to this email",
+      pay: "Proceed to payment", paying: "Redirecting…", securePay: "Secure payment via OxaPay",
+      acceptedCrypto: "Accepted crypto", verified: "Verified", verifyPrompt: "Verify before paying",
       steps: ["Pick a pack", "Email & pay", "Get links"],
       whatHappens: "What happens next",
-      step1: "You'll be redirected to OxaPay",
-      step2: "Pay with any crypto you like",
-      step3: "Links delivered by email in under 5 min",
+      step1: "You'll be redirected to OxaPay", step2: "Pay with any crypto you like", step3: "Links delivered by email in under 5 min",
+      exact: "Exact amount — no hidden fees", anonymous: "100% anonymous", support24: "24/7 support",
+      liensWord: "links",
     },
-  }[lang] || { back: "Back", step: "", title: "Order", summary: "Summary", total: "Total", perLink: "per link", deliveryTime: "Instant", guarantee: "Guarantee", crypto: "Crypto", email: "Email", emailPlaceholder: "you@example.com", emailHint: "Links will arrive here", pay: "Pay", paying: "Redirecting…", securePay: "Secure payment", acceptedCrypto: "Accepted", verified: "Verified", verifyPrompt: "Verify", steps: ["Pack", "Pay", "Done"], whatHappens: "What's next", step1: "Redirect", step2: "Pay", step3: "Links" };
+    es: {
+      back: "Volver a ofertas", step: "Paso 2/3 — Completa tu pedido", title: "Pedido", summary: "Resumen",
+      subtotal: "Subtotal", loyaltyLabel: "Descuento fidelidad", total: "Total a pagar", perLink: "por enlace",
+      deliveryTime: "Entrega instantánea", guarantee: "Garantía 30 días", crypto: "Pago cripto",
+      email: "Email de entrega", emailPlaceholder: "tu@ejemplo.com", emailHint: "Tus enlaces llegarán a este email",
+      pay: "Continuar al pago", paying: "Redirigiendo…", securePay: "Pago seguro vía OxaPay",
+      acceptedCrypto: "Cripto aceptados", verified: "Verificado", verifyPrompt: "Verifica antes de pagar",
+      steps: ["Elegir pack", "Email y pago", "Recibir enlaces"],
+      whatHappens: "Qué pasa después",
+      step1: "Serás redirigido a OxaPay", step2: "Paga con la cripto que prefieras", step3: "Enlaces por email en menos de 5 min",
+      exact: "Monto exacto — sin comisiones ocultas", anonymous: "100% anónimo", support24: "Soporte 24/7",
+      liensWord: "enlaces",
+    },
+    pt: {
+      back: "Voltar às ofertas", step: "Passo 2/3 — Conclua seu pedido", title: "Pedido", summary: "Resumo",
+      subtotal: "Subtotal", loyaltyLabel: "Desconto fidelidade", total: "Total a pagar", perLink: "por link",
+      deliveryTime: "Entrega instantânea", guarantee: "Garantia 30 dias", crypto: "Pagamento cripto",
+      email: "Email de entrega", emailPlaceholder: "voce@exemplo.com", emailHint: "Seus links serão enviados a este email",
+      pay: "Prosseguir ao pagamento", paying: "Redirecionando…", securePay: "Pagamento seguro via OxaPay",
+      acceptedCrypto: "Cripto aceitos", verified: "Verificado", verifyPrompt: "Verifique antes de pagar",
+      steps: ["Escolher pack", "Email e pagamento", "Receber links"],
+      whatHappens: "O que acontece depois",
+      step1: "Você será redirecionado ao OxaPay", step2: "Pague com a cripto que preferir", step3: "Links por email em menos de 5 min",
+      exact: "Valor exato — sem taxas ocultas", anonymous: "100% anônimo", support24: "Suporte 24/7",
+      liensWord: "links",
+    },
+    de: {
+      back: "Zurück zu Angeboten", step: "Schritt 2/3 — Bestellung abschließen", title: "Bestellung", summary: "Zusammenfassung",
+      subtotal: "Zwischensumme", loyaltyLabel: "Treuerabatt", total: "Zu zahlender Betrag", perLink: "pro Link",
+      deliveryTime: "Sofortige Lieferung", guarantee: "30-Tage-Garantie", crypto: "Krypto-Zahlung",
+      email: "Liefer-E-Mail", emailPlaceholder: "du@beispiel.com", emailHint: "Ihre Aktivierungslinks werden an diese E-Mail gesendet",
+      pay: "Zur Zahlung", paying: "Weiterleitung…", securePay: "Sichere Zahlung via OxaPay",
+      acceptedCrypto: "Akzeptierte Krypto", verified: "Verifiziert", verifyPrompt: "Vor der Zahlung verifizieren",
+      steps: ["Pack wählen", "E-Mail & Zahlung", "Links erhalten"],
+      whatHappens: "Was als nächstes passiert",
+      step1: "Sie werden zu OxaPay weitergeleitet", step2: "Zahlen Sie mit beliebiger Krypto", step3: "Links per E-Mail in weniger als 5 Min.",
+      exact: "Exakter Betrag — keine versteckten Gebühren", anonymous: "100% anonym", support24: "24/7 Support",
+      liensWord: "Links",
+    },
+    tr: {
+      back: "Tekliflere dön", step: "Adım 2/3 — Siparişi tamamla", title: "Sipariş", summary: "Özet",
+      subtotal: "Ara toplam", loyaltyLabel: "Sadakat indirimi", total: "Ödenecek toplam", perLink: "bağlantı başına",
+      deliveryTime: "Anında teslimat", guarantee: "30 gün garanti", crypto: "Kripto ödeme",
+      email: "Teslimat e-postası", emailPlaceholder: "sen@ornek.com", emailHint: "Aktivasyon bağlantılarınız bu e-postaya gönderilir",
+      pay: "Ödemeye geç", paying: "Yönlendiriliyor…", securePay: "OxaPay ile güvenli ödeme",
+      acceptedCrypto: "Kabul edilen kripto", verified: "Doğrulandı", verifyPrompt: "Ödemeden önce doğrulayın",
+      steps: ["Paket seç", "E-posta ve ödeme", "Bağlantıları al"],
+      whatHappens: "Sonra ne olacak",
+      step1: "OxaPay'e yönlendirileceksiniz", step2: "Dilediğiniz kripto ile ödeyin", step3: "Bağlantılar 5 dk içinde e-postayla gelir",
+      exact: "Tam tutar — gizli ücret yok", anonymous: "%100 anonim", support24: "7/24 destek",
+      liensWord: "bağlantı",
+    },
+    nl: {
+      back: "Terug naar aanbiedingen", step: "Stap 2/3 — Bestelling afronden", title: "Bestelling", summary: "Samenvatting",
+      subtotal: "Subtotaal", loyaltyLabel: "Loyaliteitskorting", total: "Te betalen totaal", perLink: "per link",
+      deliveryTime: "Directe levering", guarantee: "30 dagen garantie", crypto: "Crypto-betaling",
+      email: "Bezorg-e-mail", emailPlaceholder: "jij@voorbeeld.com", emailHint: "Je activeringslinks worden naar dit e-mailadres gestuurd",
+      pay: "Ga naar betaling", paying: "Doorverwijzen…", securePay: "Veilige betaling via OxaPay",
+      acceptedCrypto: "Geaccepteerde crypto", verified: "Geverifieerd", verifyPrompt: "Verifieer vóór betaling",
+      steps: ["Pakket kiezen", "E-mail & betaling", "Links ontvangen"],
+      whatHappens: "Wat er daarna gebeurt",
+      step1: "Je wordt doorverwezen naar OxaPay", step2: "Betaal met elke gewenste crypto", step3: "Links per e-mail binnen 5 min",
+      exact: "Exact bedrag — geen verborgen kosten", anonymous: "100% anoniem", support24: "24/7 support",
+      liensWord: "links",
+    },
+    ar: {
+      back: "رجوع للعروض", step: "الخطوة 2/3 — إتمام الطلب", title: "الطلب", summary: "الملخص",
+      subtotal: "المجموع الفرعي", loyaltyLabel: "خصم الولاء", total: "المجموع المستحق", perLink: "لكل رابط",
+      deliveryTime: "توصيل فوري", guarantee: "ضمان 30 يومًا", crypto: "دفع كريبتو",
+      email: "بريد التسليم", emailPlaceholder: "anta@example.com", emailHint: "ستصلك روابط التفعيل على هذا البريد",
+      pay: "المتابعة للدفع", paying: "جارٍ التحويل…", securePay: "دفع آمن عبر OxaPay",
+      acceptedCrypto: "العملات المقبولة", verified: "تم التحقق", verifyPrompt: "تحقق قبل الدفع",
+      steps: ["اختيار الباقة", "البريد والدفع", "استلام الروابط"],
+      whatHappens: "ما سيحدث بعد ذلك",
+      step1: "سيتم تحويلك إلى OxaPay", step2: "ادفع بالعملة الرقمية التي تفضلها", step3: "تصل الروابط عبر البريد خلال 5 دقائق",
+      exact: "مبلغ دقيق — بلا رسوم خفية", anonymous: "مجهول 100%", support24: "دعم 24/7",
+      liensWord: "روابط",
+    },
+  };
+  const T = Tdict[lang] || Tdict.en;
 
   return (
     <div className="relative min-h-screen">
@@ -303,9 +376,9 @@ export default function Checkout() {
                         <div className="text-white font-semibold text-[14px] truncate">
                           {t(l.name_key || "pack_starter")} <span className="text-white/50 font-normal">× {l.count}</span>
                         </div>
-                        <div className="text-white/45 text-[11px]">
-                          {l.pack_quantity * l.count}{" "}{lang === "fr" ? "liens" : "links"} · {l.pack_price.toFixed(2)}€ / pack
-                        </div>
+                      <div className="text-white/45 text-[11px]">
+                        {l.pack_quantity * l.count}{" "}{T.liensWord} · {l.pack_price.toFixed(2)}€ / pack
+                      </div>
                       </div>
                       <div className="text-white font-semibold text-[14px] tabular-nums">
                         {l.line_total.toFixed(2)}€
@@ -332,21 +405,51 @@ export default function Checkout() {
                 </div>
               )}
 
+              {/* Loyalty discount badge */}
+              {loyaltyDiscountPct > 0 && (
+                <div
+                  className="mb-4 flex items-center justify-between px-4 py-3 rounded-2xl bg-green-500/10 border border-green-500/25"
+                  data-testid="loyalty-discount-row"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Sparkles className="h-3.5 w-3.5 text-green-400" />
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-green-400 text-[12.5px] font-semibold">
+                        {T.loyaltyLabel}
+                        {loyaltyTierName ? <span className="text-green-300/70 font-normal"> · {loyaltyTierName}</span> : null}
+                      </div>
+                      <div className="text-white/45 text-[11px]">
+                        −{loyaltyDiscountPct}%
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-green-400 font-semibold text-[14px] tabular-nums">
+                    −{loyaltySavings.toFixed(2)}€
+                  </div>
+                </div>
+              )}
+
               {/* Total */}
               <div className="rounded-2xl bg-gradient-to-br from-violet-900/30 to-transparent border border-violet-500/20 p-5 mb-5">
+                {loyaltyDiscountPct > 0 && (
+                  <div className="flex items-baseline justify-between mb-1.5 text-[12px]">
+                    <span className="text-white/45">{T.subtotal}</span>
+                    <span className="text-white/60 line-through tabular-nums">{basePrice.toFixed(2)}€</span>
+                  </div>
+                )}
                 <div className="flex items-baseline justify-between mb-1">
                   <span className="text-white/60 text-[13px] font-medium">{T.total}</span>
                   <div className="flex items-baseline gap-1">
                     <span className="display-md text-white tracking-tight" data-testid="checkout-total">
-                      {displayPrice?.toFixed(2)}
+                      {finalPrice.toFixed(2)}
                     </span>
                     <span className="text-white/50 font-semibold text-sm">EUR</span>
                   </div>
                 </div>
                 <div className="text-white/40 text-[11px]">
-                  {lang === "fr"
-                    ? "Montant exact — aucun frais caché"
-                    : "Exact amount — no hidden fees"}
+                  {T.exact}
                 </div>
               </div>
 
@@ -355,8 +458,8 @@ export default function Checkout() {
                 {[
                   { icon: Zap, text: T.deliveryTime, color: "text-violet-300" },
                   { icon: Award, text: T.guarantee, color: "text-green-400" },
-                  { icon: Lock, text: lang === "fr" ? "100% anonyme" : "100% anonymous", color: "text-sky-300" },
-                  { icon: Clock, text: lang === "fr" ? "Support 24/7" : "24/7 support", color: "text-amber-300" },
+                  { icon: Lock, text: T.anonymous, color: "text-sky-300" },
+                  { icon: Clock, text: T.support24, color: "text-amber-300" },
                 ].map((r, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-white/70">
                     <r.icon className={`h-3.5 w-3.5 ${r.color} shrink-0`} />
@@ -443,7 +546,7 @@ export default function Checkout() {
                   data-testid="pay-btn"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-                  {loading ? T.paying : `${T.pay} · ${displayPrice?.toFixed(2)}€`}
+                  {loading ? T.paying : `${T.pay} · ${finalPrice.toFixed(2)}€`}
                 </button>
 
                 <p className="text-white/45 text-[12px] text-center flex items-center justify-center gap-1.5 mt-3.5">

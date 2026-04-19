@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe, Menu, X, ShoppingCart, User, LogIn, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { pickLang as L } from "@/utils/langPick";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
@@ -51,10 +52,10 @@ export default function Header() {
   const isRegularUser = isLoggedIn && user.role !== "admin";
 
   const navLinks = [
-    { to: "/", label: lang === "fr" ? "Accueil" : "Home" },
-    { to: "/offers", label: lang === "fr" ? "Offres" : "Pricing" },
-    { to: "/gift-cards", label: lang === "fr" ? "Cartes" : "Gift Cards" },
-    ...(isRegularUser ? [{ to: "/history", label: lang === "fr" ? "Historique" : "Orders" }] : []),
+    { to: "/", label: L({ fr: "Accueil", en: "Home", es: "Inicio", pt: "Início", de: "Startseite", tr: "Ana Sayfa", nl: "Home", ar: "الرئيسية" }, lang) },
+    { to: "/offers", label: L({ fr: "Offres", en: "Pricing", es: "Ofertas", pt: "Ofertas", de: "Angebote", tr: "Teklifler", nl: "Aanbiedingen", ar: "العروض" }, lang) },
+    { to: "/gift-cards", label: L({ fr: "Cartes", en: "Gift Cards", es: "Tarjetas", pt: "Cartões", de: "Karten", tr: "Kartlar", nl: "Kaarten", ar: "البطاقات" }, lang) },
+    ...(isRegularUser ? [{ to: "/history", label: L({ fr: "Historique", en: "Orders", es: "Pedidos", pt: "Pedidos", de: "Bestellungen", tr: "Siparişler", nl: "Bestellingen", ar: "الطلبات" }, lang) }] : []),
   ];
 
   return (
@@ -148,7 +149,7 @@ export default function Header() {
                 className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white text-black text-[13px] font-semibold hover:bg-white/90 transition-all"
               >
                 <LogIn className="h-3.5 w-3.5" />
-                {lang === "fr" ? "Connexion" : "Sign in"}
+                {L({ fr: "Connexion", en: "Sign in", es: "Entrar", pt: "Entrar", de: "Anmelden", tr: "Giriş", nl: "Inloggen", ar: "تسجيل الدخول" }, lang)}
               </Link>
             ) : isAdminUser ? (
               <Link to="/admin" data-testid="admin-btn" className="p-1">
@@ -170,7 +171,7 @@ export default function Header() {
               className="hidden lg:inline-flex btn-primary !py-2 !px-4 !text-[13px]"
               data-testid="header-cta-btn"
             >
-              {lang === "fr" ? "Commencer" : "Get Started"}
+              {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
             </button>
 
             {/* Mobile menu */}
@@ -214,7 +215,7 @@ export default function Header() {
                     data-testid="mobile-login-btn"
                     className="mt-2 px-4 py-3 rounded-2xl bg-white text-black font-semibold text-[14px] text-center"
                   >
-                    {lang === "fr" ? "Connexion" : "Sign in"}
+                    {L({ fr: "Connexion", en: "Sign in", es: "Entrar", pt: "Entrar", de: "Anmelden", tr: "Giriş", nl: "Inloggen", ar: "تسجيل الدخول" }, lang)}
                   </Link>
                 )}
                 <Link
@@ -223,7 +224,7 @@ export default function Header() {
                   data-testid="mobile-cta-btn"
                   className="btn-primary w-full mt-1 justify-center"
                 >
-                  {lang === "fr" ? "Commencer" : "Get Started"}
+                  {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
                 </Link>
                 {isLoggedIn && (
                   <button
@@ -231,7 +232,7 @@ export default function Header() {
                     data-testid="mobile-logout-btn"
                     className="mt-2 px-4 py-3 rounded-2xl bg-white/[0.03] text-red-400 font-semibold text-[14px] text-left"
                   >
-                    {lang === "fr" ? "Déconnexion" : "Sign out"}
+                    {L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
                   </button>
                 )}
               </div>
@@ -249,7 +250,7 @@ export default function Header() {
               className="fixed top-24 right-4 px-4 py-3 rounded-full bg-[#0f0f14] border border-green-500/25 z-50 shadow-[0_8px_32px_-8px_rgba(34,197,94,0.4)]"
             >
               <p className="text-sm text-green-400 font-semibold flex items-center gap-2">
-                <span className="pill-dot" /> {lang === "fr" ? "Ajouté au panier" : "Added to cart"}
+                <span className="pill-dot" /> {L({ fr: "Ajouté au panier", en: "Added to cart", es: "Añadido al carrito", pt: "Adicionado ao carrinho", de: "Zum Warenkorb hinzugefügt", tr: "Sepete eklendi", nl: "Toegevoegd aan winkelwagen", ar: "أُضيف إلى السلة" }, lang)}
               </p>
             </motion.div>
           )}

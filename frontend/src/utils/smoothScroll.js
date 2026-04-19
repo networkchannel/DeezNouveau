@@ -13,17 +13,9 @@ export function initSmoothScroll() {
 
   lenisInstance = new Lenis({
     autoRaf: true,
-    duration: 1.2,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // ease-out expo
-    smoothWheel: true,
-    syncTouch: false,
-    wheelMultiplier: 1.0,
-    touchMultiplier: 1.6,
-    lerp: 0.12,                            // responsive but still smooth
-    orientation: "vertical",
-    gestureOrientation: "vertical",
-    infinite: false,
-    autoResize: true,
+    anchors: {
+      offset: -80,        // account for sticky header
+    },
   });
 
   // Expose for debug
