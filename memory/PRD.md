@@ -64,7 +64,23 @@ offers gift cards, and provides a loyalty program.
     album mosaic using Deezer trending, no text overlay), metrics bar (3 stats),
     features grid (6), pricing (3 packs with clean violet badges), FAQ accordion
   - All garish `from-purple/pink/orange` gradients replaced with unified violet
+- **Jan 19, 2026 — Checkout refonte + OxaPay fee fix**: (voir section précédente)
 - **Jan 19, 2026 — Admin dashboards + OxaPay monitoring**:
+  - Bug résolu : OxaPay affichait 5.075€ pour un pack 5€ (frais 1.5% ajoutés au
+    payeur). Ajout de `feePaidByPayer: 0` + `lifeTime: 60` sur `/api/orders/create`
+    ET `/api/orders/create-custom`. Le client voit maintenant exactement le
+    montant annoncé ; le marchand absorbe les frais réseau crypto.
+  - Refonte complète de `Checkout.js` en crystality-style 2 colonnes :
+    - Stepper top-right (Pick a pack ✓ / Email & pay / Get links)
+    - Colonne gauche : Summary card (icône produit, prix unitaire),
+      bloc total en violet "Exact amount — no hidden fees", 4 trust bullets
+      (Instant delivery / 30-day guarantee / 100% anonymous / 24/7 support)
+    - Colonne droite : input email à grosse forme pill, 4 pills crypto
+      (BTC/ETH/USDT/LTC), bouton CTA "Proceed to payment · {montant}€"
+      avec icône Lock, note "Secure payment via OxaPay"
+    - Section "What happens next" (redirect → crypto pay → delivery)
+  - Bouton "Back" redirige vers `/offers` au lieu de `/`
+  - testing_agent_v3 iteration_6: 13/13 PASS (backend 100%, frontend 100%)
   - `/admin/ab` : live A/B stats (views/clicks/conversions/CTR/CR),
     two-proportion z-test with auto-winner verdict when p < 0.05,
     refresh every 15s

@@ -2296,6 +2296,8 @@ async def create_custom_order(request: Request):
                 "description": f"DeezLink - Deezer Premium x{quantity}",
                 "callbackUrl": f"{backend_url}/api/webhooks/oxapay",
                 "returnUrl": f"{site_url}/order/{order_id}",
+                "feePaidByPayer": 0,
+                "lifeTime": 60,
             }
             async with httpx.AsyncClient(timeout=10.0) as http_client:
                 resp = await http_client.post(f"{OXAPAY_BASE_URL}/merchants/request", json=payload)
