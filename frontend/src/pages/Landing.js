@@ -355,7 +355,7 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="relative overflow-hidden rounded-[2rem]"
+              className="relative"
             >
               <div className="relative aspect-[4/5] sm:aspect-square w-full max-w-[520px] ml-auto">
                 <div className="relative grid grid-cols-3 grid-rows-4 gap-2 sm:gap-3 h-full">
