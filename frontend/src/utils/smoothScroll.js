@@ -11,26 +11,36 @@ export function initSmoothScroll() {
   const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   if (prefersReduced) return null;
 
-  // Disable Lenis on touch devices (iOS/Android) — native scroll is smoother
-  // and avoids memory/performance issues on lower-end phones.
-  const isTouchDevice =
-    window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ||
-    ("ontouchstart" in window && navigator.maxTouchPoints > 0);
-  if (isTouchDevice) return null;
-
   lenisInstance = new Lenis({
+    // RAF géré en interne par Lenis
     autoRaf: true,
+
+    // Fluidité du scroll — plus bas = plus fluide/inertiel (défaut 0.1)
+    // 0.08 donne un rendu très soyeux proche des sites premium
+    lerp: 0.08,
+
+    // Scroll vers les ancres (#section) avec offset pour le header sticky
     anchors: {
-      offset: -80,        // account for sticky header
+      offset: -88,
     },
+
+    // Laisse les éléments scrollables imbriqués (cart panel, dropdowns,
+    // sélecteur de langue, modales) scroller nativement
+    allowNestedScroll: true,
+
+    // Arrête l'inertie de scroll quand on clique sur un lien interne
+    stopInertiaOnNavigate: true,
+
+    // Active/désactive automatiquement Lenis quand overflow change
+    // (utile pour les modales qui font overflow: hidden sur body)
+    autoToggle: true,
   });
 
-  // Expose for debug
+  // Expose pour debug dans la console navigateur
   if (typeof window !== "undefined") {
     window.__LENIS__ = lenisInstance;
   }
 
-  // Log once so dev can confirm Lenis is alive
   // eslint-disable-next-line no-console
   console.log("[Lenis] smooth scroll initialized", lenisInstance);
 
@@ -47,8 +57,8 @@ export function getLenis() {
 }
 
 /**
- * Smoothly scroll to a target.
- * target: element, selector string, or Y coordinate.
+ * Scroll programmatique vers une cible.
+ * target: sélecteur CSS, élément DOM, ou valeur Y en pixels.
  */
 export function smoothScrollTo(target, options = {}) {
   if (lenisInstance) {
@@ -61,7 +71,7 @@ export function smoothScrollTo(target, options = {}) {
       force: false,
     });
   } else {
-    // Fallback to native scroll
+    // Fallback scroll natif
     if (typeof target === "number") {
       window.scrollTo({ top: target, behavior: "smooth" });
     } else {

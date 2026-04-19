@@ -35,14 +35,21 @@
     overflow-x: hidden;
     max-width: 100vw;
   }
-  /* With Lenis active, the lib sets .lenis class and manages scroll manually.
-     When Lenis is NOT active (reduced motion), fall back to native smooth. */
+  /* ─── Lenis smooth scroll — classes de support ─── */
+  /* height: auto requis pour que Lenis contrôle le scroll via window */
   html.lenis, html.lenis body { height: auto; }
+  /* Empêche scroll-behavior natif d'interférer avec Lenis */
   html.lenis-smooth { scroll-behavior: auto !important; }
-  html.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  /* Les éléments avec data-lenis-prevent scrollent nativement */
+  html.lenis-smooth [data-lenis-prevent] {
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  /* autoToggle: quand overflow: hidden est mis sur body, Lenis se stoppe */
   html.lenis-stopped { overflow: clip; }
+  /* Évite les clics involontaires sur iframes pendant le scroll */
   html.lenis-scrolling iframe { pointer-events: none; }
-  /* When Lenis is disabled (reduced motion) we still want smooth anchors */
+  /* Fallback scroll natif quand Lenis est désactivé (prefers-reduced-motion) */
   @media (prefers-reduced-motion: no-preference) {
     html:not(.lenis) { scroll-behavior: smooth; }
   }
