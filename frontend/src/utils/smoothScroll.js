@@ -12,15 +12,19 @@ export function initSmoothScroll() {
   if (prefersReduced) return null;
 
   lenisInstance = new Lenis({
-    autoRaf: true,                        // let Lenis run its own rAF loop
-    duration: 1.2,                        // smooth length
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // expo-out
+    autoRaf: true,
+    duration: 1.6,                        // longer glide
+    easing: (t) => 1 - Math.pow(1 - t, 3), // ease-out cubic (soft deceleration)
     smoothWheel: true,
-    wheelMultiplier: 1,
+    syncTouch: true,                       // unified touch + mouse feel on mobile
+    syncTouchLerp: 0.08,
+    wheelMultiplier: 0.85,                 // slightly slower per wheel tick
     touchMultiplier: 1.5,
-    lerp: 0.1,                            // interpolation factor (lower = more smooth)
+    lerp: 0.08,                            // lower = more glide/inertia
     orientation: "vertical",
     gestureOrientation: "vertical",
+    infinite: false,
+    autoResize: true,
   });
 
   return lenisInstance;
