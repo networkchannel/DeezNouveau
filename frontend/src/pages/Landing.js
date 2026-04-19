@@ -365,7 +365,13 @@ export default function Landing() {
                   {/* Big featured card */}
                   <div className="col-span-2 row-span-2 relative rounded-2xl overflow-hidden card-surface">
                     {albums[0] ? (
-                      <img src={albums[0].cover_big} alt={albums[0].title} className="w-full h-full object-cover" />
+                      <img
+                        src={albums[0].cover_big}
+                        alt={albums[0].title}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-violet-900/40 to-black flex items-center justify-center">
                         <Music className="h-16 w-16 text-violet-400/40" />
@@ -383,11 +389,17 @@ export default function Landing() {
                   {/* Small artist tiles (5 — fills the bottom-right cell too) */}
                   {[1, 2, 3, 4, 5].map((idx) => {
                     const a = artists[idx - 1] || albums[idx];
-                    const img = a?.picture_big || a?.cover_big || a?.cover;
+                    const img = a?.picture_medium || a?.cover_medium || a?.picture || a?.cover;
                     return (
                       <div key={idx} className="relative rounded-2xl overflow-hidden card-surface aspect-square">
                         {img ? (
-                          <img src={img} alt={a?.name || ""} className="w-full h-full object-cover" />
+                          <img
+                            src={img}
+                            alt={a?.name || ""}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-violet-900/30 to-black flex items-center justify-center">
                             <Star className="h-5 w-5 text-violet-400/40" />

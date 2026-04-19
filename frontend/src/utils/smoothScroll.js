@@ -11,6 +11,13 @@ export function initSmoothScroll() {
   const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   if (prefersReduced) return null;
 
+  // Disable Lenis on touch devices (iOS/Android) — native scroll is smoother
+  // and avoids memory/performance issues on lower-end phones.
+  const isTouchDevice =
+    window.matchMedia?.("(hover: none) and (pointer: coarse)").matches ||
+    ("ontouchstart" in window && navigator.maxTouchPoints > 0);
+  if (isTouchDevice) return null;
+
   lenisInstance = new Lenis({
     autoRaf: true,
     anchors: {
