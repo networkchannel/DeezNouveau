@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { smoothScrollTo } from "@/utils/smoothScroll";
+import Reveal, { StaggerGroup, StaggerItem } from "@/components/Reveal";
 import {
   Headphones, Music, Zap, Check, ArrowRight, Shield, Gift,
   Download, Volume2, Radio, Sparkles, Clock, Users, Lock,
@@ -302,7 +303,7 @@ export default function Landing() {
       {/* ═════════ METRICS BAR ═════════ */}
       <section className="relative px-4 sm:px-6 mb-20 sm:mb-28">
         <div className="max-w-6xl mx-auto">
-          <div className="rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-3 divide-x divide-white/[0.05] overflow-hidden">
+          <Reveal className="rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-3 divide-x divide-white/[0.05] overflow-hidden">
             {[
               { value: stats.links ? `${stats.links.toLocaleString()}+` : "10,000+", label: T.statLinks },
               { value: "<5 min", label: T.statTime },
@@ -313,64 +314,59 @@ export default function Landing() {
                 <div className="text-[11px] sm:text-[13px] text-white/50 uppercase tracking-[0.12em]">{s.label}</div>
               </div>
             ))}
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ═════════ FEATURES ═════════ */}
       <section id="features" className="relative px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-12 sm:mb-16 max-w-2xl">
+          <Reveal className="mb-12 sm:mb-16 max-w-2xl">
             <div className="pill mb-4"><span className="pill-dot pill-dot-violet" />{T.featuresLabel}</div>
             <h2 className="display-lg text-white mb-3">{T.featuresTitle}</h2>
             <p className="text-white/55 text-[16px]">{T.featuresSub}</p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" stagger={0.08}>
             {features.map((f, i) => {
               const Icon = f.icon;
               return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ delay: i * 0.05 }}
-                  className="card-surface p-6 group hover:border-violet-500/30 transition-all"
-                  data-testid={`feature-${i}`}
-                >
-                  <div className="w-11 h-11 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-violet-500/25 transition-all">
-                    <Icon className="h-5 w-5 text-violet-300" />
+                <StaggerItem key={i} className="card-surface p-6 group hover:border-violet-500/30 transition-all" y={24}>
+                  <div data-testid={`feature-${i}`}>
+                    <div className="w-11 h-11 rounded-xl bg-violet-500/15 border border-violet-500/30 flex items-center justify-center mb-4 group-hover:scale-105 group-hover:bg-violet-500/25 transition-all">
+                      <Icon className="h-5 w-5 text-violet-300" />
+                    </div>
+                    <h3 className="text-white text-[17px] font-semibold mb-2 tracking-tight">{f.title}</h3>
+                    <p className="text-white/55 text-[14px] leading-relaxed">{f.desc}</p>
                   </div>
-                  <h3 className="text-white text-[17px] font-semibold mb-2 tracking-tight">{f.title}</h3>
-                  <p className="text-white/55 text-[14px] leading-relaxed">{f.desc}</p>
-                </motion.div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
 
       {/* ═════════ PRICING ═════════ */}
       <section id="pricing" className="relative px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto">
-          <div className="mb-12 sm:mb-16 max-w-2xl mx-auto text-center">
+          <Reveal className="mb-12 sm:mb-16 max-w-2xl mx-auto text-center">
             <div className="pill mb-4 mx-auto"><span className="pill-dot pill-dot-violet" />{T.pricingLabel}</div>
             <h2 className="display-lg text-white mb-3">{T.pricingTitle}</h2>
             <p className="text-white/55 text-[16px]">{T.pricingSub}</p>
-          </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 pt-6">
+          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 pt-6" stagger={0.1}>
             {packs.map((pack) => (
-              <div
+              <StaggerItem
                 key={pack.id}
                 className={`relative p-7 rounded-[1.5rem] transition-all duration-200 ${
                   pack.highlight
                     ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"
                     : "card-surface"
                 }`}
-                data-testid={`pack-${pack.id}`}
+                y={30}
               >
+                <div data-testid={`pack-${pack.id}`}>
                 {pack.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <span className="inline-flex items-center px-3 py-[5px] rounded-full bg-violet-500 text-white text-[11px] font-semibold whitespace-nowrap">
@@ -415,38 +411,40 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-              </div>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
 
-          <div className="text-center mt-10">
+          <Reveal className="text-center mt-10" delay={0.15}>
             <Link to="/offers" className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 text-[14px] font-medium transition-colors">
               {lang === "fr" ? "Voir toutes les offres & quantités personnalisées" : "See all offers & custom quantities"}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ═════════ FAQ ═════════ */}
       <section className="relative px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-3xl mx-auto">
-          <div className="mb-10 sm:mb-12 text-center">
+          <Reveal className="mb-10 sm:mb-12 text-center">
             <div className="pill mb-4 mx-auto"><span className="pill-dot pill-dot-violet" />{T.faqLabel}</div>
             <h2 className="display-lg text-white mb-3">{T.faqTitle}</h2>
-          </div>
+          </Reveal>
 
-          <div className="space-y-3">
+          <StaggerGroup className="space-y-3" stagger={0.05}>
             {faqs.map((f, i) => {
               const open = openFAQ === i;
               return (
-                <div
+                <StaggerItem
                   key={i}
                   className={`rounded-2xl border transition-all ${
                     open
                       ? "bg-[#0f0f14] border-violet-500/30"
                       : "bg-[#0a0a0e] border-white/[0.07] hover:border-white/[0.12]"
                   }`}
+                  y={18}
                 >
                   <button
                     onClick={() => setOpenFAQ(open ? null : i)}
@@ -463,10 +461,10 @@ export default function Landing() {
                       {f.a}
                     </div>
                   )}
-                </div>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGroup>
         </div>
       </section>
     </div>

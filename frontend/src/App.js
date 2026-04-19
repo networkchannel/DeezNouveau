@@ -25,6 +25,7 @@ import Profile from "@/pages/Profile";
 import ScrollToTop from "@/components/ScrollToTop";
 import ScrollProgress from "@/components/ScrollProgress";
 import PageTransition from "@/components/PageTransition";
+import FloatingCTA from "@/components/FloatingCTA";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -78,6 +79,7 @@ function App() {
                 <AnimatedRoutes />
               </main>
               <Footer />
+              <FloatingCTA />
             </div>
           </div>
         </BrowserRouter>
