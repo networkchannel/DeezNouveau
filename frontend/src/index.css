@@ -166,6 +166,13 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 1.25rem;
   position: relative;
+  transition: border-color 220ms ease, transform 220ms cubic-bezier(.2,.8,.2,1), background 220ms ease;
+}
+
+.card-surface:hover {
+  border-color: rgba(139, 92, 246, 0.28);
+  transform: translateY(-3px);
+  background: linear-gradient(180deg, rgba(30, 26, 44, 0.88) 0%, rgba(14, 12, 22, 0.88) 100%);
 }
 
 .card-surface::before {

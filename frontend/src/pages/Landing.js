@@ -363,9 +363,9 @@ export default function Landing() {
             {packs.map((pack) => (
               <div
                 key={pack.id}
-                className={`relative p-7 rounded-[1.5rem] ${
+                className={`relative p-7 rounded-[1.5rem] transition-all duration-200 ${
                   pack.highlight
-                    ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40"
+                    ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"
                     : "card-surface"
                 }`}
                 data-testid={`pack-${pack.id}`}

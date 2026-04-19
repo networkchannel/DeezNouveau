@@ -64,11 +64,11 @@ export default function Header() {
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-          className={`max-w-6xl mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-full transition-all duration-300 border ${
+          className={`max-w-6xl mx-auto grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-3 rounded-full transition-all duration-300 border ${
             scrolled
-              ? "bg-[rgba(10,10,14,0.85)] border-white/10 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)]"
+              ? "bg-[rgba(10,10,14,0.88)] border-white/10 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)]"
               : "bg-[rgba(10,10,14,0.55)] border-white/[0.06] backdrop-blur-lg"
-          } px-3 sm:px-4 py-2`}
+          } pl-2 pr-2 sm:pl-3 sm:pr-3 py-1.5 sm:py-2`}
           data-testid="main-header"
         >
           {/* Logo */}
@@ -125,11 +125,11 @@ export default function Header() {
             {/* Lang */}
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="hidden sm:flex text-white/60 hover:text-white text-[12px] items-center gap-1 outline-none px-2.5 py-2 rounded-full hover:bg-white/[0.04] transition-all"
+                className="flex text-white/60 hover:text-white text-[11px] items-center gap-1 outline-none px-2 py-2 rounded-full hover:bg-white/[0.04] transition-all"
                 data-testid="lang-btn"
               >
                 <Globe className="h-3.5 w-3.5" />
-                <span>{i18n.language?.toUpperCase()?.slice(0, 2)}</span>
+                <span className="hidden sm:inline">{i18n.language?.toUpperCase()?.slice(0, 2)}</span>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="bg-[#0f0f14] border border-white/10 min-w-[80px] rounded-xl backdrop-blur-xl">
                 {["fr", "en", "es", "pt", "de", "tr", "nl", "ar"].map((lng) => (
@@ -223,6 +223,14 @@ export default function Header() {
                     {lang === "fr" ? "Connexion" : "Sign in"}
                   </Link>
                 )}
+                <Link
+                  to="/offers"
+                  onClick={() => setMobileOpen(false)}
+                  data-testid="mobile-cta-btn"
+                  className="btn-primary w-full mt-1 justify-center"
+                >
+                  {lang === "fr" ? "Commencer" : "Get Started"}
+                </Link>
                 {isLoggedIn && (
                   <button
                     onClick={() => { logout(); setMobileOpen(false); }}
