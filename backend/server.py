@@ -2175,16 +2175,18 @@ async def create_order(request: Request):
                 "description": f"DeezLink - Deezer Premium x{pack['quantity']}",
                 "callbackUrl": f"{backend_url}/api/webhooks/oxapay",
                 "returnUrl": f"{site_url}/order/{order_id}",
+                "feePaidByPayer": 0,
+                "lifeTime": 60,
             }
             async with httpx.AsyncClient(timeout=10.0) as http_client:
                 resp = await http_client.post(f"{OXAPAY_BASE_URL}/merchants/request", json=payload)
-                data = resp.json()
-                logger.info(f"OxaPay response: {data}")
-                if data.get("result") == 100:
-                    order["payment_url"] = data.get("payLink", "")
-                    order["track_id"] = data.get("trackId", "")
+                data_resp = resp.json()
+                logger.info(f"OxaPay response: {data_resp}")
+                if data_resp.get("result") == 100:
+                    order["payment_url"] = data_resp.get("payLink", "")
+                    order["track_id"] = data_resp.get("trackId", "")
                 else:
-                    logger.error(f"OxaPay error: {data}")
+                    logger.error(f"OxaPay error: {data_resp}")
                     order["status"] = "payment_error"
                     order["payment_url"] = f"/order/{order_id}?error=payment"
         except Exception as e:
@@ -2194,9 +2196,9 @@ async def create_order(request: Request):
     else:
         order["status"] = "payment_error"
         order["payment_url"] = f"/order/{order_id}?error=no_payment_configured"
-    
+
     await db.orders.insert_one(order)
-    
+
     # A/B tracking: conversion
     ab_data = data.get("ab") if isinstance(data, dict) else None
     if ab_data and ab_data.get("variant") in ("a", "b") and ab_data.get("experiment"):

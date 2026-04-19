@@ -1,0 +1,124 @@
+{
+  "summary": "Iteration 6: Checkout page refonte + OxaPay feePaidByPayer fix. All backend tests PASSED (13/13). Frontend checkout page verified with correct prices for all packs (single=5€, pack_3=12€, pack_5=20€, pack_10=35€). OxaPay payload now includes feePaidByPayer:0 and lifeTime:60 in /api/orders/create.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/orders/create-custom",
+        "issue": "Missing feePaidByPayer:0 and lifeTime:60 in OxaPay payload (noted as acceptable in this iteration)",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_checkout_oxapay.py",
+    "/app/test_reports/pytest/pytest_results_iteration6.xml"
+  ],
+  "action_items": [
+    "Consider adding feePaidByPayer:0 and lifeTime:60 to /api/orders/create-custom for consistency"
+  ],
+  "critical_code_review_comments": [
+    "OxaPay payload in /api/orders/create correctly includes feePaidByPayer:0 (merchant absorbs fees) and lifeTime:60",
+    "/api/orders/create-custom is missing these parameters - should be added for consistency"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_checkout_oxapay.py"
+  ],
+  "success_rate": {
+    "backend": "100% - 13/13 tests passed",
+    "frontend": "100% - All checkout pages render correctly with correct prices"
+  },
+  "test_credentials": "Email: test@deezlink.com, OxaPay merchant key: EWVVRZ-Y40MQP-ZZBKWM-GRJ8UT",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Checkout page has been completely refactored with 2-column layout, stepper, trust signals. OxaPay integration now sends feePaidByPayer:0 to ensure exact amount matching (5€ checkout = 5€ OxaPay). Captcha is required for form submission in test environment.",
+  "verified_flows": [
+    {
+      "flow": "GET /api/packs",
+      "result": "PASS",
+      "details": "Returns 4 packs with correct prices: single=5€, pack_3=12€, pack_5=20€, pack_10=35€"
+    },
+    {
+      "flow": "POST /api/orders/create (single pack)",
+      "result": "PASS",
+      "details": "Returns order_id, payment_url (OxaPay payLink), price=5.0. Payload includes feePaidByPayer:0, lifeTime:60"
+    },
+    {
+      "flow": "POST /api/orders/create (pack_3)",
+      "result": "PASS",
+      "details": "Returns price=12.0"
+    },
+    {
+      "flow": "POST /api/orders/create (pack_5)",
+      "result": "PASS",
+      "details": "Returns price=20.0"
+    },
+    {
+      "flow": "POST /api/orders/create (pack_10)",
+      "result": "PASS",
+      "details": "Returns price=35.0"
+    },
+    {
+      "flow": "POST /api/orders/create-custom",
+      "result": "PASS",
+      "details": "Returns order_id, payment_url, price. Note: Missing feePaidByPayer:0 in payload"
+    },
+    {
+      "flow": "GET /api/pricing/calculate",
+      "result": "PASS",
+      "details": "Returns correct pricing for quantities 1, 5, 10"
+    },
+    {
+      "flow": "Frontend: /checkout/single",
+      "result": "PASS",
+      "details": "Shows 'Deezer Premium · 1x', 5.00€ subtotal, 5.00 EUR total, 4 trust bullets, 4 crypto pills, stepper, 'What happens next' section"
+    },
+    {
+      "flow": "Frontend: /checkout/pack_3",
+      "result": "PASS",
+      "details": "Shows 12.00€ everywhere"
+    },
+    {
+      "flow": "Frontend: /checkout/pack_5",
+      "result": "PASS",
+      "details": "Shows 20.00€ everywhere"
+    },
+    {
+      "flow": "Frontend: /checkout/pack_10",
+      "result": "PASS",
+      "details": "Shows 35.00€ everywhere"
+    },
+    {
+      "flow": "Frontend: Back to offers button",
+      "result": "PASS",
+      "details": "Correctly navigates to /offers (not /)"
+    },
+    {
+      "flow": "Frontend: Form validation",
+      "result": "PASS",
+      "details": "HTML5 validation triggers for empty email"
+    }
+  ],
+  "data_testid_verified": [
+    "checkout-page",
+    "checkout-back",
+    "checkout-form",
+    "checkout-email",
+    "checkout-total",
+    "pay-btn",
+    "pack-name",
+    "pack-subtotal"
+  ],
+  "oxapay_fix_verified": {
+    "feePaidByPayer": 0,
+    "lifeTime": 60,
+    "location": "/app/backend/server.py line ~2178-2179",
+    "effect": "Merchant absorbs OxaPay fees - customer pays exact amount shown on checkout"
+  }
+}
