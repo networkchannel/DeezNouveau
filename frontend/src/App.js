@@ -5,6 +5,7 @@ import { CartProvider } from "@/context/CartContext";
 import { useEffect } from "react";
 import { initSecurity } from "@/utils/security";
 import telemetryService from "@/utils/telemetryService";
+import { initSmoothScroll, destroySmoothScroll } from "@/utils/smoothScroll";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -48,14 +49,15 @@ function AnimatedRoutes() {
 }
 
 function App() {
-  // Initialize security + telemetry service on load
+  // Initialize security + telemetry + Lenis smooth scroll on load
   useEffect(() => {
     initSecurity();
-    // Initialize telemetry session (token rotation)
     telemetryService.init();
-    
+    initSmoothScroll();
+
     return () => {
       telemetryService.destroy();
+      destroySmoothScroll();
     };
   }, []);
 

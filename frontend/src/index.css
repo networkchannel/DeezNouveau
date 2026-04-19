@@ -28,10 +28,17 @@
   * { @apply border-border; }
   html {
     background: #050505;
-    scroll-behavior: smooth;
   }
-  @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
+  /* With Lenis active, the lib sets .lenis class and manages scroll manually.
+     When Lenis is NOT active (reduced motion), fall back to native smooth. */
+  html.lenis, html.lenis body { height: auto; }
+  html.lenis-smooth { scroll-behavior: auto !important; }
+  html.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  html.lenis-stopped { overflow: clip; }
+  html.lenis-scrolling iframe { pointer-events: none; }
+  /* When Lenis is disabled (reduced motion) we still want smooth anchors */
+  @media (prefers-reduced-motion: no-preference) {
+    html:not(.lenis) { scroll-behavior: smooth; }
   }
   body {
     background: #050505;

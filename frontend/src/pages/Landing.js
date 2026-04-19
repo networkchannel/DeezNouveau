@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { smoothScrollTo } from "@/utils/smoothScroll";
 import {
   Headphones, Music, Zap, Check, ArrowRight, Shield, Gift,
   Download, Volume2, Radio, Sparkles, Clock, Users, Lock,
@@ -204,7 +205,7 @@ export default function Landing() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <button onClick={() => {
-                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                  smoothScrollTo("#features", { offset: -40 });
                 }} className="btn-secondary" data-testid="hero-cta-secondary">
                   {lang === "fr" ? "En savoir plus" : "Learn more"}
                 </button>
