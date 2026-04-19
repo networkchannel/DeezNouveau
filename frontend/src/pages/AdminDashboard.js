@@ -242,10 +242,18 @@ export default function AdminDashboard() {
               </h1>
               <p className="text-t-muted text-sm mt-1">Gestion et monitoring en temps réel</p>
             </div>
-            <Button onClick={() => { fetchData(); fetchSecurityData(); fetchAnalytics(); fetchGenStatus(); }}
-              variant="outline" className="border-border text-t-secondary hover:bg-surface-2" disabled={refreshing}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />Actualiser
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link to="/admin/ab" className="btn-secondary !py-2 !px-3 !text-[12px]" data-testid="admin-ab-link">
+                A/B stats
+              </Link>
+              <Link to="/admin/oxapay" className="btn-secondary !py-2 !px-3 !text-[12px]" data-testid="admin-oxapay-link">
+                OxaPay
+              </Link>
+              <Button onClick={() => { fetchData(); fetchSecurityData(); fetchAnalytics(); fetchGenStatus(); }}
+                variant="outline" className="border-border text-t-secondary hover:bg-surface-2" disabled={refreshing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />Actualiser
+              </Button>
+            </div>
           </div>
 
           {/* Stats */}

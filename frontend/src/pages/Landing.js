@@ -257,8 +257,8 @@ export default function Landing() {
                     </div>
                   </div>
 
-                  {/* Small artist tiles */}
-                  {[1, 2, 3, 4].map((idx) => {
+                  {/* Small artist tiles (5 — fills the bottom-right cell too) */}
+                  {[1, 2, 3, 4, 5].map((idx) => {
                     const a = artists[idx - 1] || albums[idx];
                     const img = a?.picture_big || a?.cover_big || a?.cover;
                     return (

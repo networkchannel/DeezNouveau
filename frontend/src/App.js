@@ -18,6 +18,8 @@ import OrderHistory from "@/pages/OrderHistory";
 import Login from "@/pages/Login";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
+import AdminAB from "@/pages/AdminAB";
+import AdminOxaPay from "@/pages/AdminOxaPay";
 import Profile from "@/pages/Profile";
 
 function App() {
@@ -55,6 +57,8 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/admin/login" element={<AdminLogin />} />
                   <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/admin/ab" element={<AdminAB />} />
+                  <Route path="/admin/oxapay" element={<AdminOxaPay />} />
                 </Routes>
               </main>
               <Footer />

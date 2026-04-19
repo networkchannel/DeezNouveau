@@ -182,7 +182,7 @@ export default function Offers() {
             return (
               <div
                 key={pack.id}
-                className="group relative flex flex-col h-full"
+                className="group relative flex flex-col h-full transition-transform duration-200 hover:-translate-y-[3px]"
               >
                 {pack.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
@@ -191,7 +191,7 @@ export default function Offers() {
                     </span>
                   </div>
                 )}
-                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-all duration-200 hover:border-violet-400/60 hover:-translate-y-[3px]`}>
+                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-colors duration-200 group-hover:border-violet-400/60`}>
                   {/* Content */}
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
                     {/* Icon + Name */}

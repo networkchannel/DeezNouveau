@@ -2391,26 +2391,53 @@ async def get_order_history(email: str, request: Request, user: dict = Depends(g
 # --- Webhook Routes ---
 @api_router.post("/webhooks/oxapay")
 async def oxapay_webhook(request: Request):
+    received_at = datetime.now(timezone.utc).isoformat()
+    body = {}
     try:
         body = await request.json()
-        logger.info(f"OxaPay webhook received: {body}")
-        
-        order_id = body.get("orderId", "")
-        status = body.get("status", "")
-        track_id = body.get("trackId", "")
-        
+    except Exception:
+        body = {}
+    order_id = body.get("orderId") or body.get("order_id") or ""
+    status = body.get("status", "")
+    track_id = body.get("trackId") or body.get("track_id") or ""
+
+    # Always persist an audit record
+    webhook_doc = {
+        "received_at": received_at,
+        "order_id": order_id,
+        "status": status,
+        "track_id": track_id,
+        "payload": body,
+        "processed": False,
+        "processing_error": None,
+    }
+
+    try:
+        logger.info(f"OxaPay webhook received: order={order_id} status={status}")
+
         if not order_id:
+            webhook_doc["processing_error"] = "no_order_id"
+            await db.oxapay_webhooks.insert_one(webhook_doc)
             return {"status": "ok"}
-        
+
         order = await db.orders.find_one({"order_id": order_id})
         if not order:
             logger.warning(f"Webhook for unknown order: {order_id}")
+            webhook_doc["processing_error"] = "unknown_order"
+            await db.oxapay_webhooks.insert_one(webhook_doc)
             return {"status": "ok"}
-        
+
+        # Idempotency: if already completed/failed don't reprocess
+        existing_status = order.get("status")
+        if existing_status in ("completed", "failed") and status in ["Paid", "Confirmed", "Expired", "Failed"]:
+            webhook_doc["processed"] = True
+            webhook_doc["processing_error"] = f"idempotent_skip (already {existing_status})"
+            await db.oxapay_webhooks.insert_one(webhook_doc)
+            return {"status": "ok"}
+
         if status in ["Paid", "Confirmed"]:
             quantity = order["quantity"]
             available_links = await db.links.find({"status": "available"}).to_list(quantity)
-            
             assigned_links = []
             for link_doc in available_links:
                 await db.links.update_one(
@@ -2418,17 +2445,17 @@ async def oxapay_webhook(request: Request):
                     {"$set": {"status": "sold", "order_id": order_id, "sold_at": datetime.now(timezone.utc).isoformat()}}
                 )
                 assigned_links.append(link_doc["url"])
-            
+
             new_status = "completed" if len(assigned_links) >= quantity else "partial"
-            
+
             # Add loyalty points
             points_earned = calculate_loyalty_points(order["price"])
             await db.users.update_one(
                 {"email": order["email"]},
                 {"$inc": {"loyalty_points": points_earned}},
-                upsert=True
+                upsert=True,
             )
-            
+
             await db.orders.update_one(
                 {"order_id": order_id},
                 {"$set": {
@@ -2436,24 +2463,115 @@ async def oxapay_webhook(request: Request):
                     "links": assigned_links,
                     "track_id": track_id,
                     "loyalty_points_earned": points_earned,
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+                    "paid_at": datetime.now(timezone.utc).isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
                 }}
             )
-            
-            # Send confirmation email
+
+            # Send confirmation email (catch errors to not fail the webhook)
+            email_sent = False
             if assigned_links:
-                send_order_confirmation_email(order["email"], order_id, assigned_links, order.get("language", "en"))
-                
+                try:
+                    send_order_confirmation_email(order["email"], order_id, assigned_links, order.get("language", "en"))
+                    email_sent = True
+                except Exception as e:
+                    logger.error(f"Confirmation email failed for order {order_id}: {e}")
+
+            webhook_doc["processed"] = True
+            webhook_doc["details"] = {
+                "new_status": new_status,
+                "links_assigned": len(assigned_links),
+                "email_sent": email_sent,
+            }
+
         elif status in ["Expired", "Failed"]:
             await db.orders.update_one(
                 {"order_id": order_id},
                 {"$set": {"status": "failed", "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
-        
+            webhook_doc["processed"] = True
+            webhook_doc["details"] = {"new_status": "failed"}
+        else:
+            # Unknown status — just log
+            webhook_doc["processed"] = True
+            webhook_doc["details"] = {"new_status": existing_status, "note": f"status '{status}' not actionable"}
+
+        await db.oxapay_webhooks.insert_one(webhook_doc)
         return {"status": "ok"}
+
     except Exception as e:
-        logger.error(f"Webhook error: {e}")
+        logger.exception(f"Webhook error: {e}")
+        webhook_doc["processing_error"] = str(e)[:300]
+        try:
+            await db.oxapay_webhooks.insert_one(webhook_doc)
+        except Exception:
+            pass
         return {"status": "ok"}
+
+
+# --- Admin: OxaPay monitoring ---
+@api_router.get("/admin/oxapay/webhooks")
+async def admin_oxapay_webhooks(user: dict = Depends(require_admin), limit: int = 50):
+    """Last N OxaPay webhook events (most recent first)."""
+    limit = max(1, min(200, limit))
+    rows = await db.oxapay_webhooks.find({}, {"_id": 0}).sort("received_at", -1).to_list(limit)
+    return {"webhooks": rows}
+
+
+@api_router.post("/admin/orders/{order_id}/retry")
+async def admin_retry_order(order_id: str, user: dict = Depends(require_admin)):
+    """Re-run link assignment + email for an order that was stuck in 'partial' or failed email.
+
+    Safe to call multiple times: only assigns the remaining missing links.
+    """
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.get("status") not in ("partial", "pending", "completed"):
+        raise HTTPException(status_code=400, detail=f"Order status '{order.get('status')}' not retryable")
+
+    quantity = order["quantity"]
+    already = order.get("links", []) or []
+    missing = max(0, quantity - len(already))
+
+    newly_assigned = list(already)
+    if missing > 0:
+        available_links = await db.links.find({"status": "available"}).to_list(missing)
+        for link_doc in available_links:
+            await db.links.update_one(
+                {"_id": link_doc["_id"]},
+                {"$set": {"status": "sold", "order_id": order_id, "sold_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            newly_assigned.append(link_doc["url"])
+
+    new_status = "completed" if len(newly_assigned) >= quantity else "partial"
+
+    await db.orders.update_one(
+        {"order_id": order_id},
+        {"$set": {
+            "status": new_status,
+            "links": newly_assigned,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_retry_at": datetime.now(timezone.utc).isoformat(),
+            "retry_count": order.get("retry_count", 0) + 1,
+        }}
+    )
+
+    email_sent = False
+    if newly_assigned:
+        try:
+            send_order_confirmation_email(order["email"], order_id, newly_assigned, order.get("language", "en"))
+            email_sent = True
+        except Exception as e:
+            logger.error(f"Retry email failed for {order_id}: {e}")
+
+    return {
+        "order_id": order_id,
+        "status": new_status,
+        "links_total": len(newly_assigned),
+        "links_required": quantity,
+        "email_sent": email_sent,
+    }
 
 # --- Admin Routes ---
 @api_router.get("/admin/stats")
