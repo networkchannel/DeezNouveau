@@ -1955,6 +1955,71 @@ async def admin_auto_login(request: Request):
 async def get_packs():
     return {"packs": PACKS}
 
+# --- A/B Testing Routes ---
+# Experiment: "best_value_label"
+#   variant_a: "Best value" / "Meilleur prix" (control)
+#   variant_b: "Le plus choisi" / "Most chosen" (variant)
+@api_router.post("/ab/track")
+async def ab_track(request: Request):
+    """Track A/B test event. Events: view | click | conversion."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    experiment = (data.get("experiment") or "").strip()
+    variant = (data.get("variant") or "").strip()
+    event = (data.get("event") or "").strip()
+    session_id = (data.get("session_id") or "").strip()
+    if not experiment or variant not in ("a", "b") or event not in ("view", "click", "conversion"):
+        raise HTTPException(status_code=400, detail="Invalid payload")
+    try:
+        await db.ab_events.insert_one({
+            "experiment": experiment,
+            "variant": variant,
+            "event": event,
+            "session_id": session_id,
+            "pack_id": data.get("pack_id") or None,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception as e:
+        logger.error(f"ab_track failed: {e}")
+    return {"ok": True}
+
+
+@api_router.get("/ab/stats/{experiment}")
+async def ab_stats(experiment: str):
+    """Aggregate A/B stats: views, clicks, conversions + CTR/CR per variant."""
+    try:
+        pipeline = [
+            {"$match": {"experiment": experiment}},
+            {"$group": {"_id": {"variant": "$variant", "event": "$event"}, "count": {"$sum": 1}}},
+        ]
+        rows = await db.ab_events.aggregate(pipeline).to_list(100)
+    except Exception as e:
+        logger.error(f"ab_stats failed: {e}")
+        rows = []
+
+    stats = {"a": {"view": 0, "click": 0, "conversion": 0},
+             "b": {"view": 0, "click": 0, "conversion": 0}}
+    for r in rows:
+        v = r["_id"]["variant"]
+        e = r["_id"]["event"]
+        if v in stats and e in stats[v]:
+            stats[v][e] = r["count"]
+
+    def rates(s):
+        ctr = (s["click"] / s["view"] * 100) if s["view"] else 0
+        cr = (s["conversion"] / s["view"] * 100) if s["view"] else 0
+        return {**s, "ctr": round(ctr, 2), "cr": round(cr, 2)}
+
+    return {
+        "experiment": experiment,
+        "variant_a": rates(stats["a"]),
+        "variant_b": rates(stats["b"]),
+    }
+
+
+
 # --- Custom Pricing Route ---
 @api_router.get("/pricing/calculate")
 async def pricing_calculate(quantity: int = 1, email: Optional[str] = None):
@@ -2132,6 +2197,22 @@ async def create_order(request: Request):
     
     await db.orders.insert_one(order)
     
+    # A/B tracking: conversion
+    ab_data = data.get("ab") if isinstance(data, dict) else None
+    if ab_data and ab_data.get("variant") in ("a", "b") and ab_data.get("experiment"):
+        try:
+            await db.ab_events.insert_one({
+                "experiment": ab_data["experiment"],
+                "variant": ab_data["variant"],
+                "event": "conversion",
+                "session_id": ab_data.get("session_id") or "",
+                "pack_id": pack_id,
+                "order_id": order_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            logger.error(f"ab conversion track failed: {e}")
+
     return {
         "order_id": order_id,
         "payment_url": order["payment_url"],

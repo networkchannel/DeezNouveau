@@ -71,7 +71,20 @@ export default function Checkout() {
         language: lang,
       };
       if (captchaToken) payload.captcha_token = captchaToken;
-      
+
+      // Attach A/B experiment variant if available (for conversion tracking)
+      try {
+        const abVariant = localStorage.getItem("dz_ab_best_value_label");
+        const abSession = localStorage.getItem("dz_session_id") || "";
+        if (abVariant === "a" || abVariant === "b") {
+          payload.ab = {
+            experiment: "best_value_label",
+            variant: abVariant,
+            session_id: abSession,
+          };
+        }
+      } catch {}
+
       let data;
       if (isCustom) {
         data = await securePost("/orders/create-custom", { ...payload, quantity: customQty });

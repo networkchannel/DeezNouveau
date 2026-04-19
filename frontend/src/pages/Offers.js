@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useState, useEffect } from "react";
 import { secureGet } from "@/utils/secureApi";
+import { useAbTest } from "@/hooks/useAbTest";
 import { Headphones, Music, Zap, Star, Crown, Check, ArrowRight, Infinity, Shield, Package, X, Sparkles, TrendingDown } from "lucide-react";
 
 const DEEZER_FEATURES = {
@@ -34,6 +35,12 @@ export default function Offers() {
   const [customQuantity, setCustomQuantity] = useState(10);
   const [availableStock, setAvailableStock] = useState(0);
   const [loadingStock, setLoadingStock] = useState(true);
+
+  // A/B test: pack_10 badge wording
+  const { variant: abVariant, sessionId: abSession, trackClick: abTrackClick } = useAbTest("best_value_label");
+  const bestValueLabel = abVariant === "a"
+    ? (lang === "fr" ? "Meilleur prix" : "Best value")
+    : (lang === "fr" ? "Le plus choisi" : "Most chosen");
 
   useEffect(() => {
     fetchStock();
@@ -112,7 +119,7 @@ export default function Offers() {
       icon: Crown,
       color: "from-violet-500 via-violet-600 to-violet-900",
       shadow: "shadow-violet-500/35",
-      badge: lang === "fr" ? "Meilleur prix" : "Best value",
+      badge: bestValueLabel,
       desc: lang === "fr" ? "Pour les pros" : "For pros",
     },
   ];
@@ -227,7 +234,10 @@ export default function Offers() {
                     {/* Buttons */}
                     <div className="space-y-2 mt-auto">
                       <button
-                        onClick={() => navigate(`/checkout/${pack.id}`)}
+                        onClick={() => {
+                          abTrackClick({ pack_id: pack.id });
+                          navigate(`/checkout/${pack.id}`);
+                        }}
                         className={pack.badge ? "btn-primary w-full !py-3" : "btn-secondary w-full !py-3"}
                         data-testid={`buy-${pack.id}`}
                       >
