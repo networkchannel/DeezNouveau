@@ -229,26 +229,29 @@ export default function Header() {
               exit={{ opacity: 0, y: -8 }}
               className="md:hidden max-w-6xl mx-auto mt-2 rounded-3xl bg-[rgba(10,10,14,0.92)] backdrop-blur-xl border border-white/10 p-3"
             >
-              <div className="flex flex-col gap-1">
-                {navLinks.map((l) => (
-                  <Link
-                    key={l.to}
-                    to={l.to}
-                    onClick={() => setMobileOpen(false)}
-                    data-testid={`mobile-nav-${l.to.replace(/\//g, "") || "home"}`}
-                    className={`px-4 py-3 rounded-2xl text-[14px] font-medium transition-all ${
-                      active(l.to) ? "bg-white/[0.06] text-white" : "text-white/70 hover:bg-white/[0.03]"
-                    }`}
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+              <div className="flex flex-col gap-2">
+                {/* Nav links in 2-column grid on mobile */}
+                <div className="grid grid-cols-2 gap-2">
+                  {navLinks.map((l) => (
+                    <Link
+                      key={l.to}
+                      to={l.to}
+                      onClick={() => setMobileOpen(false)}
+                      data-testid={`mobile-nav-${l.to.replace(/\//g, "") || "home"}`}
+                      className={`px-4 py-3 rounded-2xl text-[14px] font-medium transition-all text-center ${
+                        active(l.to) ? "bg-white/[0.06] text-white" : "text-white/70 hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
                 {!isLoggedIn && !authLoading && (
                   <Link
                     to="/login"
                     onClick={() => setMobileOpen(false)}
                     data-testid="mobile-login-btn"
-                    className="mt-2 px-4 py-3 rounded-2xl bg-white text-black font-semibold text-[14px] text-center"
+                    className="mt-1 px-4 py-3 rounded-2xl bg-white text-black font-semibold text-[14px] text-center"
                   >
                     {L({ fr: "Connexion", en: "Sign in", es: "Entrar", pt: "Entrar", de: "Anmelden", tr: "Giriş", nl: "Inloggen", ar: "تسجيل الدخول" }, lang)}
                   </Link>
@@ -265,7 +268,7 @@ export default function Header() {
                   <button
                     onClick={() => { logout(); setMobileOpen(false); }}
                     data-testid="mobile-logout-btn"
-                    className="mt-2 px-4 py-3 rounded-2xl bg-white/[0.03] text-red-400 font-semibold text-[14px] text-left"
+                    className="mt-1 px-4 py-3 rounded-2xl bg-white/[0.03] text-red-400 font-semibold text-[14px] text-left"
                   >
                     {L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
                   </button>
