@@ -199,13 +199,15 @@ export default function Header() {
             )}
 
             {/* Primary CTA on desktop */}
-            <button
-              onClick={() => navigate("/offers")}
-              className="hidden lg:inline-flex btn-primary !py-2 !px-4 !text-[13px]"
-              data-testid="header-cta-btn"
-            >
-              {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
-            </button>
+            <div className="hidden lg:block">
+              <button
+                onClick={() => navigate("/offers")}
+                className="btn-primary !py-2 !px-4 !text-[13px]"
+                data-testid="header-cta-btn"
+              >
+                {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
+              </button>
+            </div>
 
             {/* Mobile menu */}
             <button

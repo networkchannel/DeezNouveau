@@ -355,7 +355,7 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="relative"
+              className="relative overflow-hidden rounded-[2rem]"
             >
               <div className="relative aspect-[4/5] sm:aspect-square w-full max-w-[520px] ml-auto">
                 {/* Violet halo behind */}
