@@ -649,11 +649,12 @@ COUNTRY_NAMES = {
     "CN": "China", "IN": "India", "RU": "Russia", "AU": "Australia", "NZ": "New Zealand",
 }
 
-# Pricing Packs - 2 packs fixes + custom
+# Pricing Packs
 PACKS = [
-    {"id": "solo", "name_key": "pack_solo", "quantity": 1, "price": 5.00, "unit_price": 5.00, "discount": 0, "icon": "user"},
-    {"id": "duo", "name_key": "pack_duo", "quantity": 2, "price": 9.00, "unit_price": 4.50, "discount": 10, "icon": "users"},
-    {"id": "family", "name_key": "pack_family", "quantity": 5, "price": 20.00, "unit_price": 4.00, "discount": 20, "icon": "users", "highlighted": True},
+    {"id": "single", "name_key": "pack_starter", "quantity": 1, "price": 5.00, "unit_price": 5.00, "discount": 0, "icon": "user"},
+    {"id": "pack_3", "name_key": "pack_essential", "quantity": 3, "price": 12.00, "unit_price": 4.00, "discount": 20, "icon": "users"},
+    {"id": "pack_5", "name_key": "pack_premium", "quantity": 5, "price": 20.00, "unit_price": 4.00, "discount": 20, "icon": "star", "highlighted": True},
+    {"id": "pack_10", "name_key": "pack_business", "quantity": 10, "price": 35.00, "unit_price": 3.50, "discount": 30, "icon": "crown"},
 ]
 
 ADMIN_IPS = ["5.49.128.70", "82.64.128.239"]  # Multiple admin IPs supported
