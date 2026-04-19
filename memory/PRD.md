@@ -78,10 +78,20 @@ offers gift cards, and provides a loyalty program.
 - All pages load: `/`, `/offers`, `/gift-cards`, `/login`, `/checkout/:pack_id`
 - All 4 checkout flows: single / pack_3 / pack_5 / pack_10 → correct pack
   details + email field + OxaPay crypto pay button
+- **OxaPay end-to-end PRODUCTION** with key `EWVVRZ-Y40MQP-ZZBKWM-GRJ8UT`
+  (sandbox=false): order creation → payLink returned (`https://pay.oxapay.com/...`)
+  → redirect works. Verified with pack_10 at 35.525 EUR.
+- **A/B testing system** (experiment `best_value_label` on pack_10 badge):
+  - variant A = "Best value" / "Meilleur prix"
+  - variant B = "Le plus choisi" / "Most chosen"
+  - 50/50 split, persisted via `localStorage`
+  - `/api/ab/track` logs `view` (auto on mount), `click` (Buy now), `conversion`
+    (on order create)
+  - `/api/ab/stats/{experiment}` returns aggregated CTR/CR per variant
 - Cart slide panel, gift cards, FAQ accordion, mobile nav
 - Backend APIs: `/api/packs`, `/api/stats/public`, `/api/deezer/trending`,
-  `/api/pricing/calculate`, `/api/security/*`
-- Testing agent: backend 100% / frontend 100% (iteration_3)
+  `/api/pricing/calculate`, `/api/security/*`, `/api/ab/*`
+- Testing agent: backend 100% / frontend 100% (iteration_4)
 
 ## Prioritized backlog
 
