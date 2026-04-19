@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart, User, LogIn, Sparkles } from "lucide-react";
+import { Globe, Menu, X, ShoppingCart, User, LogIn, Sparkles, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -55,7 +55,6 @@ export default function Header() {
     { to: "/offers", label: lang === "fr" ? "Offres" : "Pricing" },
     { to: "/gift-cards", label: lang === "fr" ? "Cartes" : "Gift Cards" },
     ...(isRegularUser ? [{ to: "/history", label: lang === "fr" ? "Historique" : "Orders" }] : []),
-    ...(isAdmin && isAdminUser ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   return (
@@ -157,8 +156,14 @@ export default function Header() {
                 <LogIn className="h-3.5 w-3.5" />
                 {lang === "fr" ? "Connexion" : "Sign in"}
               </Link>
+            ) : isAdminUser ? (
+              <Link to="/admin" data-testid="admin-btn" className="p-1">
+                <div className="w-9 h-9 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500/25 transition-all">
+                  <Shield className="h-4 w-4" />
+                </div>
+              </Link>
             ) : (
-              <Link to={isAdminUser ? "/admin" : "/profile"} data-testid="profile-btn" className="p-1">
+              <Link to="/profile" data-testid="profile-btn" className="p-1">
                 <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 hover:bg-violet-500/25 transition-all">
                   <User className="h-4 w-4" />
                 </div>

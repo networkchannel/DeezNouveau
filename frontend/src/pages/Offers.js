@@ -173,22 +173,19 @@ export default function Offers() {
             const Icon = pack.icon;
             const unitPrice = (pack.price / pack.quantity).toFixed(2);
             return (
-              <motion.div
+              <div
                 key={pack.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 + i * 0.08 }}
                 className="group relative flex flex-col h-full"
               >
                 {pack.badge && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-white bg-violet-500 shadow-[0_4px_16px_-4px_rgba(139,92,246,0.8)] whitespace-nowrap">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-white bg-violet-500 border border-violet-400/60 whitespace-nowrap">
                       <Zap className="h-3 w-3" />
                       {pack.badge}
                     </span>
                   </div>
                 )}
-                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40 shadow-[0_20px_60px_-20px_rgba(139,92,246,0.35)]' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-all duration-300 group-hover:border-violet-500/30 group-hover:-translate-y-1`}>
+                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-all duration-300 hover:border-violet-500/30`}>
                   {/* Top accent bar */}
                   <div className="h-1 bg-gradient-to-r from-violet-500 to-violet-700 rounded-t-2xl" />
 
@@ -250,7 +247,7 @@ export default function Offers() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
           </div>

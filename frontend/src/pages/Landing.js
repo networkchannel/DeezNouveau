@@ -248,14 +248,12 @@ export default function Landing() {
                         <Music className="h-16 w-16 text-violet-400/40" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <div className="pill !py-1 !px-2 !text-[10px] mb-1">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-3 left-3">
+                      <div className="pill !py-1 !px-2 !text-[10px]">
                         <span className="pill-dot pill-dot-violet" />
                         {lang === "fr" ? "En tendance" : "Trending"}
                       </div>
-                      <div className="text-white font-semibold text-sm truncate">{albums[0]?.title || "Album"}</div>
-                      <div className="text-white/60 text-xs truncate">{albums[0]?.artist_name || "Artist"}</div>
                     </div>
                   </div>
 
@@ -361,23 +359,20 @@ export default function Landing() {
             <p className="text-white/55 text-[16px]">{T.pricingSub}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 pt-6">
             {packs.map((pack) => (
-              <motion.div
+              <div
                 key={pack.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-80px" }}
                 className={`relative p-7 rounded-[1.5rem] ${
                   pack.highlight
-                    ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40 shadow-[0_20px_60px_-20px_rgba(139,92,246,0.45)]"
+                    ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40"
                     : "card-surface"
                 }`}
                 data-testid={`pack-${pack.id}`}
               >
                 {pack.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="px-3 py-1 rounded-full bg-violet-500 text-white text-[11px] font-semibold shadow-[0_4px_16px_-4px_rgba(139,92,246,0.8)]">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <span className="px-3 py-1 rounded-full bg-violet-500 text-white text-[11px] font-semibold border border-violet-400/60">
                       {pack.badge}
                     </span>
                   </div>
@@ -419,7 +414,7 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-              </motion.div>
+              </div>
             ))}
           </div>
 
