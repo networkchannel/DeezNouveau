@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test new public stock endpoint added to the DeezLink backend"
+user_problem_statement: "Test the mobile header and the new legal notice page of the DeezLink app"
 
 backend:
   - task: "Public Stock Endpoint"
@@ -118,6 +118,30 @@ backend:
           comment: "Public stock endpoint testing completed successfully. Comprehensive testing confirms: (1) GET /api/stock returns 200 status code with correct JSON format {'available': 0}, (2) Endpoint does NOT require authentication - accessible without any auth headers or tokens, (3) Available field is correctly returned as an integer number (0), (4) Endpoint properly rejects non-GET methods (POST returns 405 Method Not Allowed), (5) Admin stats endpoint /api/admin/stats remains properly protected - returns 401 'Not authenticated' for unauthenticated requests. All requirements from review request met: public stock endpoint works correctly at http://localhost:8001/api/stock, returns expected format, requires no authentication, and admin endpoints remain protected."
 
 frontend:
+  - task: "Mobile Header - Flex Layout at 390px"
+    implemented: true
+    working: true
+    file: "frontend/src/components/Header.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Mobile header tested successfully at 390x844 viewport (iPhone 14). Verified: (1) Header uses 'display: flex' on mobile (not grid) - computed display property is 'flex' and gridTemplateColumns is 'none', confirming the 'flex md:grid' classes work correctly, (2) Logo positioned on the left (x=21.0) and hamburger button on the right (x=333.0) with no horizontal overflow, (3) Hamburger button opens mobile menu successfully, (4) Mobile menu displays navigation links in a 2-column grid layout with computed gridTemplateColumns '166px 166px', (5) Found 3 navigation links (Home, Pricing, Gift Cards) in the grid, plus Sign in and Get Started buttons below. All layout requirements met. Screenshots captured showing the open mobile menu with proper 2-column grid layout."
+
+  - task: "Legal Notice Page"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/LegalNotice.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Legal notice page tested successfully at /mentions-legales. Verified: (1) Page loads correctly with title 'Legal Notice', (2) Breadcrumb displays 'Home > Legal Notice' as expected, (3) All 7 required sections are present with proper headings: Site Publisher, Hosting, Intellectual Property, Personal Data Protection, Cookies, Limitation of Liability, Contact, (4) Footer link to legal notice works correctly - clicking 'Legal Notice' link in footer navigates to /mentions-legales successfully, (5) Page content is properly formatted with icons, sections, and contact information. Screenshots captured showing the legal notice page with breadcrumb and sections. All requirements met."
+  
   - task: "Mobile Menu - 2-Column Grid Layout"
     implemented: true
     working: true
@@ -172,12 +196,13 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 6
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Public Stock Endpoint"
+    - "Mobile Header - Flex Layout at 390px"
+    - "Legal Notice Page"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -193,3 +218,5 @@ agent_communication:
       message: "Mobile scroll performance testing completed with fix applied. Initial testing revealed that mobile CSS optimizations were not being applied in the testing environment due to media query '@media (hover: none) and (pointer: coarse)' not matching in headless browsers. Fixed by adding '(max-width: 768px)' as an additional condition to the media query. This ensures optimizations work on both real touch devices and in testing environments. All tests now pass: page scrolls smoothly without crashes, all sections visible, .crys-noise has display: none, .crys-halo::before has animation: none, and all mobile optimizations are correctly applied. The fix maintains compatibility with real touch devices while making the optimizations testable."
     - agent: "testing"
       message: "Lenis smooth scroll testing completed successfully. Comprehensive testing on desktop viewport (1440x900) confirms all 5 requirements are met: (1) Console log '[Lenis] smooth scroll initialized' is present, (2) HTML element has 'lenis' and 'lenis-autoToggle' classes, (3) window.__LENIS__ exists as a proper Lenis instance, (4) Smooth scroll to #features section works perfectly with 978px smooth animation when clicking 'Learn more' button, (5) data-lenis-prevent attribute is correctly applied to cart panel's scrollable area. Lenis version 1.3.23 is active with optimal configuration (lerp: 0.08 for smooth inertial scrolling, autoRaf: true, allowNestedScroll: true). No console errors. Smooth scroll animation is fluid and premium-quality. Screenshots captured at key test points."
+    - agent: "testing"
+      message: "Mobile header and legal notice page testing completed successfully. TEST 1 - Mobile Header: Header correctly uses 'display: flex' on mobile (not grid), logo positioned on left and hamburger on right with no overflow, mobile menu opens with proper 2-column grid layout (166px 166px) displaying 3 nav links plus action buttons. TEST 2 - Legal Notice Page: Page loads correctly at /mentions-legales with proper breadcrumb (Home > Legal Notice), all 7 required sections present (Site Publisher, Hosting, Intellectual Property, Personal Data Protection, Cookies, Limitation of Liability, Contact), and footer link to legal notice works correctly. Screenshots captured for both tests. All requirements from review request met successfully."

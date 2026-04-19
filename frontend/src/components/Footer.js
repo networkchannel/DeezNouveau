@@ -52,6 +52,7 @@ export default function Footer() {
                 {L({ fr: "Légal", en: "Legal", es: "Legal", pt: "Legal", de: "Rechtliches", tr: "Yasal", nl: "Juridisch", ar: "قانوني" }, lang)}
               </h3>
               <ul className="space-y-2.5 text-[13px] text-white/60">
+                <li><Link to="/mentions-legales" className="hover:text-white transition-colors">{L({ fr: "Mentions légales", en: "Legal Notice", es: "Aviso legal", pt: "Aviso legal", de: "Impressum", tr: "Yasal Uyarı", nl: "Juridisch", ar: "إشعار قانوني" }, lang)}</Link></li>
                 <li><a href="#" className="hover:text-white transition-colors">{L({ fr: "Conditions", en: "Terms", es: "Términos", pt: "Termos", de: "Bedingungen", tr: "Şartlar", nl: "Voorwaarden", ar: "الشروط" }, lang)}</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">{L({ fr: "Confidentialité", en: "Privacy", es: "Privacidad", pt: "Privacidade", de: "Datenschutz", tr: "Gizlilik", nl: "Privacy", ar: "الخصوصية" }, lang)}</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">{L({ fr: "Remboursement", en: "Refund", es: "Reembolso", pt: "Reembolso", de: "Rückerstattung", tr: "İade", nl: "Terugbetaling", ar: "الاسترداد" }, lang)}</a></li>

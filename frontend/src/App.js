@@ -13,6 +13,7 @@ import Landing from "@/pages/Landing";
 import Offers from "@/pages/Offers";
 import GiftCards from "@/pages/GiftCards";
 import CustomQuantity from "@/pages/CustomQuantity";
+import LegalNotice from "@/pages/LegalNotice";
 import Checkout from "@/pages/Checkout";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import OrderHistory from "@/pages/OrderHistory";
@@ -36,6 +37,7 @@ function AnimatedRoutes() {
         <Route path="/offers" element={<Offers />} />
         <Route path="/gift-cards" element={<GiftCards />} />
         <Route path="/custom-quantity" element={<CustomQuantity />} />
+        <Route path="/mentions-legales" element={<LegalNotice />} />
         <Route path="/checkout/:packId" element={<Checkout />} />
         <Route path="/order/:orderId" element={<OrderConfirmation />} />
         <Route path="/history" element={<OrderHistory />} />
