@@ -8,11 +8,22 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe, Menu, X, ShoppingCart, User, LogIn, Shield } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogIn, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { pickLang as L } from "@/utils/langPick";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
+
+const LANGUAGES = [
+  { code: "fr", name: "Français",  flag: "🇫🇷" },
+  { code: "en", name: "English",   flag: "🇬🇧" },
+  { code: "es", name: "Español",   flag: "🇪🇸" },
+  { code: "pt", name: "Português", flag: "🇵🇹" },
+  { code: "de", name: "Deutsch",   flag: "🇩🇪" },
+  { code: "tr", name: "Türkçe",    flag: "🇹🇷" },
+  { code: "nl", name: "Nederlands",flag: "🇳🇱" },
+  { code: "ar", name: "العربية",   flag: "🇸🇦" },
+];
 
 export default function Header() {
   const { t, i18n } = useTranslation();
@@ -120,22 +131,44 @@ export default function Header() {
             {/* Lang */}
             <DropdownMenu>
               <DropdownMenuTrigger
-                className="flex text-white/60 hover:text-white text-[11px] items-center gap-1 outline-none px-2 py-2 rounded-full hover:bg-white/[0.04] transition-all"
+                className="flex items-center gap-1.5 text-white/70 hover:text-white text-[12px] font-medium outline-none px-2.5 py-2 rounded-full hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] transition-all"
                 data-testid="lang-btn"
+                aria-label="Language"
               >
-                <Globe className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{i18n.language?.toUpperCase()?.slice(0, 2)}</span>
+                <span className="text-base leading-none" aria-hidden>
+                  {LANGUAGES.find((l) => l.code === lang)?.flag || "🌐"}
+                </span>
+                <span className="hidden sm:inline uppercase tracking-wide">{lang.slice(0, 2)}</span>
+                <svg className="h-3 w-3 text-white/40" viewBox="0 0 12 12" fill="none" aria-hidden>
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-[#0f0f14] border border-white/10 min-w-[80px] rounded-xl backdrop-blur-xl">
-                {["fr", "en", "es", "pt", "de", "tr", "nl", "ar"].map((lng) => (
-                  <DropdownMenuItem
-                    key={lng}
-                    onClick={() => changeLang(lng)}
-                    className={`text-xs cursor-pointer rounded-md ${i18n.language === lng ? "text-violet-400" : "text-white/70"}`}
-                  >
-                    {lng.toUpperCase()}
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent
+                align="end"
+                className="bg-[#0f0f14]/95 border border-white/10 min-w-[200px] rounded-2xl backdrop-blur-xl p-1.5 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]"
+              >
+                {LANGUAGES.map((l) => {
+                  const active = lang === l.code;
+                  return (
+                    <DropdownMenuItem
+                      key={l.code}
+                      onClick={() => changeLang(l.code)}
+                      data-testid={`lang-option-${l.code}`}
+                      className={`flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer rounded-xl transition-colors outline-none focus:bg-white/[0.06] ${
+                        active ? "text-violet-300 bg-violet-500/10" : "text-white/75 hover:text-white hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      <span className="text-[18px] leading-none" aria-hidden>{l.flag}</span>
+                      <span className="flex-1 font-medium">{l.name}</span>
+                      <span className="text-[10px] uppercase tracking-[0.15em] text-white/30 font-semibold">{l.code}</span>
+                      {active && (
+                        <svg className="h-3.5 w-3.5 text-violet-400" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M3.5 8.5L6.5 11.5L12.5 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
 

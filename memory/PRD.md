@@ -6,6 +6,7 @@
 > https://crystality.win/"
 
 ## Latest updates (Feb 2026)
+- **[2026-02]** **Sélecteur de langue visible dans le Header** : dropdown avec drapeaux emoji (🇫🇷 🇬🇧 🇪🇸 🇵🇹 🇩🇪 🇹🇷 🇳🇱 🇸🇦) + noms natifs + code pays + checkmark violet sur langue active. Auto-RTL pour l'arabe.
 - **[2026-02]** **Traductions 8 langues étendues aux pages secondaires** : Offers, GiftCards, Profile, OrderHistory, OrderConfirmation, CartSlidePanel, PricingModal, CustomQuantity (FR/EN/ES/PT/DE/TR/NL/AR) via helper `pickLang`
 - **[2026-02]** Scroll fluide aligné avec Micord : Lenis simplifié en `{ autoRaf: true, anchors: { offset: -80 } }`
 - **[2026-02]** Hero "deezlink" : "link" coloré en `text-violet-500` dans le gros titre Landing
