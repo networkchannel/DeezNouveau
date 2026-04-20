@@ -381,7 +381,7 @@ export default function AdminDashboard() {
                     {analytics?.top_customers?.slice(0, 5).map((c, i) => (
                       <div key={i} className="flex justify-between items-center p-2.5 bg-white/[0.02] rounded-lg">
                         <div className="flex items-center gap-2"><span className="text-t-muted text-xs font-mono w-5">#{i + 1}</span><span className="text-sm text-t-secondary truncate">{c._id}</span></div>
-                        <Badge className="bg-green/10 text-green border-green/20">{c.total_spent?.toFixed(2)}\u20ac</Badge>
+                        <Badge className="bg-green/10 text-green border-green/20">{c.total_spent?.toFixed(2)}€</Badge>
                       </div>
                     )) || <p className="text-t-muted text-sm text-center py-4">Aucune donnee</p>}
                   </div>
@@ -842,7 +842,7 @@ export default function AdminDashboard() {
                           <TableCell className="font-mono text-xs"><Link to={`/order/${order.order_id}`} className="text-accent hover:underline flex items-center gap-1"><Hash className="h-3 w-3" />{order.order_id?.slice(0, 8)}</Link></TableCell>
                           <TableCell className="text-sm text-t-secondary">{order.email}</TableCell>
                           <TableCell className="text-sm text-t-muted">{order.pack_id} ({order.quantity})</TableCell>
-                          <TableCell className="font-semibold text-t-primary">{order.price}\u20ac</TableCell>
+                          <TableCell className="font-semibold text-t-primary">{order.price}€</TableCell>
                           <TableCell><Badge className={statusColor[order.status] || statusColor.pending}>{order.status}</Badge></TableCell>
                           <TableCell className="text-xs text-t-muted">{new Date(order.created_at).toLocaleDateString()}</TableCell>
                           <TableCell><button onClick={() => handleDeleteOrder(order.order_id)} className="text-t-muted hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-500/10"><Trash2 className="h-3.5 w-3.5" /></button></TableCell>
