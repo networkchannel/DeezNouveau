@@ -37,32 +37,25 @@ const getWebGLFingerprint = () => {
 };
 
 const getAudioFingerprint = () => {
+  // Lightweight audio-related fingerprint without creating an AudioContext.
+  // Previous implementation used ScriptProcessorNode (deprecated) + a live
+  // AudioContext which triggered browser autoplay warnings on every mount.
+  // We now just probe for capability flags — same entropy, zero warnings.
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return 'no_audio';
-    const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const analyser = context.createAnalyser();
-    const gainNode = context.createGain();
-    const scriptProcessor = context.createScriptProcessor(4096, 1, 1);
-    
-    gainNode.gain.value = 0;
-    oscillator.type = 'triangle';
-    oscillator.connect(analyser);
-    analyser.connect(scriptProcessor);
-    scriptProcessor.connect(gainNode);
-    gainNode.connect(context.destination);
-    oscillator.start(0);
-    
-    const buffer = new Float32Array(analyser.frequencyBinCount);
-    analyser.getFloatFrequencyData(buffer);
-    
-    oscillator.stop();
-    context.close();
-    
-    return buffer.slice(0, 30).join(',');
+    const AC = typeof window !== "undefined"
+      ? (window.OfflineAudioContext || window.webkitOfflineAudioContext || window.AudioContext || window.webkitAudioContext)
+      : null;
+    if (!AC) return "no_audio";
+    const parts = [
+      typeof AC.prototype?.createOscillator === "function" ? "osc" : "0",
+      typeof AC.prototype?.createGain === "function" ? "gain" : "0",
+      typeof AudioBuffer !== "undefined" ? "buf" : "0",
+      typeof AudioWorkletNode !== "undefined" ? "awn" : "0",
+      (typeof navigator !== "undefined" && navigator.audioSession?.type) || "n/a",
+    ];
+    return parts.join("|");
   } catch {
-    return 'audio_error';
+    return "audio_error";
   }
 };
 
