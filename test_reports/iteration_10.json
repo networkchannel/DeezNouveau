@@ -1,0 +1,63 @@
+{
+  "summary": "Mobile-only (390x844) verification of 3 targeted fixes: Landing vs Offers price parity (Essential 12€), Lenis syncTouch enablement, and PageTransition popLayout. All three PASS on preview URL.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Landing.js is still 632 lines — pricing cards block (lines 205-253 + render 488-547) should be extracted into a <PricingCard/> component to stay DRY with Offers.js (which renders its own cards inline lines 183-264). The two lists share identical pricing but diverge in presentation, which is the kind of drift that caused the original 13€ vs 12€ bug. Consider a shared pricing source (constants file or API) so Landing cannot go out of sync again.",
+    "smoothScroll.js uses `l.options?.touchInertiaMultiplier` which returned undefined at runtime even though it is passed in the Lenis constructor — Lenis may not echo that key back on `.options`. Harmless for behavior but misleading if used as a sanity-check attribute.",
+    "PageTransition relies on AnimatePresence `mode=popLayout` which intentionally keeps sibling motion.div nodes in the DOM briefly; during the 380ms window, page components are mounted twice (count=6 observed). Ensure pages do not run exclusive side-effects in render/useEffect that would collide (e.g. singleton toasts, focus traps, window event listeners) — none observed on Landing/Offers, but a note for future heavy routes."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (skipped)", "frontend": "100%" },
+  "test_credentials": "none required",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Preview URL: https://feature-grid-mobile.preview.emergentagent.com/. Mobile 390x844 verified. Lenis exposes `window.__LENIS__` with syncTouch:true, syncTouchLerp:0.075, lerp:0.08 (touchInertiaMultiplier not mirrored on .options but passed via constructor). PageTransition uses mode=popLayout — during SPA navigation count of `div.flex-1.flex.flex-col` temporarily rises to 6 (both pages mounted) before settling. Use `[data-testid=\"hero-cta-primary\"]` or nav-links (nav-home/nav-offers/nav-gift-cards) for SPA navigation tests, NOT page.goto which triggers full reload and bypasses AnimatePresence.",
+  "verification_details": {
+    "landing_pricing_mobile": {
+      "starter": "5€ no strike, 5.00€ per link, 1 link",
+      "essential": "12€ (strike 15€), 4.00€ per link, 3 links, badge 'Most popular', perk 'save 20%'",
+      "premium": "35€ (strike 50€), 3.50€ per link, 10 links, badge 'Best value', perk 'save 30%'"
+    },
+    "offers_pricing_mobile": {
+      "single": "5€ / 5.00€ per link (1x)",
+      "pack_3_Essential": "12€ / 4.00€ per link (3x) — MATCHES Landing Essential",
+      "pack_5_Premium": "20€ / 4.00€ per link (5x)",
+      "pack_10_Business": "35€ / 3.50€ per link (10x)"
+    },
+    "lenis_options_observed": {
+      "present": true,
+      "syncTouch": true,
+      "syncTouchLerp": 0.075,
+      "lerp": 0.08,
+      "touchInertiaMultiplier_on_options": null
+    },
+    "page_transition_spa_nav": {
+      "trigger": "click [data-testid=hero-cta-primary] → /offers",
+      "total_duration_ms": 385,
+      "popLayout_confirmed": true,
+      "co_mounted_count_during_transition": 6,
+      "outgoing_opacity_path": "1 → 0.87 → 0.71 → 0.31 → 0.14 → 0.06 → 0.028 → 0.0066 → 0.0009 → removed",
+      "incoming_opacity_path": "0 → 0.00096 → 0.16 → 0.60 → 0.83 → 0.92 → 0.96 → 0.99 → 1",
+      "outgoing_y_translate": "0 → -6px",
+      "incoming_y_translate": "12 → 0px",
+      "easing": "smooth non-linear (matches cubic-bezier 0.22, 0.8, 0.2, 1)",
+      "final_state_after_503ms": "single motion.div, opacity 1, transform none"
+    },
+    "scroll_smoothness_lenis_scrollTo_0_to_1500px_1200ms": {
+      "samples_yPx": [0, 660, 1029, 1236, 1353, 1418, 1455, 1475, 1487, 1493, 1497, 1499, 1500],
+      "unique_positions": 13,
+      "monotonic_increasing": true,
+      "progressive_not_abrupt": true,
+      "easing_curve": "ease-out (large early deltas, small later deltas)"
+    },
+    "page_errors": "0 new (pre-existing telemetry 401 + AudioContext autoplay warnings unchanged)"
+  }
+}

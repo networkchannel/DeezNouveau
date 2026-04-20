@@ -24,6 +24,12 @@ export function initSmoothScroll() {
       offset: -88,
     },
 
+    // Active Lenis sur les écrans tactiles (mobile) — sans ça le scroll tactile
+    // reste natif et n'a pas le même feel "lissé" qu'au desktop
+    syncTouch: true,
+    syncTouchLerp: 0.075,
+    touchInertiaMultiplier: 25,
+
     // Laisse les éléments scrollables imbriqués (cart panel, dropdowns,
     // sélecteur de langue, modales) scroller nativement
     allowNestedScroll: true,
