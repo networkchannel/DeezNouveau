@@ -1,0 +1,47 @@
+{
+  "summary": "Validated new /api/admin/orders/manual-create endpoint (8 backend tests inc. validation, happy paths, stock 409, explicit links, custom qty pricing, auth gate) + existing admin endpoints regression (4 tests) + Stripe Checkout end-to-end (real checkout.stripe.com URL returned) + Admin UI manual order + manual link forms via Playwright. 12/12 backend tests pass. UI flows succeed with success banners and DB persistence visible. One cosmetic frontend bug: orders table renders price as raw escape '5\\u20ac' instead of '5€'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "AdminDashboard orders table (Commandes tab, Montant column)",
+        "issue": "Price renders as literal escape sequence '5\\u20ac', '52.5\\u20ac', '60\\u20ac' instead of '5€', '52.50€', '60€'. Likely a string with escaped backslash (e.g. \"\\\\u20ac\") instead of the actual € character or unescaped \"\\u20ac\". Search /app/frontend/src/pages/AdminDashboard.js for '\\\\u20ac' or 'u20ac'. Cosmetic only — values are numerically correct and the form/inputs themselves render € properly elsewhere on the page (e.g. pack dropdown 'Starter · 1 lien · 5€' is fine).",
+        "selector": "Commandes tab orders table > Montant column cells",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_manual_order.py",
+    "/app/test_reports/pytest/iteration_12.xml"
+  ],
+  "action_items": [
+    "(LOW) Fix orders-table currency rendering in AdminDashboard.js — replace escaped '\\\\u20ac' with '€' (or unescape \\u20ac) in the Montant column cell. Affects only the admin Commandes table display."
+  ],
+  "critical_code_review_comments": [
+    "Backend manual-create endpoint is well-structured: validates email, resolves pack vs custom quantity correctly, pre-checks stock with proper 409, supports explicit-links bypass, marks links sold + binds order_id, awards loyalty points, sends email only when status completed AND assigned_links non-empty. Mongo _id is correctly stripped after insert_one (line 3412). Status transitions: pending→completed when full assignment, partial when some, pending when none.",
+    "Stripe create-session endpoint correctly persists payment_transactions BEFORE returning the URL and saves payment_url on the order — good fallback design. Verified end-to-end: returns real https://checkout.stripe.com/g/pay/cs_live_... URL.",
+    "Admin login cookie is samesite=none + secure (line 1533) — good for cross-site preview env; works with Playwright/browser cookie jar.",
+    "AdminDashboard.js is 1009 lines — over the 700-line guideline. Manual-order section (~180 lines, 681-820) and manual-links section (~80 lines) could be extracted into /components/admin/ManualOrderForm.jsx + ManualLinksForm.jsx for maintainability.",
+    "Manual order form correctly defaults to fr language and posts via axios with withCredentials — consistent with rest of admin panel.",
+    "Stock pre-check logic at line 3381 correctly excluded when explicit links provided (uses 'and not req.links') — prevents false 409 when admin supplies own links."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_manual_order.py (NEW)"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 pytest)",
+    "frontend": "100% on admin manual order + manual link flows (Stripe checkout redirect not browser-tested due to LIVE-mode constraint, but backend-verified to return real Stripe URL)"
+  },
+  "test_credentials": "admin@deezlink.com / DeezLink2024! — works",
+  "seed_data_creation": "Created several TEST_-prefixed orders and TEST_/e2e_-prefixed links during testing. Visible in orders table (e.g. test_manual_explicit, test_manual_custom_15, manual_e2e). These can be cleaned via the trash icons in the admin UI or by deleting orders prefixed with TEST_/manual_/stripe_redirect_test in db.orders.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Mobile regression items (FAQ accordion, carousels, /offers buy buttons) were NOT re-tested in this iteration since iteration_11 already validated them and there was no code change in those areas per the request. Backend manual-create tests are stable & idempotent (use uuid suffixes). Stripe end-to-end was verified via curl using a freshly-created pending manual order — the response includes a live checkout.stripe.com URL. DO NOT actually pay on Stripe.",
+  "rca of the issue": "Cosmetic '5\\u20ac' rendering: the order list cell appears to use a JSON-escaped euro string rather than the literal char. Likely fixable by replacing '\\\\u20ac' → '€' (or '\\u20ac' literal) in the row template inside AdminDashboard.js. Reproduction: admin → Commandes → look at any row in the Montant column. The pack dropdown a few px above renders € correctly, so the bug is localized to the orders-table render."
+}

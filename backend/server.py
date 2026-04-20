@@ -1159,6 +1159,18 @@ class LinkImportRequest(BaseModel):
 class LinkManualAdd(BaseModel):
     link: str
 
+class AdminManualOrder(BaseModel):
+    email: str
+    pack_id: Optional[str] = None  # if provided, resolve price/qty from PACKS
+    quantity: Optional[int] = None  # used when pack_id not provided
+    price: Optional[float] = None   # override price (optional)
+    status: str = "completed"       # "completed" | "pending"
+    send_email: bool = True
+    assign_links: bool = True       # auto-pull from stock
+    links: Optional[List[str]] = None  # explicit links to attach (bypass stock)
+    language: str = "en"
+    notes: Optional[str] = None
+
 class ProfileUpdateRequest(BaseModel):
     name: Optional[str] = None
 
@@ -3321,6 +3333,180 @@ async def admin_delete_order(order_id: str, user: dict = Depends(require_admin))
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"message": "Order deleted"}
+
+@api_router.post("/admin/orders/manual-create")
+async def admin_create_manual_order(req: AdminManualOrder, user: dict = Depends(require_admin)):
+    """Create an order manually from the admin panel.
+
+    Use cases:
+      - Replace a failed order
+      - Deliver a comped order to a customer
+      - Record a sale booked via another channel (e.g., Telegram DM)
+
+    Behaviour:
+      - If pack_id is provided, pull price/quantity from the PACKS catalog.
+        Otherwise, use the provided quantity and price (at least one must match).
+      - If status='completed' and assign_links=True, pull `quantity` available
+        links from stock and mark them sold + bind to this order.
+      - If explicit `links` list is provided, use those instead of stock
+        (they're inserted as sold and attached to the order).
+      - If send_email=True and order is completed, send confirmation email.
+    """
+    email = (req.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Valid email is required")
+
+    # Resolve pack
+    pack = None
+    if req.pack_id:
+        pack = next((p for p in PACKS if p["id"] == req.pack_id), None)
+        if not pack:
+            raise HTTPException(status_code=400, detail=f"Unknown pack_id: {req.pack_id}")
+
+    if pack:
+        quantity = int(pack["quantity"])
+        price = float(req.price) if req.price is not None else float(pack["price"])
+        pack_id = pack["id"]
+        name_key = pack["name_key"]
+    else:
+        if not req.quantity or req.quantity < 1:
+            raise HTTPException(status_code=400, detail="quantity must be >= 1 when pack_id is not provided")
+        quantity = int(req.quantity)
+        pricing = calculate_custom_price(quantity)
+        price = float(req.price) if req.price is not None else float(pricing.get("total", 0))
+        pack_id = f"custom_{quantity}"
+        name_key = "custom"
+
+    # Pre-check stock if we need to assign
+    if req.status == "completed" and req.assign_links and not req.links:
+        available = await db.links.count_documents({"status": "available"})
+        if available < quantity:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Not enough links in stock: {available}/{quantity} available. "
+                       f"Import more or set status='pending'.",
+            )
+
+    order_id = str(uuid.uuid4())
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    order_doc = {
+        "order_id": order_id,
+        "email": email,
+        "pack_id": pack_id,
+        "name_key": name_key,
+        "quantity": quantity,
+        "price": price,
+        "status": "pending",  # flip later if completed
+        "payment_provider": "manual",
+        "payment_method": "manual",
+        "language": req.language or "en",
+        "links": [],
+        "created_by_admin": user.get("email", ""),
+        "created_at": now_iso,
+        "updated_at": now_iso,
+        "admin_notes": req.notes or "",
+    }
+    await db.orders.insert_one(order_doc)
+    # Strip mongo _id that insert_one appended to the dict.
+    order_doc.pop("_id", None)
+
+    assigned_links: List[str] = []
+
+    if req.status == "completed":
+        # --- Assign explicit links (manual list) ---
+        if req.links:
+            for raw_url in req.links[:quantity]:
+                url = (raw_url or "").strip()
+                if not url:
+                    continue
+                # If the URL already exists in stock, mark it sold;
+                # otherwise insert it directly as sold.
+                existing = await db.links.find_one({"url": url})
+                if existing:
+                    await db.links.update_one(
+                        {"_id": existing["_id"]},
+                        {"$set": {
+                            "status": "sold",
+                            "order_id": order_id,
+                            "sold_at": now_iso,
+                        }},
+                    )
+                else:
+                    await db.links.insert_one({
+                        "url": url,
+                        "status": "sold",
+                        "order_id": order_id,
+                        "source": "manual_order",
+                        "created_at": now_iso,
+                        "sold_at": now_iso,
+                    })
+                assigned_links.append(url)
+        elif req.assign_links:
+            # --- Pull from stock ---
+            pool = await db.links.find({"status": "available"}).to_list(quantity)
+            for link_doc in pool:
+                await db.links.update_one(
+                    {"_id": link_doc["_id"]},
+                    {"$set": {
+                        "status": "sold",
+                        "order_id": order_id,
+                        "sold_at": now_iso,
+                    }},
+                )
+                assigned_links.append(link_doc["url"])
+
+        final_status = "completed" if len(assigned_links) >= quantity else ("partial" if assigned_links else "pending")
+
+        # Loyalty points
+        points_earned = calculate_loyalty_points(price)
+        try:
+            await db.users.update_one(
+                {"email": email},
+                {"$inc": {"loyalty_points": points_earned}},
+                upsert=True,
+            )
+        except Exception as e:
+            logger.error(f"Manual order loyalty update failed for {order_id}: {e}")
+
+        await db.orders.update_one(
+            {"order_id": order_id},
+            {"$set": {
+                "status": final_status,
+                "links": assigned_links,
+                "loyalty_points_earned": points_earned,
+                "paid_at": now_iso,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }},
+        )
+
+        if req.send_email and assigned_links:
+            try:
+                send_order_confirmation_email(email, order_id, assigned_links, req.language or "en")
+            except Exception as e:
+                logger.error(f"Manual order email failed for {order_id}: {e}")
+
+        return {
+            "ok": True,
+            "order_id": order_id,
+            "status": final_status,
+            "links_assigned": len(assigned_links),
+            "email_sent": bool(req.send_email and assigned_links),
+            "price": price,
+            "quantity": quantity,
+        }
+
+    # Pending-only branch
+    return {
+        "ok": True,
+        "order_id": order_id,
+        "status": "pending",
+        "links_assigned": 0,
+        "email_sent": False,
+        "price": price,
+        "quantity": quantity,
+    }
+
 
 @api_router.get("/admin/users")
 async def admin_users(user: dict = Depends(require_admin), skip: int = 0, limit: int = 50):

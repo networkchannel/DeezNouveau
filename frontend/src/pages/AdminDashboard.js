@@ -52,6 +52,19 @@ export default function AdminDashboard() {
   const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
   const genPollRef = useRef(null);
 
+  // Manual order creation
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualPackId, setManualPackId] = useState("single");
+  const [manualQty, setManualQty] = useState("");
+  const [manualPrice, setManualPrice] = useState("");
+  const [manualStatus, setManualStatus] = useState("completed");
+  const [manualSendEmail, setManualSendEmail] = useState(true);
+  const [manualAssignLinks, setManualAssignLinks] = useState(true);
+  const [manualExplicitLinks, setManualExplicitLinks] = useState("");
+  const [manualNotes, setManualNotes] = useState("");
+  const [manualLang, setManualLang] = useState("fr");
+  const [manualSubmitting, setManualSubmitting] = useState(false);
+
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "admin")) navigate("/admin/login");
   }, [user, authLoading, navigate]);
@@ -193,6 +206,56 @@ export default function AdminDashboard() {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Supprimer cette commande ?")) return;
     try { await axios.delete(`${API}/admin/orders/${orderId}`, { withCredentials: true }); fetchData(); } catch {}
+  };
+
+  const handleManualOrder = async (e) => {
+    e?.preventDefault?.();
+    if (!manualEmail.trim() || !manualEmail.includes("@")) {
+      setMsg("Email invalide"); return;
+    }
+    const payload = {
+      email: manualEmail.trim(),
+      status: manualStatus,
+      send_email: manualSendEmail,
+      assign_links: manualAssignLinks,
+      language: manualLang,
+      notes: manualNotes || undefined,
+    };
+    if (manualPackId === "custom") {
+      const q = parseInt(manualQty, 10);
+      if (!q || q < 1) { setMsg("Quantité invalide pour un pack custom"); return; }
+      payload.quantity = q;
+    } else {
+      payload.pack_id = manualPackId;
+    }
+    if (manualPrice.trim()) {
+      const p = parseFloat(manualPrice);
+      if (Number.isFinite(p) && p >= 0) payload.price = p;
+    }
+    if (manualExplicitLinks.trim()) {
+      payload.links = manualExplicitLinks
+        .split("\n").map((l) => l.trim()).filter(Boolean);
+      payload.assign_links = false;
+    }
+
+    setManualSubmitting(true); setMsg("");
+    try {
+      const { data } = await axios.post(
+        `${API}/admin/orders/manual-create`, payload,
+        { withCredentials: true },
+      );
+      setMsg(
+        `Commande créée (${data.order_id?.slice(0, 8)}) — ${data.status} · ` +
+        `${data.links_assigned}/${data.quantity} liens${data.email_sent ? " · email envoyé" : ""}`
+      );
+      // Reset light fields, keep email/pack for batch entries
+      setManualExplicitLinks("");
+      setManualNotes("");
+      fetchData();
+    } catch (err) {
+      setMsg("Erreur: " + (err.response?.data?.detail || err.message));
+    }
+    setManualSubmitting(false);
   };
 
   const handleBlockIp = async () => {
@@ -614,6 +677,151 @@ export default function AdminDashboard() {
 
             {/* ═══ ORDERS ═══ */}
             <TabsContent value="orders">
+              {/* Manual order creation */}
+              <div className="glass rounded-xl border border-border p-5 mb-5" data-testid="manual-order-card">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2 text-t-primary">
+                  <Plus className="h-4 w-4 text-accent" />
+                  Ajouter une commande manuelle
+                </h3>
+                <form onSubmit={handleManualOrder} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-t-muted block mb-1">Email client</label>
+                    <Input
+                      type="email"
+                      value={manualEmail}
+                      onChange={(e) => setManualEmail(e.target.value)}
+                      placeholder="client@email.com"
+                      className="bg-surface border-border text-sm"
+                      data-testid="manual-order-email"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-t-muted block mb-1">Pack</label>
+                    <select
+                      value={manualPackId}
+                      onChange={(e) => setManualPackId(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-md text-sm text-t-primary px-3 py-2 outline-none focus:border-accent"
+                      data-testid="manual-order-pack"
+                    >
+                      <option value="single">Starter · 1 lien · 5€</option>
+                      <option value="pack_3">Essential · 3 liens · 12€</option>
+                      <option value="pack_5">Premium · 5 liens · 20€</option>
+                      <option value="pack_10">Business · 10 liens · 35€</option>
+                      <option value="custom">Sur mesure (qty perso)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-t-muted block mb-1">
+                      {manualPackId === "custom" ? "Quantité *" : "Quantité (auto)"}
+                    </label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={manualQty}
+                      onChange={(e) => setManualQty(e.target.value)}
+                      placeholder={manualPackId === "custom" ? "ex. 15" : "auto"}
+                      disabled={manualPackId !== "custom"}
+                      className="bg-surface border-border text-sm disabled:opacity-60"
+                      data-testid="manual-order-qty"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-t-muted block mb-1">Prix (€) — laisse vide pour auto</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={manualPrice}
+                      onChange={(e) => setManualPrice(e.target.value)}
+                      placeholder="auto"
+                      className="bg-surface border-border text-sm"
+                      data-testid="manual-order-price"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-t-muted block mb-1">Langue email</label>
+                    <select
+                      value={manualLang}
+                      onChange={(e) => setManualLang(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-md text-sm text-t-primary px-3 py-2 outline-none focus:border-accent"
+                    >
+                      <option value="fr">Français</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                      <option value="pt">Português</option>
+                      <option value="de">Deutsch</option>
+                      <option value="tr">Türkçe</option>
+                      <option value="nl">Nederlands</option>
+                      <option value="ar">العربية</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-t-muted block mb-1">Statut</label>
+                    <select
+                      value={manualStatus}
+                      onChange={(e) => setManualStatus(e.target.value)}
+                      className="w-full bg-surface border border-border rounded-md text-sm text-t-primary px-3 py-2 outline-none focus:border-accent"
+                      data-testid="manual-order-status"
+                    >
+                      <option value="completed">Complétée (assigner + envoyer)</option>
+                      <option value="pending">En attente (pas d'assignation)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-t-muted block mb-1">
+                      Liens explicites (optionnel — un par ligne, remplace l'assignation auto)
+                    </label>
+                    <textarea
+                      value={manualExplicitLinks}
+                      onChange={(e) => setManualExplicitLinks(e.target.value)}
+                      placeholder="https://www.deezer.com/…&#10;https://www.deezer.com/…"
+                      rows={3}
+                      className="w-full bg-surface border border-border rounded-md text-sm text-t-primary px-3 py-2 outline-none focus:border-accent font-mono"
+                      data-testid="manual-order-links"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-xs text-t-muted block mb-1">Notes internes (optionnel)</label>
+                    <Input
+                      value={manualNotes}
+                      onChange={(e) => setManualNotes(e.target.value)}
+                      placeholder="ex: vente via Telegram, remboursement compensation…"
+                      className="bg-surface border-border text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2 flex flex-wrap items-center gap-4 pt-1">
+                    <label className="flex items-center gap-2 text-xs text-t-secondary cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={manualSendEmail}
+                        onChange={(e) => setManualSendEmail(e.target.checked)}
+                        className="accent-accent"
+                      />
+                      Envoyer email de livraison
+                    </label>
+                    <label className="flex items-center gap-2 text-xs text-t-secondary cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={manualAssignLinks}
+                        onChange={(e) => setManualAssignLinks(e.target.checked)}
+                        className="accent-accent"
+                      />
+                      Assigner depuis le stock
+                    </label>
+                    <Button
+                      type="submit"
+                      disabled={manualSubmitting}
+                      className="ml-auto bg-accent/20 hover:bg-accent/30 text-accent border border-accent/30"
+                      data-testid="manual-order-submit"
+                    >
+                      {manualSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                      Créer la commande
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
               <div className="glass rounded-xl border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
@@ -650,6 +858,68 @@ export default function AdminDashboard() {
             {/* ═══ LINKS ═══ */}
             <TabsContent value="links">
               <div className="space-y-5">
+                {/* Manual link add + bulk import */}
+                <div className="glass rounded-xl border border-border p-5 grid grid-cols-1 md:grid-cols-2 gap-5" data-testid="manual-links-card">
+                  {/* Single link add */}
+                  <div>
+                    <h3 className="font-semibold text-sm mb-3 flex items-center gap-2 text-t-primary">
+                      <Plus className="h-4 w-4 text-green" />
+                      Ajouter un lien
+                    </h3>
+                    <div className="flex gap-2">
+                      <Input
+                        type="url"
+                        value={singleLink}
+                        onChange={(e) => setSingleLink(e.target.value)}
+                        placeholder="https://www.deezer.com/…"
+                        className="bg-surface border-border text-sm flex-1 font-mono"
+                        data-testid="manual-link-single"
+                      />
+                      <Button
+                        onClick={handleAddSingle}
+                        disabled={adding || !singleLink.trim()}
+                        className="bg-green/20 hover:bg-green/30 text-green border border-green/30"
+                        data-testid="manual-link-single-submit"
+                      >
+                        {adding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <p className="text-t-muted text-[11px] mt-2">
+                      Ajoute un lien d&apos;activation au stock (statut: available).
+                    </p>
+                  </div>
+
+                  {/* Bulk import */}
+                  <div>
+                    <h3 className="font-semibold text-sm mb-3 flex items-center gap-2 text-t-primary">
+                      <Upload className="h-4 w-4 text-cyan-400" />
+                      Importer en masse
+                    </h3>
+                    <textarea
+                      value={importText}
+                      onChange={(e) => setImportText(e.target.value)}
+                      placeholder="Un lien par ligne&#10;https://…&#10;https://…"
+                      rows={4}
+                      className="w-full bg-surface border border-border rounded-md text-sm text-t-primary px-3 py-2 outline-none focus:border-accent font-mono resize-none"
+                      data-testid="manual-link-import"
+                    />
+                    <div className="flex items-center justify-between mt-2 gap-3">
+                      <span className="text-t-muted text-[11px]">
+                        {importText.split("\n").filter((l) => l.trim()).length} ligne(s)
+                      </span>
+                      <Button
+                        onClick={handleImport}
+                        disabled={importing || !importText.trim()}
+                        className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30"
+                        data-testid="manual-link-import-submit"
+                      >
+                        {importing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                        Importer
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="glass rounded-xl border border-border overflow-hidden">
                   <div className="px-5 py-3 border-b border-border"><h3 className="text-sm font-medium text-t-primary flex items-center gap-2"><Link2 className="h-4 w-4 text-cyan-400" />Liens ({realLinks.length})</h3></div>
                   <div className="overflow-x-auto">
