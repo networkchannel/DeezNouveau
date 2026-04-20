@@ -6,7 +6,7 @@
 > https://crystality.win/"
 
 ## Latest updates (Feb 2026)
-- **[2026-02-20]** **Refonte crystality.win** : (a) Bouton primaire avec gradient animé violet→fuchsia + glow pulsant + sheen sweep on hover. (b) Feature cards refondues en style hero-card (grid 1 col mobile / 2 cols ≥sm), grand icône 3D violet-fuchsia au centre avec float anim + bottom violet glow dans la card. (c) Background halo enrichi avec couche de base radial (violet/fuchsia/indigo) sous le `.bg-orb` pour matcher l'ambiance crystality.
+- **[2026-02-20 v2]** **Match crystality.win strict** : fond `rgb(0,0,0)` pur (était `#020208`), glow violet `rgb(98,0,255)` concentré (top-center + subtle bottom-left). Feature cards passent en quasi-noir pur (`#050008` → `#030006`) avec border violet `rgba(98,0,255,.14→.45)`. Nouveau hover : l'icône scale 1.056 + translateY -8.75px, le SVG interne fait scale 1.114 + rotate 6°, glow violet passe de 0.55α à 0.8α. Bouton primaire utilise le gradient crystality EXACT (224deg, 6 stops violet) + inset bottom shadow `rgb(111,0,255)`.
 - **[2026-02-20]** **Pages légales routées** : `/conditions`, `/confidentialite`, `/remboursement` ajoutées dans `App.js`. Liens `#` du Footer remplacés par les routes correspondantes.
 - **[2026-02]** **Sélecteur de langue visible dans le Header** : dropdown avec drapeaux emoji (🇫🇷 🇬🇧 🇪🇸 🇵🇹 🇩🇪 🇹🇷 🇳🇱 🇸🇦) + noms natifs + code pays + checkmark violet sur langue active. Auto-RTL pour l'arabe.
 - **[2026-02]** **Traductions 8 langues étendues aux pages secondaires** : Offers, GiftCards, Profile, OrderHistory, OrderConfirmation, CartSlidePanel, PricingModal, CustomQuantity (FR/EN/ES/PT/DE/TR/NL/AR) via helper `pickLang`
