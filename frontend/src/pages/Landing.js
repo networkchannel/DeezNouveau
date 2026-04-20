@@ -491,7 +491,7 @@ export default function Landing() {
                 key={pack.id}
                 className={`relative p-7 rounded-[1.5rem] transition-all duration-200 ${
                   pack.highlight
-                    ? "bg-gradient-to-b from-violet-900/40 to-[#0a0a0e] border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"
+                    ? "bg-gradient-to-b from-violet-900/30 to-[rgba(10,5,20,0.4)] backdrop-blur-xl border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"
                     : "card-surface"
                 }`}
                 y={30}
@@ -569,10 +569,10 @@ export default function Landing() {
               return (
                 <StaggerItem
                   key={i}
-                  className={`rounded-2xl border transition-all ${
+                  className={`rounded-2xl border backdrop-blur-xl transition-all ${
                     open
-                      ? "bg-[#0f0f14] border-violet-500/30"
-                      : "bg-[#0a0a0e] border-white/[0.07] hover:border-white/[0.12]"
+                      ? "bg-[rgba(15,10,24,0.55)] border-violet-500/30"
+                      : "bg-[rgba(10,5,16,0.45)] border-white/[0.07] hover:border-white/[0.14]"
                   }`}
                   y={18}
                 >

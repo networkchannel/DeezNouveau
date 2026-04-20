@@ -300,15 +300,18 @@
 .feature-card {
   position: relative;
   overflow: hidden;
-  /* Near-pure black matching crystality — no washed gradient */
-  background: linear-gradient(180deg, #050008 0%, #030006 100%);
-  border: 1px solid rgba(98, 0, 255, 0.14);
+  /* Translucide — glassy near-black with violet tint */
+  background: linear-gradient(180deg, rgba(12, 4, 22, 0.55) 0%, rgba(4, 0, 12, 0.45) 100%);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid rgba(98, 0, 255, 0.18);
   border-radius: 1.5rem;
   padding: 2.75rem 1.75rem 2rem;
   transition:
     border-color 320ms ease,
     transform 320ms cubic-bezier(.2,.8,.2,1),
-    box-shadow 320ms ease;
+    box-shadow 320ms ease,
+    background 320ms ease;
 }
 
 /* Tight inner violet accent at the bottom that intensifies on hover */
@@ -342,6 +345,7 @@
 .feature-card:hover {
   border-color: rgba(98, 0, 255, 0.45);
   transform: translateY(-4px);
+  background: linear-gradient(180deg, rgba(18, 6, 32, 0.65) 0%, rgba(6, 0, 16, 0.55) 100%);
   box-shadow:
     0 28px 64px -24px rgba(98, 0, 255, 0.55),
     0 0 0 1px rgba(98, 0, 255, 0.18);

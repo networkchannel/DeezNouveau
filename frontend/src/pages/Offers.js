@@ -196,7 +196,7 @@ export default function Offers() {
                     </span>
                   </div>
                 )}
-                <div className={`relative bg-gradient-to-b from-[#16161d] to-[#0a0a0e] border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.06]'} rounded-2xl flex flex-col h-full transition-colors duration-200 group-hover:border-violet-400/60`}>
+                <div className={`relative bg-gradient-to-b from-[rgba(22,18,32,0.50)] to-[rgba(10,5,16,0.40)] backdrop-blur-xl border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.08]'} rounded-2xl flex flex-col h-full transition-colors duration-200 group-hover:border-violet-400/60`}>
                   {/* Content */}
                   <div className="p-5 sm:p-6 flex flex-col flex-1">
                     {/* Icon + Name */}
