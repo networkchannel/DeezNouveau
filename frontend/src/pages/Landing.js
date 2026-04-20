@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { smoothScrollTo } from "@/utils/smoothScroll";
 import { pickLang as L } from "@/utils/langPick";
+import { detectSource, getSourceCTA } from "@/utils/sourceDetection";
 import Reveal, { StaggerGroup, StaggerItem } from "@/components/Reveal";
 import FeaturesSection from "@/components/landing/FeaturesSection";
 import PricingSection from "@/components/landing/PricingSection";
@@ -26,6 +27,10 @@ export default function Landing() {
   const [stats, setStats] = useState({ orders: 0, links: 0 });
   const [trending, setTrending] = useState({ albums: [], artists: [] });
   const [openFAQ, setOpenFAQ] = useState(null);
+
+  // ─── Source-aware CTA (TikTok / Instagram / YouTube / Facebook / X / default) ───
+  useEffect(() => { detectSource(); }, []);
+  const srcCTA = useMemo(() => getSourceCTA(lang), [lang]);
 
   useEffect(() => {
     axios.get(`${API}/stats/public`).then((r) => setStats(r.data)).catch(() => {});
@@ -295,9 +300,9 @@ export default function Landing() {
   return (
     <div className="relative">
       {/* ═════════ HERO ═════════ */}
-      <section className="relative px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-28">
+      <section className="relative px-4 sm:px-6 pt-10 sm:pt-20 pb-12 sm:pb-28">
         <div className="max-w-6xl mx-auto relative">
-          <div className="grid lg:grid-cols-[1.1fr_1fr] gap-10 sm:gap-16 items-center">
+          <div className="grid lg:grid-cols-[1.1fr_1fr] gap-6 sm:gap-16 items-center">
             {/* LEFT — text */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -305,39 +310,39 @@ export default function Landing() {
               transition={{ duration: 0.7 }}
               className="relative z-10"
             >
-              <div className="flex flex-col items-start gap-3 mb-8">
+              <div className="flex flex-col items-start gap-3 mb-5 sm:mb-8">
                 <span className="pill" data-testid="hero-pill-new">
                   <span className="pill-dot" />
-                  {T.newDrop}
+                  {srcCTA.pill}
                 </span>
               </div>
 
               <h1
-                className="display-xl text-white mb-6"
+                className="display-xl text-white mb-4 sm:mb-6"
                 data-testid="hero-title"
                 style={{ letterSpacing: "-0.06em" }}
               >
                 deez<span className="text-violet-500">link</span>
               </h1>
 
-              <p className="text-white/65 text-[16px] sm:text-[17px] leading-relaxed max-w-xl mb-10">
+              <p className="text-white/65 text-[15px] sm:text-[17px] leading-relaxed max-w-xl mb-6 sm:mb-10">
                 {T.heroSub}
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 mb-12">
-                <button onClick={() => navigate("/offers")} className="btn-primary" data-testid="hero-cta-primary">
-                  {T.ctaMain}
+              <div className="flex flex-wrap items-center gap-3 mb-6 sm:mb-12">
+                <button onClick={() => navigate("/offers")} className="btn-primary" data-testid="hero-cta-primary" data-source={srcCTA.platform}>
+                  {srcCTA.label}
                   <ArrowRight className="h-4 w-4" />
                 </button>
                 <button onClick={() => {
-                  smoothScrollTo("#features", { offset: -40 });
+                  smoothScrollTo("#pricing", { offset: -40 });
                 }} className="btn-secondary" data-testid="hero-cta-secondary">
-                  {L({ fr: "En savoir plus", en: "Learn more", es: "Saber más", pt: "Saiba mais", de: "Mehr erfahren", tr: "Daha fazla bilgi", nl: "Meer weten", ar: "اعرف المزيد" }, lang)}
+                  {L({ fr: "Voir les prix", en: "See pricing", es: "Ver precios", pt: "Ver preços", de: "Preise ansehen", tr: "Fiyatları gör", nl: "Bekijk prijzen", ar: "شاهد الأسعار" }, lang)}
                 </button>
               </div>
 
-              {/* Mini stats row */}
-              <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-white/50 text-[13px]">
+              {/* Mini trust row — compact on mobile */}
+              <div className="flex flex-wrap items-center gap-x-5 sm:gap-x-8 gap-y-2 sm:gap-y-3 text-white/50 text-[12px] sm:text-[13px]">
                 <div className="flex items-center gap-2">
                   <Shield className="h-3.5 w-3.5 text-violet-400" />
                   {L({ fr: "Paiement crypto", en: "Crypto payment", es: "Pago cripto", pt: "Pagamento cripto", de: "Krypto-Zahlung", tr: "Kripto ödeme", nl: "Crypto-betaling", ar: "دفع كريبتو" }, lang)}
@@ -346,19 +351,19 @@ export default function Landing() {
                   <Zap className="h-3.5 w-3.5 text-violet-400" />
                   {L({ fr: "Livraison < 5 min", en: "Under 5min delivery", es: "Entrega < 5 min", pt: "Entrega < 5 min", de: "Lieferung < 5 Min.", tr: "5 dk içinde teslimat", nl: "Levering < 5 min", ar: "التوصيل خلال 5 دقائق" }, lang)}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-violet-400" />
                   {L({ fr: "Support 24/7", en: "24/7 support", es: "Soporte 24/7", pt: "Suporte 24/7", de: "24/7 Support", tr: "7/24 destek", nl: "24/7 support", ar: "دعم 24/7" }, lang)}
                 </div>
               </div>
             </motion.div>
 
-            {/* RIGHT — album mosaic */}
+            {/* RIGHT — album mosaic (simplified on mobile) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.1 }}
-              className="relative"
+              className="relative hidden sm:block"
             >
               <div className="relative aspect-[4/5] sm:aspect-square w-full max-w-[520px] ml-auto">
                 <div className="relative grid grid-cols-3 grid-rows-4 gap-2 sm:gap-3 h-full">
@@ -429,24 +434,71 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
+
+            {/* RIGHT — MOBILE-ONLY compact preview (replaces the big mosaic) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="sm:hidden"
+            >
+              <div className="flex items-center gap-3 rounded-2xl card-surface p-3">
+                <div className="flex -space-x-2">
+                  {[0, 1, 2].map((i) => {
+                    const a = artists[i] || albums[i];
+                    const img = a?.picture_medium || a?.cover_medium || a?.picture || a?.cover;
+                    return (
+                      <div key={i} className="w-9 h-9 rounded-full border-2 border-[#0a0a0e] overflow-hidden bg-violet-900/40 shrink-0">
+                        {img ? <img src={img} alt="" loading="lazy" className="w-full h-full object-cover" /> : null}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-white text-[12.5px] font-semibold truncate">
+                    {L({ fr: "10,000+ auditeurs Premium", en: "10,000+ Premium listeners", es: "+10,000 oyentes Premium", pt: "+10,000 ouvintes Premium", de: "10.000+ Premium-Hörer", tr: "10.000+ Premium dinleyici", nl: "10.000+ Premium-luisteraars", ar: "+10,000 مستمع Premium" }, lang)}
+                  </div>
+                  <div className="text-white/50 text-[11px] truncate">
+                    {L({ fr: "rejoignent deezlink chaque mois", en: "join deezlink every month", es: "se unen a deezlink cada mes", pt: "se juntam ao deezlink todo mês", de: "treten deezlink monatlich bei", tr: "her ay deezlink'e katılıyor", nl: "sluiten zich maandelijks aan", ar: "ينضمون إلى deezlink كل شهر" }, lang)}
+                  </div>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center shrink-0">
+                  <Check className="h-3.5 w-3.5 text-green-400" />
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* ═════════ METRICS BAR ═════════ */}
-      <section className="relative px-4 sm:px-6 mb-20 sm:mb-28">
+      <section className="relative px-4 sm:px-6 mb-14 sm:mb-28">
         <div className="max-w-6xl mx-auto">
-          <Reveal className="rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-3 divide-x divide-white/[0.05] overflow-hidden">
+          <Reveal className="rounded-[1.25rem] sm:rounded-[1.5rem] border border-white/[0.06] bg-[rgba(10,10,14,0.6)] backdrop-blur-xl grid grid-cols-3 divide-x divide-white/[0.05] overflow-hidden">
             {[
               { value: stats.links ? `${stats.links.toLocaleString()}+` : "10,000+", label: T.statLinks },
               { value: "<5 min", label: T.statTime },
               { value: "24/7", label: T.statSupport },
             ].map((s, i) => (
-              <div key={i} className="p-5 sm:p-7 text-center">
-                <div className="text-2xl sm:text-4xl font-display font-bold text-white tracking-tight mb-1">{s.value}</div>
-                <div className="text-[11px] sm:text-[13px] text-white/50 uppercase tracking-[0.12em]">{s.label}</div>
+              <div key={i} className="p-3.5 sm:p-7 text-center">
+                <div className="text-xl sm:text-4xl font-display font-bold text-white tracking-tight mb-1">{s.value}</div>
+                <div className="text-[10px] sm:text-[13px] text-white/50 uppercase tracking-[0.12em]">{s.label}</div>
               </div>
             ))}
+          </Reveal>
+
+          {/* Mid-page CTA — mobile-first, helps conversion after scroll */}
+          <Reveal className="mt-4 sm:hidden" delay={0.15}>
+            <button
+              onClick={() => navigate("/offers")}
+              className="btn-primary w-full justify-center"
+              data-testid="metrics-cta-mobile"
+              data-source={srcCTA.platform}
+            >
+              {srcCTA.label}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <p className="text-center text-white/40 text-[11px] mt-2">{srcCTA.sub}</p>
           </Reveal>
         </div>
       </section>
@@ -479,8 +531,8 @@ export default function Landing() {
                 <p className="text-white/60 text-[15px] max-w-xl mx-auto mb-6">
                   {L({ fr: "Rejoignez des milliers d'utilisateurs. Paiement crypto anonyme, livraison instantanée.", en: "Join thousands of users. Anonymous crypto payment, instant delivery.", es: "Únete a miles de usuarios. Pago cripto anónimo, entrega instantánea.", pt: "Junte-se a milhares de usuários. Pagamento cripto anônimo, entrega instantânea.", de: "Schließen Sie sich Tausenden von Nutzern an. Anonyme Krypto-Zahlung, sofortige Lieferung.", tr: "Binlerce kullanıcıya katılın. Anonim kripto ödeme, anında teslimat.", nl: "Sluit u aan bij duizenden gebruikers. Anonieme crypto-betaling, directe levering.", ar: "انضم إلى آلاف المستخدمين. دفع كريبتو مجهول، توصيل فوري." }, lang)}
                 </p>
-                <Link to="/offers" className="btn-primary" data-testid="home-cta-btn">
-                  {L({ fr: "Voir les offres", en: "Get Started Now", es: "Empezar ahora", pt: "Começar agora", de: "Jetzt starten", tr: "Hemen başla", nl: "Begin nu", ar: "ابدأ الآن" }, lang)}
+                <Link to="/offers" className="btn-primary" data-testid="home-cta-btn" data-source={srcCTA.platform}>
+                  {srcCTA.label}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>

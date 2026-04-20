@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, X, ArrowRight } from "lucide-react";
 import { pickLang as L } from "@/utils/langPick";
+import { getSourceCTA } from "@/utils/sourceDetection";
 
 /**
  * Persistent floating CTA, bottom-right.
  * Appears once the user scrolls past ~600px, hides on /checkout, /order, /admin*.
  * Dismissible (persisted in sessionStorage for current session).
+ * Uses platform-adapted CTA copy (TikTok / Instagram / YouTube / Facebook / X / default).
  */
 const HIDDEN_PATHS = ["/checkout", "/order", "/admin"];
 const SCROLL_THRESHOLD = 600;
@@ -45,9 +47,11 @@ export default function FloatingCTA() {
 
   const show = visible && !dismissed && !routeHidden;
 
-  const label = L({ fr: "Get Deezer Premium", en: "Get Deezer Premium", es: "Obtén Deezer Premium", pt: "Obter Deezer Premium", de: "Deezer Premium holen", tr: "Deezer Premium al", nl: "Krijg Deezer Premium", ar: "احصل على Deezer Premium" }, lang);
-  const sub = L({ fr: "Dès 5€ · Livraison 5 min", en: "From 5€ · 5 min delivery", es: "Desde 5€ · Entrega 5 min", pt: "A partir de 5€ · Entrega 5 min", de: "Ab 5€ · Lieferung 5 Min.", tr: "5€'dan · 5 dk teslimat", nl: "Vanaf 5€ · 5 min levering", ar: "من 5€ · توصيل 5 دقائق" }, lang);
-  const cta = L({ fr: "Commencer", en: "Get started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang);
+  // Source-aware copy
+  const srcCTA = getSourceCTA(lang);
+  const label = srcCTA.label;
+  const sub = srcCTA.sub;
+  const cta = L({ fr: "Activer", en: "Activate", es: "Activar", pt: "Ativar", de: "Aktivieren", tr: "Aktive et", nl: "Activeer", ar: "فعّل" }, lang);
 
   return (
     <AnimatePresence>

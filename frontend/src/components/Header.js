@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import CartSlidePanel from "@/components/CartSlidePanel";
 import {
@@ -11,6 +11,7 @@ import {
 import { Menu, X, ShoppingCart, User, LogIn, LogOut, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { pickLang as L } from "@/utils/langPick";
+import { getSourceCTA } from "@/utils/sourceDetection";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
@@ -60,6 +61,9 @@ export default function Header() {
   const isLoggedIn = user && user !== false && user.email;
   const isAdminUser = isLoggedIn && user.role === "admin";
   const isRegularUser = isLoggedIn && user.role !== "admin";
+
+  // Source-aware CTA label (TikTok / Instagram / YouTube / Facebook / X / default)
+  const srcCTA = useMemo(() => getSourceCTA(lang), [lang]);
 
   const navLinks = [
     { to: "/", label: L({ fr: "Accueil", en: "Home", es: "Inicio", pt: "Início", de: "Startseite", tr: "Ana Sayfa", nl: "Home", ar: "الرئيسية" }, lang) },
@@ -275,9 +279,10 @@ export default function Header() {
                   to="/offers"
                   onClick={() => setMobileOpen(false)}
                   data-testid="mobile-cta-btn"
+                  data-source={srcCTA.platform}
                   className="btn-primary w-full mt-1 justify-center"
                 >
-                  {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
+                  {srcCTA.label}
                 </Link>
                 {isLoggedIn && (
                   <button

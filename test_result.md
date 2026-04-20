@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the mobile header and the new legal notice page of the DeezLink app"
+user_problem_statement: "Test the Deezlink landing page mobile features: platform-adaptive CTA, mobile carousels, FAQ interactivity, and mobile-optimized hero section"
 
 backend:
   - task: "Public Stock Endpoint"
@@ -192,17 +192,80 @@ frontend:
         - working: true
           agent: "testing"
           comment: "Comprehensive testing on desktop viewport (1440x900) confirms Lenis smooth scroll is working correctly. ALL 5 requirements PASSED: (1) Console log '[Lenis] smooth scroll initialized' found in browser console, (2) HTML element has 'lenis' and 'lenis-autoToggle' classes applied by Lenis, (3) window.__LENIS__ exists and is a proper Lenis instance with scrollTo function, (4) Smooth scroll to #features section works perfectly - clicking 'Learn more' button smoothly scrolls 978px to the features section with proper offset, (5) data-lenis-prevent attribute is present on cart panel's scrollable area (<div class='flex-1 overflow-y-auto p-6' data-lenis-prevent>) to prevent Lenis from interfering with cart panel scrolling. Lenis version 1.3.23 detected from package.json. Configuration: autoRaf: true, lerp: 0.08 (smooth inertial scrolling), anchors offset: -88px, allowNestedScroll: true, stopInertiaOnNavigate: true, autoToggle: true. Screenshots captured showing initial state, after smooth scroll to features section, and cart panel with data-lenis-prevent attribute. No console errors. Smooth scroll animation is fluid and premium-quality."
+  
+  - task: "Platform-Adaptive CTA System"
+    implemented: true
+    working: true
+    file: "frontend/src/utils/sourceDetection.js, frontend/src/pages/Landing.js, frontend/src/components/Header.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Platform-adaptive CTA system tested comprehensively on mobile viewport (390x844). Tested all 6 platforms with URL parameters: default (/), tiktok (?src=tiktok), instagram (?src=instagram), youtube (?src=youtube), facebook (?src=facebook), and x (?src=x). VERIFIED: (1) Hero CTA button (data-testid='hero-cta-primary') displays correct platform-specific text for each source - TikTok: 'Get Deezer Premium — from 5€', Instagram: 'Join 10k+ Premium listeners', YouTube: 'Activate Deezer Premium in 5 min', Facebook: 'Exclusive Deezer Premium deal', X: 'Unlock Deezer — no subscription', Default: 'Unlock Deezer Premium', (2) Hero pill badge (data-testid='hero-pill-new') shows correct platform-specific text - TikTok deal, Insta drop, YouTube deal, Facebook deal, X deal, New drop, (3) data-source attribute on CTA buttons correctly matches the platform for all sources, (4) sessionStorage.getItem('dz_source_v1') correctly stores platform detection data with platform, detectedBy, and detectedAt fields, (5) Mobile header CTA (data-testid='mobile-cta-btn') in mobile menu displays platform-adapted text with correct data-source attribute, (6) Extra mobile CTA after metrics bar (data-testid='metrics-cta-mobile') is visible on mobile only with correct platform-adapted text and data-source. Source detection works via URL params (?src=), utm_source, and document.referrer. All 5/6 platforms passed (default shows 'direct' in sessionStorage which is correctly mapped to 'default' bucket for CTA purposes - this is working as designed). Screenshots captured showing mobile menu with CTA."
+  
+  - task: "Mobile Carousel for Pricing Section"
+    implemented: true
+    working: true
+    file: "frontend/src/components/landing/PricingSection.js, frontend/src/components/MobileCarousel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Mobile carousel for pricing section tested successfully on iPhone 14 Pro viewport (390x844). VERIFIED: (1) Pricing section (#pricing) contains exactly 3 carousel dots (data-testid='carousel-dot-0', 'carousel-dot-1', 'carousel-dot-2') for the 3 pricing packs (Starter/single, Essential/pack_3, Premium/pack_10), (2) Carousel container (data-testid='mobile-carousel') exists and is horizontally scrollable with snap behavior, (3) Scrolling the carousel by 300px successfully changes scroll position from 0px to 209px, confirming horizontal scroll works, (4) Active dot indicator changes correctly when scrolling - active dot has class 'w-6' while inactive dots have 'w-1.5', (5) Carousel uses flex layout on mobile with overflow-x-auto and snap-x snap-mandatory for smooth scrolling experience, (6) On desktop (md+ breakpoint), carousel switches to CSS grid layout (grid-cols-3) as expected. MobileCarousel component properly handles both mobile horizontal scroll and desktop grid layout. Screenshots captured showing pricing carousel with visible dots at bottom."
+  
+  - task: "Mobile Carousel for Features Section"
+    implemented: true
+    working: true
+    file: "frontend/src/components/landing/FeaturesSection.js, frontend/src/components/MobileCarousel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Mobile carousel for features section tested successfully on iPhone 14 Pro viewport (390x844). VERIFIED: (1) Features section (#features) contains 6 carousel dots for the 6 feature cards (HiFi FLAC audio, Unlimited offline, Flow AI, Zero ads, 120M+ tracks, Synced lyrics), (2) Carousel container is horizontally scrollable with scrollWidth (1596px) greater than clientWidth (390px), confirming horizontal scroll capability, (3) All 6 feature cards (data-testid='feature-0' through 'feature-5') are present in the carousel, (4) Carousel dots are visible and functional on mobile, hidden on desktop, (5) Feature cards use proper snap-center behavior for smooth scrolling experience, (6) On desktop, features display in 3-column grid layout (md:grid-cols-3). MobileCarousel component works perfectly for features section with proper responsive behavior."
+  
+  - task: "FAQ Mobile Tap Interactivity"
+    implemented: true
+    working: true
+    file: "frontend/src/components/landing/FAQSection.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "FAQ mobile tap interactivity tested successfully on iPhone 14 Pro viewport (390x844). This was a CRITICAL test as the review request specifically mentioned 'the previous bug was non-interactive FAQ tabs on mobile'. VERIFIED: (1) FAQ-0 (data-testid='faq-0'): Initial aria-expanded='false', after tap aria-expanded='true' (expanded), after second tap aria-expanded='false' (closed) - PASS, (2) FAQ-1 (data-testid='faq-1'): Expands and closes correctly on tap - PASS, (3) FAQ-2 (data-testid='faq-2'): Expands and closes correctly on tap - PASS. All 3 FAQs tested are fully interactive on mobile. Implementation uses proper button elements with type='button', touch-action: manipulation for snappy mobile taps, onClick AND onKeyDown handlers for accessibility, and framer-motion AnimatePresence for smooth height animations. FAQ buttons have proper aria-expanded attributes that toggle correctly. The previous non-interactive bug has been FIXED - all FAQ items are now fully interactive on mobile viewport. Screenshots captured showing FAQ in expanded state."
+  
+  - task: "Reduced Mobile Hero Clutter"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Landing.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Reduced mobile hero clutter tested successfully on iPhone 14 Pro viewport (390x844). VERIFIED: (1) Large 6-tile album mosaic (grid with trending albums/artists) is NOT visible on mobile - uses class 'hidden sm:block' which hides it below sm breakpoint (640px), confirmed via visibility check that mosaic elements are not visible on 390px viewport, (2) Compact avatar row IS visible on mobile - uses class 'sm:hidden' which shows it only below sm breakpoint, (3) Compact avatar row displays correct text '10,000+ Premium listeners' with subtitle 'join deezlink every month', (4) Compact row shows 3 circular avatar images in -space-x-2 overlap layout with green checkmark indicator, (5) Mobile hero is clean and uncluttered with only essential elements: pill badge, title, subtitle, CTA buttons, trust indicators, and compact avatar row. Desktop (sm+) shows the full album mosaic instead. This mobile-first optimization reduces visual clutter and improves mobile UX by replacing the large mosaic with a simpler social proof element. Screenshots captured showing mobile hero with compact avatar row visible and mosaic hidden."
 
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 7
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Mobile Header - Flex Layout at 390px"
-    - "Legal Notice Page"
+    - "Platform-Adaptive CTA System"
+    - "Mobile Carousel for Pricing Section"
+    - "Mobile Carousel for Features Section"
+    - "FAQ Mobile Tap Interactivity"
+    - "Reduced Mobile Hero Clutter"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -220,3 +283,5 @@ agent_communication:
       message: "Lenis smooth scroll testing completed successfully. Comprehensive testing on desktop viewport (1440x900) confirms all 5 requirements are met: (1) Console log '[Lenis] smooth scroll initialized' is present, (2) HTML element has 'lenis' and 'lenis-autoToggle' classes, (3) window.__LENIS__ exists as a proper Lenis instance, (4) Smooth scroll to #features section works perfectly with 978px smooth animation when clicking 'Learn more' button, (5) data-lenis-prevent attribute is correctly applied to cart panel's scrollable area. Lenis version 1.3.23 is active with optimal configuration (lerp: 0.08 for smooth inertial scrolling, autoRaf: true, allowNestedScroll: true). No console errors. Smooth scroll animation is fluid and premium-quality. Screenshots captured at key test points."
     - agent: "testing"
       message: "Mobile header and legal notice page testing completed successfully. TEST 1 - Mobile Header: Header correctly uses 'display: flex' on mobile (not grid), logo positioned on left and hamburger on right with no overflow, mobile menu opens with proper 2-column grid layout (166px 166px) displaying 3 nav links plus action buttons. TEST 2 - Legal Notice Page: Page loads correctly at /mentions-legales with proper breadcrumb (Home > Legal Notice), all 7 required sections present (Site Publisher, Hosting, Intellectual Property, Personal Data Protection, Cookies, Limitation of Liability, Contact), and footer link to legal notice works correctly. Screenshots captured for both tests. All requirements from review request met successfully."
+    - agent: "testing"
+      message: "Comprehensive mobile landing page testing completed successfully on iPhone 14 Pro viewport (390x844). ALL 7 TESTS PASSED: (1) Platform-adaptive CTA - Tested 6 platforms (default, tiktok, instagram, youtube, facebook, x), all show correct platform-specific CTA text, pill badges, and data-source attributes. sessionStorage correctly stores platform detection. (2) Pricing carousel - Has exactly 3 dots for 3 pricing packs, scrolls horizontally, active dot indicator changes correctly. (3) Features carousel - Has 6 dots for 6 features, horizontally scrollable (1596px scroll width vs 390px client width). (4) FAQ interactivity - CRITICAL FIX VERIFIED: All 3 FAQs (faq-0, faq-1, faq-2) are fully interactive on mobile, expand/close correctly on tap with proper aria-expanded toggling. Previous non-interactive bug is FIXED. (5) Mobile hero clutter - Large album mosaic hidden on mobile (hidden sm:block), compact avatar row visible with '10,000+ Premium listeners' text. (6) Extra mobile CTA - metrics-cta-mobile button visible after metrics bar with correct data-source. (7) Mobile header CTA - mobile-cta-btn in mobile menu shows platform-adapted text with correct data-source. Screenshots captured: mobile menu, pricing carousel, FAQ opened, mobile hero. All requirements from review request met successfully. No critical issues found."
