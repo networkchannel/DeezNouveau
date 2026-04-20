@@ -32,10 +32,15 @@ export default function Reveal({
         transition: { duration: 0.4, delay: 0 },
       }
     : {
-        initial: { opacity: 0, y },
-        whileInView: { opacity: 1, y: 0 },
+        initial: { opacity: 0, y, scale: 0.985 },
+        whileInView: { opacity: 1, y: 0, scale: 1 },
         viewport: { once, margin },
-        transition: { duration, delay, ease: [0.2, 0.8, 0.2, 1] },
+        transition: {
+          // Spring momentum — natural "launch then settle" feel
+          opacity: { duration: duration * 0.55, delay, ease: [0.22, 0.8, 0.2, 1] },
+          y:       { type: "spring", stiffness: 90,  damping: 18, mass: 0.9, delay },
+          scale:   { type: "spring", stiffness: 120, damping: 20, delay },
+        },
       };
 
   return (
@@ -75,8 +80,17 @@ export function StaggerItem({ children, y = 24, duration = 0.55, className = "" 
         visible: { opacity: 1, transition: { duration: 0.35 } },
       }
     : {
-        hidden: { opacity: 0, y },
-        visible: { opacity: 1, y: 0, transition: { duration, ease: [0.2, 0.8, 0.2, 1] } },
+        hidden: { opacity: 0, y, scale: 0.985 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          transition: {
+            opacity: { duration: duration * 0.55, ease: [0.22, 0.8, 0.2, 1] },
+            y:       { type: "spring", stiffness: 95,  damping: 17, mass: 0.85 },
+            scale:   { type: "spring", stiffness: 130, damping: 20 },
+          },
+        },
       };
 
   return (

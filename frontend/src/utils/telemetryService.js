@@ -65,7 +65,10 @@ class TelemetryService {
       });
 
       if (!resp.ok) {
-        console.warn('[Telemetry] Init failed:', resp.status);
+        // 401 is an expected, recoverable state — silence to avoid console noise
+        if (resp.status !== 401) {
+          console.warn('[Telemetry] Init failed:', resp.status);
+        }
         this._initialized = false;
         return false;
       }
@@ -118,7 +121,10 @@ class TelemetryService {
       });
 
       if (!resp.ok) {
-        console.warn('[Telemetry] Renewal failed:', resp.status);
+        // 401 is an expected, recoverable state handled by re-init below
+        if (resp.status !== 401) {
+          console.warn('[Telemetry] Renewal failed:', resp.status);
+        }
         // If 401, re-initialize
         if (resp.status === 401) {
           this._token = null;

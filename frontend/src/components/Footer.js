@@ -52,10 +52,10 @@ export default function Footer() {
                 {L({ fr: "Légal", en: "Legal", es: "Legal", pt: "Legal", de: "Rechtliches", tr: "Yasal", nl: "Juridisch", ar: "قانوني" }, lang)}
               </h3>
               <ul className="space-y-2.5 text-[13px] text-white/60">
-                <li><Link to="/mentions-legales" className="hover:text-white transition-colors">{L({ fr: "Mentions légales", en: "Legal Notice", es: "Aviso legal", pt: "Aviso legal", de: "Impressum", tr: "Yasal Uyarı", nl: "Juridisch", ar: "إشعار قانوني" }, lang)}</Link></li>
-                <li><Link to="/conditions" className="hover:text-white transition-colors">{L({ fr: "Conditions", en: "Terms", es: "Términos", pt: "Termos", de: "Bedingungen", tr: "Şartlar", nl: "Voorwaarden", ar: "الشروط" }, lang)}</Link></li>
-                <li><Link to="/confidentialite" className="hover:text-white transition-colors">{L({ fr: "Confidentialité", en: "Privacy", es: "Privacidad", pt: "Privacidade", de: "Datenschutz", tr: "Gizlilik", nl: "Privacy", ar: "الخصوصية" }, lang)}</Link></li>
-                <li><Link to="/remboursement" className="hover:text-white transition-colors">{L({ fr: "Remboursement", en: "Refund", es: "Reembolso", pt: "Reembolso", de: "Rückerstattung", tr: "İade", nl: "Terugbetaling", ar: "الاسترداد" }, lang)}</Link></li>
+                <li><Link to="/mentions-legales" data-testid="footer-link-legal-notice" className="hover:text-white transition-colors">{L({ fr: "Mentions légales", en: "Legal Notice", es: "Aviso legal", pt: "Aviso legal", de: "Impressum", tr: "Yasal Uyarı", nl: "Juridisch", ar: "إشعار قانوني" }, lang)}</Link></li>
+                <li><Link to="/conditions" data-testid="footer-link-terms" className="hover:text-white transition-colors">{L({ fr: "Conditions", en: "Terms", es: "Términos", pt: "Termos", de: "Bedingungen", tr: "Şartlar", nl: "Voorwaarden", ar: "الشروط" }, lang)}</Link></li>
+                <li><Link to="/confidentialite" data-testid="footer-link-privacy" className="hover:text-white transition-colors">{L({ fr: "Confidentialité", en: "Privacy", es: "Privacidad", pt: "Privacidade", de: "Datenschutz", tr: "Gizlilik", nl: "Privacy", ar: "الخصوصية" }, lang)}</Link></li>
+                <li><Link to="/remboursement" data-testid="footer-link-refund" className="hover:text-white transition-colors">{L({ fr: "Remboursement", en: "Refund", es: "Reembolso", pt: "Reembolso", de: "Rückerstattung", tr: "İade", nl: "Terugbetaling", ar: "الاسترداد" }, lang)}</Link></li>
               </ul>
             </div>
 

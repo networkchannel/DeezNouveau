@@ -1,0 +1,39 @@
+{
+  "summary": "Frontend-only validation of 5 follow-up tasks (momentum CTAs, pricing single source of truth, data-testids, telemetry 401 silence, Landing.js split). All 8 acceptance criteria from review request verified via Playwright + source inspection on the preview URL. No blocking issues found.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/offers Custom Quantity modal — Volume discounts table",
+        "issues": [
+          "Tier unit prices render as '5€, 4.5€, 4€, 3.5€, 3€' (Number->String coercion drops trailing zeros) instead of the spec format '5.00€, 4.50€, 4.00€, 3.50€, 3.00€'. Offers.js line 429: `{tier.unit}€` should use `{tier.unit.toFixed(2)}€` for consistency with the rest of the UI (unit prices elsewhere correctly show 2 decimals). Cosmetic-only; values are numerically correct."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "OPTIONAL cosmetic: In frontend/src/pages/Offers.js line 429, change `{tier.unit}€` to `{tier.unit.toFixed(2)}€` to match the spec's '5.00€ / 4.50€ / 4.00€ / 3.50€ / 3.00€' display format in the Volume discounts grid."
+  ],
+  "critical_code_review_comments": [
+    "pricing.js is a clean single source of truth; Landing and Offers both import PACKS, LANDING_PACK_IDS / OFFERS_PACK_IDS and VOLUME_TIERS — no drift between the two pages (5€/12€/20€/35€ and unit prices 5.00/4.00/3.50 match).",
+    "Landing.js is now 493 lines (down from 632); FeaturesSection/PricingSection/FAQSection are properly extracted under /components/landing/ and imported.",
+    "telemetryService.js: 401 console noise correctly silenced via `if (resp.status !== 401) console.warn(...)` on both init and renew paths. The 'Init error: TypeError: Failed to fetch' still appears on some networks — this is a different code path (catch block line 91) and not in the task scope.",
+    "index.css: .btn-primary transition uses cubic-bezier(.34, 1.56, .64, 1) with translateY(-2px) scale(1.015) on hover and translateY(1px) scale(0.97) on :active — matches the 'momentum / slight overshoot' spec exactly. Verified via getComputedStyle: `transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1)`.",
+    "Reveal.js: desktop path uses type:'spring' stiffness 90 damping 18 mass 0.9 for Reveal and stiffness 95 damping 17 mass 0.85 for StaggerItem — spring momentum confirmed. Mobile path intentionally simplifies to opacity-only to avoid jank (good choice).",
+    "Footer.js legal links all carry data-testid: footer-link-legal-notice / terms / privacy / refund — all four verified present in DOM."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100% (8/8 criteria)"},
+  "test_credentials": "N/A",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Lenis is fully removed — native CSS scroll. All pricing goes through frontend/src/constants/pricing.js. The only observation was cosmetic: Volume tiers in /offers custom modal render as '5€' instead of '5.00€' because {tier.unit}€ doesn't pin decimals. Non-blocking.",
+  "rca of the issue": "N/A — no bug found. All 5 follow-up tasks validated as delivered."
+}

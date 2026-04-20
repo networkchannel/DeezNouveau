@@ -7,6 +7,7 @@ import { secureGet } from "@/utils/secureApi";
 import { useAbTest } from "@/hooks/useAbTest";
 import { Headphones, Music, Zap, Star, Crown, Check, ArrowRight, Infinity, Shield, Package, X, Sparkles, TrendingDown } from "lucide-react";
 import { pickLang as L } from "@/utils/langPick";
+import { PACKS, OFFERS_PACK_IDS, VOLUME_TIERS, getUnitPrice } from "@/constants/pricing";
 
 const DEEZER_FEATURES = {
   fr: ["Écoute hors ligne illimitée", "Qualité audio HiFi (FLAC)", "Zéro publicité", "Skip illimité", "Mode Flow personnalisé", "120M+ de titres"],
@@ -56,13 +57,7 @@ export default function Offers() {
     }
   };
 
-  const getUnitPrice = (qty) => {
-    if (qty >= 100) return 3.0;
-    if (qty >= 50) return 3.5;
-    if (qty >= 20) return 4.0;
-    if (qty >= 10) return 4.5;
-    return 5.0;
-  };
+  // getUnitPrice is imported from constants/pricing
 
   const handleCustomCheckout = () => {
     if (customQuantity < 1) return;
@@ -72,52 +67,46 @@ export default function Offers() {
 
   const features = DEEZER_FEATURES[lang] || DEEZER_FEATURES.en;
 
-  const packs = [
-    {
-      id: "single",
-      name: "Starter",
-      quantity: 1,
-      price: 5,
-      icon: Music,
-      color: "from-violet-400 to-violet-700",
-      shadow: "shadow-violet-500/20",
+  // Display metadata per pack id — merged with shared PACKS price data
+  const packMeta = {
+    single: {
+      icon: Music, color: "from-violet-400 to-violet-700", shadow: "shadow-violet-500/20",
       badge: null,
       desc: L({ fr: "Idéal pour essayer", en: "Great to try", es: "Ideal para probar", pt: "Ideal para experimentar", de: "Ideal zum Ausprobieren", tr: "Denemek için ideal", nl: "Ideaal om te proberen", ar: "مثالي للتجربة" }, lang),
     },
-    {
-      id: "pack_3",
+    pack_3: {
+      icon: Headphones, color: "from-violet-500 to-violet-800", shadow: "shadow-violet-500/25",
       name: L({ fr: "Essentiel", en: "Essential", es: "Essential", pt: "Essential", de: "Essential", tr: "Essential", nl: "Essential", ar: "Essential" }, lang),
-      quantity: 3,
-      price: 12,
-      icon: Headphones,
-      color: "from-violet-500 to-violet-800",
-      shadow: "shadow-violet-500/25",
       badge: null,
       desc: L({ fr: "Le plus équilibré", en: "Best balanced", es: "Más equilibrado", pt: "Mais equilibrado", de: "Am ausgewogensten", tr: "En dengeli", nl: "Meest gebalanceerd", ar: "الأكثر توازنًا" }, lang),
     },
-    {
-      id: "pack_5",
-      name: "Premium",
-      quantity: 5,
-      price: 20,
-      icon: Star,
-      color: "from-violet-400 via-violet-500 to-violet-700",
-      shadow: "shadow-violet-500/30",
+    pack_5: {
+      icon: Star, color: "from-violet-400 via-violet-500 to-violet-700", shadow: "shadow-violet-500/30",
       badge: L({ fr: "Populaire", en: "Popular", es: "Popular", pt: "Popular", de: "Beliebt", tr: "Popüler", nl: "Populair", ar: "شائع" }, lang),
       desc: L({ fr: "Le choix préféré", en: "Most popular choice", es: "Elección favorita", pt: "Escolha favorita", de: "Beliebteste Wahl", tr: "En popüler seçim", nl: "Populairste keuze", ar: "الخيار المفضل" }, lang),
     },
-    {
-      id: "pack_10",
-      name: "Business",
-      quantity: 10,
-      price: 35,
-      icon: Crown,
-      color: "from-violet-500 via-violet-600 to-violet-900",
-      shadow: "shadow-violet-500/35",
+    pack_10: {
+      icon: Crown, color: "from-violet-500 via-violet-600 to-violet-900", shadow: "shadow-violet-500/35",
       badge: bestValueLabel,
       desc: L({ fr: "Pour les pros", en: "For pros", es: "Para profesionales", pt: "Para profissionais", de: "Für Profis", tr: "Profesyoneller için", nl: "Voor profs", ar: "للمحترفين" }, lang),
     },
-  ];
+  };
+
+  const packs = OFFERS_PACK_IDS.map((pid) => {
+    const p = PACKS[pid];
+    const m = packMeta[pid] || {};
+    return {
+      id: p.id,
+      name: m.name || p.name,
+      quantity: p.quantity,
+      price: p.price,
+      icon: m.icon,
+      color: m.color,
+      shadow: m.shadow,
+      badge: m.badge ?? null,
+      desc: m.desc,
+    };
+  });
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -412,6 +401,7 @@ export default function Offers() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="btn-primary w-full !py-3"
+                      data-testid="custom-quantity-cta"
                     >
                       {L({ fr: "Commander", en: "Order now", es: "Pedir ahora", pt: "Pedir agora", de: "Jetzt bestellen", tr: "Şimdi sipariş ver", nl: "Nu bestellen", ar: "اطلب الآن" }, lang)}
                       <ArrowRight className="h-5 w-5" />
@@ -426,13 +416,7 @@ export default function Offers() {
                     {L({ fr: "Tarifs dégressifs", en: "Volume discounts", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
                   </h3>
                   <div className="grid grid-cols-5 gap-2">
-                    {[
-                      { min: 1, max: 9, price: 5.0 },
-                      { min: 10, max: 19, price: 4.5 },
-                      { min: 20, max: 49, price: 4.0 },
-                      { min: 50, max: 99, price: 3.5 },
-                      { min: 100, max: 1000, price: 3.0 },
-                    ].map((tier, i) => (
+                    {VOLUME_TIERS.map((tier, i) => (
                       <div
                         key={i}
                         className={`p-2 rounded-lg text-center ${
@@ -442,7 +426,7 @@ export default function Offers() {
                         }`}
                       >
                         <div className="text-t-muted text-[10px]">{tier.min}-{tier.max === 1000 ? "+" : tier.max}</div>
-                        <div className="text-t-primary font-bold text-sm">{tier.price}€</div>
+                        <div className="text-t-primary font-bold text-sm">{tier.unit}€</div>
                       </div>
                     ))}
                   </div>

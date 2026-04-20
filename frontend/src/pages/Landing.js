@@ -6,6 +6,10 @@ import axios from "axios";
 import { smoothScrollTo } from "@/utils/smoothScroll";
 import { pickLang as L } from "@/utils/langPick";
 import Reveal, { StaggerGroup, StaggerItem } from "@/components/Reveal";
+import FeaturesSection from "@/components/landing/FeaturesSection";
+import PricingSection from "@/components/landing/PricingSection";
+import FAQSection from "@/components/landing/FAQSection";
+import { PACKS, LANDING_PACK_IDS } from "@/constants/pricing";
 import {
   Headphones, Music, Zap, Check, ArrowRight, Shield, Gift,
   Download, Volume2, Radio, Sparkles, Clock, Users, Lock,
@@ -202,55 +206,54 @@ export default function Landing() {
   };
   const T = translate[lang] || translate.en;
 
-  const packs = [
-    {
-      id: "starter",
-      name: "Starter",
-      quantity: 1,
-      price: 5,
-      strike: null,
-      unit: "5.00",
-      perks: [
-        L({ fr: "1 lien d'activation", en: "1 activation link", es: "1 enlace de activación", pt: "1 link de ativação", de: "1 Aktivierungslink", tr: "1 aktivasyon bağlantısı", nl: "1 activeringslink", ar: "رابط تفعيل واحد" }, lang),
-        L({ fr: "Livraison < 5 min", en: "Under 5min delivery", es: "Entrega < 5 min", pt: "Entrega < 5 min", de: "Lieferung < 5 Min.", tr: "5 dk içinde teslimat", nl: "Levering < 5 min", ar: "التوصيل خلال 5 دقائق" }, lang),
-        L({ fr: "Garantie 30 jours", en: "30-day guarantee", es: "Garantía 30 días", pt: "Garantia 30 dias", de: "30-Tage-Garantie", tr: "30 gün garanti", nl: "30 dagen garantie", ar: "ضمان 30 يومًا" }, lang),
-        L({ fr: "Support 24/7", en: "24/7 support", es: "Soporte 24/7", pt: "Suporte 24/7", de: "24/7 Support", tr: "7/24 destek", nl: "24/7 support", ar: "دعم 24/7" }, lang),
-      ],
-    },
-    {
-      id: "popular",
-      name: "Essential",
-      quantity: 3,
-      price: 12,
-      strike: 15,
-      unit: "4.00",
-      badge: T.mostPopular,
-      perks: [
-        L({ fr: "3 liens — économisez 20%", en: "3 links — save 20%", es: "3 enlaces — ahorra 20%", pt: "3 links — economize 20%", de: "3 Links — 20% sparen", tr: "3 bağlantı — %20 tasarruf", nl: "3 links — 20% korting", ar: "3 روابط — وفّر 20%" }, lang),
-        L({ fr: "Livraison prioritaire", en: "Priority delivery", es: "Entrega prioritaria", pt: "Entrega prioritária", de: "Prioritäts-Lieferung", tr: "Öncelikli teslimat", nl: "Prioriteitslevering", ar: "توصيل أولوية" }, lang),
-        L({ fr: "Garantie 30 jours", en: "30-day guarantee", es: "Garantía 30 días", pt: "Garantia 30 dias", de: "30-Tage-Garantie", tr: "30 gün garanti", nl: "30 dagen garantie", ar: "ضمان 30 يومًا" }, lang),
-        L({ fr: "Support prioritaire", en: "Priority support", es: "Soporte prioritario", pt: "Suporte prioritário", de: "Prioritäts-Support", tr: "Öncelikli destek", nl: "Prioriteit support", ar: "دعم أولوية" }, lang),
-        L({ fr: "+5 points fidélité", en: "+5 loyalty points", es: "+5 puntos fidelidad", pt: "+5 pontos fidelidade", de: "+5 Treuepunkte", tr: "+5 sadakat puanı", nl: "+5 loyaliteitspunten", ar: "+5 نقاط ولاء" }, lang),
-      ],
-      highlight: true,
-    },
-    {
-      id: "premium",
-      name: "Premium",
-      quantity: 10,
-      price: 35,
-      strike: 50,
-      unit: "3.50",
+  const packs = LANDING_PACK_IDS.map((pid) => {
+    const p = PACKS[pid];
+    const common = {
+      id: p.landingId || p.id,
+      name: p.landingName || p.name,
+      quantity: p.quantity,
+      price: p.price,
+      strike: p.strike,
+      unit: p.unit,
+    };
+    if (pid === "single") {
+      return {
+        ...common,
+        perks: [
+          L({ fr: "1 lien d'activation", en: "1 activation link", es: "1 enlace de activación", pt: "1 link de ativação", de: "1 Aktivierungslink", tr: "1 aktivasyon bağlantısı", nl: "1 activeringslink", ar: "رابط تفعيل واحد" }, lang),
+          L({ fr: "Livraison < 5 min", en: "Under 5min delivery", es: "Entrega < 5 min", pt: "Entrega < 5 min", de: "Lieferung < 5 Min.", tr: "5 dk içinde teslimat", nl: "Levering < 5 min", ar: "التوصيل خلال 5 دقائق" }, lang),
+          L({ fr: "Garantie 30 jours", en: "30-day guarantee", es: "Garantía 30 días", pt: "Garantia 30 dias", de: "30-Tage-Garantie", tr: "30 gün garanti", nl: "30 dagen garantie", ar: "ضمان 30 يومًا" }, lang),
+          L({ fr: "Support 24/7", en: "24/7 support", es: "Soporte 24/7", pt: "Suporte 24/7", de: "24/7 Support", tr: "7/24 destek", nl: "24/7 support", ar: "دعم 24/7" }, lang),
+        ],
+      };
+    }
+    if (pid === "pack_3") {
+      return {
+        ...common,
+        badge: T.mostPopular,
+        highlight: true,
+        perks: [
+          L({ fr: `${p.quantity} liens — économisez ${p.savePct}%`, en: `${p.quantity} links — save ${p.savePct}%`, es: `${p.quantity} enlaces — ahorra ${p.savePct}%`, pt: `${p.quantity} links — economize ${p.savePct}%`, de: `${p.quantity} Links — ${p.savePct}% sparen`, tr: `${p.quantity} bağlantı — %${p.savePct} tasarruf`, nl: `${p.quantity} links — ${p.savePct}% korting`, ar: `${p.quantity} روابط — وفّر ${p.savePct}%` }, lang),
+          L({ fr: "Livraison prioritaire", en: "Priority delivery", es: "Entrega prioritaria", pt: "Entrega prioritária", de: "Prioritäts-Lieferung", tr: "Öncelikli teslimat", nl: "Prioriteitslevering", ar: "توصيل أولوية" }, lang),
+          L({ fr: "Garantie 30 jours", en: "30-day guarantee", es: "Garantía 30 días", pt: "Garantia 30 dias", de: "30-Tage-Garantie", tr: "30 gün garanti", nl: "30 dagen garantie", ar: "ضمان 30 يومًا" }, lang),
+          L({ fr: "Support prioritaire", en: "Priority support", es: "Soporte prioritario", pt: "Suporte prioritário", de: "Prioritäts-Support", tr: "Öncelikli destek", nl: "Prioriteit support", ar: "دعم أولوية" }, lang),
+          L({ fr: "+5 points fidélité", en: "+5 loyalty points", es: "+5 puntos fidelidad", pt: "+5 pontos fidelidade", de: "+5 Treuepunkte", tr: "+5 sadakat puanı", nl: "+5 loyaliteitspunten", ar: "+5 نقاط ولاء" }, lang),
+        ],
+      };
+    }
+    // pack_10
+    return {
+      ...common,
       badge: T.bestValue,
       perks: [
-        L({ fr: "10 liens — économisez 30%", en: "10 links — save 30%", es: "10 enlaces — ahorra 30%", pt: "10 links — economize 30%", de: "10 Links — 30% sparen", tr: "10 bağlantı — %30 tasarruf", nl: "10 links — 30% korting", ar: "10 روابط — وفّر 30%" }, lang),
+        L({ fr: `${p.quantity} liens — économisez ${p.savePct}%`, en: `${p.quantity} links — save ${p.savePct}%`, es: `${p.quantity} enlaces — ahorra ${p.savePct}%`, pt: `${p.quantity} links — economize ${p.savePct}%`, de: `${p.quantity} Links — ${p.savePct}% sparen`, tr: `${p.quantity} bağlantı — %${p.savePct} tasarruf`, nl: `${p.quantity} links — ${p.savePct}% korting`, ar: `${p.quantity} روابط — وفّر ${p.savePct}%` }, lang),
         L({ fr: "Livraison instantanée", en: "Instant delivery", es: "Entrega instantánea", pt: "Entrega instantânea", de: "Sofortige Lieferung", tr: "Anında teslimat", nl: "Directe levering", ar: "توصيل فوري" }, lang),
         L({ fr: "Garantie 30 jours", en: "30-day guarantee", es: "Garantía 30 días", pt: "Garantia 30 dias", de: "30-Tage-Garantie", tr: "30 gün garanti", nl: "30 dagen garantie", ar: "ضمان 30 يومًا" }, lang),
         L({ fr: "Support dédié VIP", en: "Dedicated VIP support", es: "Soporte VIP dedicado", pt: "Suporte VIP dedicado", de: "Dedizierter VIP-Support", tr: "Özel VIP destek", nl: "Toegewijd VIP-support", ar: "دعم VIP مخصص" }, lang),
         L({ fr: "+20 points fidélité", en: "+20 loyalty points", es: "+20 puntos fidelidad", pt: "+20 pontos fidelidade", de: "+20 Treuepunkte", tr: "+20 sadakat puanı", nl: "+20 loyaliteitspunten", ar: "+20 نقاط ولاء" }, lang),
       ],
-    },
-  ];
+    };
+  });
 
   const features = [
     { icon: Volume2,
@@ -449,154 +452,13 @@ export default function Landing() {
       </section>
 
       {/* ═════════ FEATURES ═════════ */}
-      <section id="features" className="relative px-4 sm:px-6 py-14 sm:py-20">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12 sm:mb-16 max-w-2xl">
-            <div className="pill mb-4"><span className="pill-dot pill-dot-violet" />{T.featuresLabel}</div>
-            <h2 className="display-lg text-white mb-3">{T.featuresTitle}</h2>
-            <p className="text-white/55 text-[16px]">{T.featuresSub}</p>
-          </Reveal>
-
-          <StaggerGroup className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" stagger={0.08}>
-            {features.map((f, i) => {
-              const Icon = f.icon;
-              return (
-                <StaggerItem key={i} className="feature-card text-center" y={24}>
-                  <div data-testid={`feature-${i}`}>
-                    <div className="feature-card__icon">
-                      <Icon strokeWidth={2.2} />
-                    </div>
-                    <h3 className="text-white text-[17px] sm:text-[20px] font-semibold mb-2 sm:mb-3 tracking-tight">{f.title}</h3>
-                    <p className="text-white/55 text-[13px] sm:text-[14.5px] leading-relaxed max-w-sm mx-auto">{f.desc}</p>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGroup>
-        </div>
-      </section>
+      <FeaturesSection T={T} features={features} />
 
       {/* ═════════ PRICING ═════════ */}
-      <section id="pricing" className="relative px-4 sm:px-6 py-14 sm:py-20">
-        <div className="max-w-6xl mx-auto">
-          <Reveal className="mb-12 sm:mb-16 max-w-2xl mx-auto text-center">
-            <div className="pill mb-4 mx-auto"><span className="pill-dot pill-dot-violet" />{T.pricingLabel}</div>
-            <h2 className="display-lg text-white mb-3">{T.pricingTitle}</h2>
-            <p className="text-white/55 text-[16px]">{T.pricingSub}</p>
-          </Reveal>
-
-          <StaggerGroup className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 pt-6" stagger={0.1}>
-            {packs.map((pack) => (
-              <StaggerItem
-                key={pack.id}
-                className={`relative p-7 rounded-[1.5rem] transition-all duration-200 ${
-                  pack.highlight
-                    ? "bg-gradient-to-b from-violet-900/30 to-[rgba(10,5,20,0.4)] backdrop-blur-xl border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"
-                    : "card-surface"
-                }`}
-                y={30}
-              >
-                <div data-testid={`pack-${pack.id}`}>
-                {pack.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className="inline-flex items-center px-3 py-[5px] rounded-full bg-violet-500 text-white text-[11px] font-semibold whitespace-nowrap">
-                      {pack.badge}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-white text-[15px] font-semibold">{pack.name}</span>
-                  <span className="text-white/40 text-[12px]">· {pack.quantity} {L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}</span>
-                </div>
-
-                <div className="mb-5 mt-4">
-                  {pack.strike && (
-                    <div className="text-white/35 text-sm line-through">{pack.strike}€</div>
-                  )}
-                  <div className="flex items-baseline gap-1">
-                    <span className="display-md text-white">{pack.price}€</span>
-                    <span className="text-white/45 text-sm">/ {L({ fr: "pack", en: "pack", es: "pack", pt: "pack", de: "Pack", tr: "paket", nl: "pakket", ar: "باقة" }, lang)}</span>
-                  </div>
-                  <div className="text-white/45 text-[12px] mt-1">
-                    {pack.unit}€ {T.perLink}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => navigate("/offers")}
-                  className={pack.highlight ? "btn-primary w-full" : "btn-secondary w-full"}
-                  data-testid={`pack-${pack.id}-cta`}
-                >
-                  {T.choose}
-                </button>
-
-                <ul className="mt-6 space-y-2.5">
-                  {pack.perks.map((p, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-[13.5px] text-white/70">
-                      <div className="w-4 h-4 rounded-full bg-violet-500/20 border border-violet-500/40 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="h-2.5 w-2.5 text-violet-300" />
-                      </div>
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-
-          <Reveal className="text-center mt-10" delay={0.15}>
-            <Link to="/offers" className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 text-[14px] font-medium transition-colors">
-              {L({ fr: "Voir toutes les offres & quantités personnalisées", en: "See all offers & custom quantities", es: "Ver todas las ofertas y cantidades", pt: "Ver todas as ofertas e quantidades", de: "Alle Angebote & benutzerdefinierte Mengen", tr: "Tüm teklifleri ve özel miktarları görün", nl: "Alle aanbiedingen & aangepaste hoeveelheden", ar: "شاهد جميع العروض والكميات المخصصة" }, lang)}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Reveal>
-        </div>
-      </section>
+      <PricingSection T={T} packs={packs} lang={lang} />
 
       {/* ═════════ FAQ ═════════ */}
-      <section className="relative px-4 sm:px-6 py-14 sm:py-20">
-        <div className="max-w-3xl mx-auto">
-          <Reveal className="mb-10 sm:mb-12 text-center">
-            <div className="pill mb-4 mx-auto"><span className="pill-dot pill-dot-violet" />{T.faqLabel}</div>
-            <h2 className="display-lg text-white mb-3">{T.faqTitle}</h2>
-          </Reveal>
-
-          <StaggerGroup className="space-y-3" stagger={0.05}>
-            {faqs.map((f, i) => {
-              const open = openFAQ === i;
-              return (
-                <StaggerItem
-                  key={i}
-                  className={`rounded-2xl border backdrop-blur-xl transition-all ${
-                    open
-                      ? "bg-[rgba(15,10,24,0.55)] border-violet-500/30"
-                      : "bg-[rgba(10,5,16,0.45)] border-white/[0.07] hover:border-white/[0.14]"
-                  }`}
-                  y={18}
-                >
-                  <button
-                    onClick={() => setOpenFAQ(open ? null : i)}
-                    className="w-full px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between gap-4 text-left"
-                    data-testid={`faq-${i}`}
-                  >
-                    <span className="text-white text-[14.5px] sm:text-[15px] font-semibold">{f.q}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-white/50 shrink-0 transition-transform ${open ? "rotate-180 text-violet-400" : ""}`}
-                    />
-                  </button>
-                  {open && (
-                    <div className="px-5 sm:px-6 pb-5 text-white/60 text-[14px] leading-relaxed">
-                      {f.a}
-                    </div>
-                  )}
-                </StaggerItem>
-              );
-            })}
-          </StaggerGroup>
-        </div>
-      </section>
+      <FAQSection T={T} faqs={faqs} openFAQ={openFAQ} setOpenFAQ={setOpenFAQ} />
 
       {/* ═════════ CTA — Ready to listen (below FAQ) ═════════ */}
       <section className="relative px-4 sm:px-6 pb-16 sm:pb-24">
