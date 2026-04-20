@@ -64,8 +64,14 @@
     input, textarea, select {
       font-size: 16px !important;
     }
-    /* Larger default tap targets on mobile (WCAG 2.5.5) */
-    button, a[role="button"], [role="button"], [role="tab"], [role="radio"] {
+    /* Larger default tap targets on mobile (WCAG 2.5.5).
+       Exclude tiny carousel dots — they're purely visual pagination
+       indicators and would be rendered as 40px-tall bars otherwise. */
+    button:not([data-testid^="carousel-dot-"]),
+    a[role="button"],
+    [role="button"]:not([data-testid^="carousel-dot-"]),
+    [role="tab"]:not([data-testid^="carousel-dot-"]),
+    [role="radio"] {
       min-height: 40px;
     }
     /* On pages with a sticky mobile pay bar, add breathing room at the bottom
