@@ -8,6 +8,7 @@ import { useAbTest } from "@/hooks/useAbTest";
 import { Headphones, Music, Zap, Star, Crown, Check, ArrowRight, Infinity, Shield, Package, X, Sparkles, TrendingDown } from "lucide-react";
 import { pickLang as L } from "@/utils/langPick";
 import { PACKS, OFFERS_PACK_IDS, VOLUME_TIERS, getUnitPrice } from "@/constants/pricing";
+import MobileCarousel from "@/components/MobileCarousel";
 
 const DEEZER_FEATURES = {
   fr: ["Écoute hors ligne illimitée", "Qualité audio HiFi (FLAC)", "Zéro publicité", "Skip illimité", "Mode Flow personnalisé", "120M+ de titres"],
@@ -167,89 +168,96 @@ export default function Offers() {
           </div>
         </motion.div>
 
-        {/* Packs Grid */}
+        {/* Packs Grid — mobile horizontal carousel, desktop 4-col grid */}
         <div className="mb-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 pt-6">
-            {packs.map((pack, i) => {
-            const Icon = pack.icon;
-            const unitPrice = (pack.price / pack.quantity).toFixed(2);
-            return (
-              <div
-                key={pack.id}
-                className="group relative flex flex-col h-full transition-transform duration-200 hover:-translate-y-[3px]"
-              >
-                {pack.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-                    <span className="inline-flex items-center gap-1 px-3 py-[5px] rounded-full text-[11px] font-semibold text-white bg-violet-500 whitespace-nowrap">
-                      {pack.badge}
-                    </span>
-                  </div>
-                )}
-                <div className={`relative bg-gradient-to-b from-[rgba(22,18,32,0.50)] to-[rgba(10,5,16,0.40)] backdrop-blur-xl border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.08]'} rounded-2xl flex flex-col h-full transition-colors duration-200 group-hover:border-violet-400/60`}>
-                  {/* Content */}
-                  <div className="p-5 sm:p-6 flex flex-col flex-1">
-                    {/* Icon + Name */}
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_-4px_rgba(139,92,246,0.7)]">
-                        <Icon className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="text-white font-semibold text-[15px]">{pack.name}</h3>
-                        <p className="text-white/45 text-[11px]">{pack.desc}</p>
-                      </div>
+          <div className="pt-6">
+            <MobileCarousel
+              desktopCols="4"
+              itemClass="w-[82%] xs:w-[72%] sm:w-[55%]"
+              ariaLabel="Offers packs"
+              gap="gap-3 sm:gap-4"
+            >
+              {packs.map((pack, i) => {
+              const Icon = pack.icon;
+              const unitPrice = (pack.price / pack.quantity).toFixed(2);
+              return (
+                <div
+                  key={pack.id}
+                  className="group relative flex flex-col h-full transition-transform duration-200 hover:-translate-y-[3px]"
+                >
+                  {pack.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+                      <span className="inline-flex items-center gap-1 px-3 py-[5px] rounded-full text-[11px] font-semibold text-white bg-violet-500 whitespace-nowrap">
+                        {pack.badge}
+                      </span>
                     </div>
-
-                    {/* Price */}
-                    <div className="mb-5">
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-4xl font-display font-bold text-white tracking-tight">
-                          {pack.price}€
-                        </span>
-                      </div>
-                      <p className="text-white/45 text-[12px] mt-1">
-                        {unitPrice}€ / {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)} · {pack.quantity}x Deezer Premium
-                      </p>
-                    </div>
-
-                    {/* Details */}
-                    <div className="space-y-2 mb-5 flex-1">
-                      {[
-                        { icon: Headphones, text: `${pack.quantity}x Deezer Premium` },
-                        { icon: Zap, text: L({ fr: "Livraison instantanée", en: "Instant delivery", es: "Entrega instantánea", pt: "Entrega instantânea", de: "Sofortige Lieferung", tr: "Anında teslimat", nl: "Directe levering", ar: "توصيل فوري" }, lang) },
-                        { icon: Shield, text: L({ fr: "Paiement crypto sécurisé", en: "Secure crypto payment", es: "Pago cripto seguro", pt: "Pagamento cripto seguro", de: "Sichere Krypto-Zahlung", tr: "Güvenli kripto ödeme", nl: "Veilige crypto-betaling", ar: "دفع كريبتو آمن" }, lang) },
-                      ].map((d, j) => (
-                        <div key={j} className="flex items-center gap-2 text-[13px] text-white/65">
-                          <d.icon className="h-3.5 w-3.5 text-violet-400/80 shrink-0" />
-                          <span>{d.text}</span>
+                  )}
+                  <div className={`relative bg-gradient-to-b from-[rgba(22,18,32,0.50)] to-[rgba(10,5,16,0.40)] backdrop-blur-xl border ${pack.badge ? 'border-violet-500/40' : 'border-white/[0.08]'} rounded-2xl flex flex-col h-full transition-colors duration-200 group-hover:border-violet-400/60`}>
+                    {/* Content */}
+                    <div className="p-5 sm:p-6 flex flex-col flex-1">
+                      {/* Icon + Name */}
+                      <div className="flex items-center gap-3 mb-5">
+                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shadow-[0_4px_16px_-4px_rgba(139,92,246,0.7)]">
+                          <Icon className="h-5 w-5 text-white" />
                         </div>
-                      ))}
-                    </div>
+                        <div>
+                          <h3 className="text-white font-semibold text-[15px]">{pack.name}</h3>
+                          <p className="text-white/45 text-[11px]">{pack.desc}</p>
+                        </div>
+                      </div>
 
-                    {/* Buttons */}
-                    <div className="space-y-2 mt-auto">
-                      <button
-                        onClick={() => {
-                          abTrackClick({ pack_id: pack.id });
-                          navigate(`/checkout/${pack.id}`);
-                        }}
-                        className={pack.badge ? "btn-primary w-full !py-3" : "btn-secondary w-full !py-3"}
-                        data-testid={`buy-${pack.id}`}
-                      >
-                        {L({ fr: "Acheter", en: "Buy now", es: "Comprar ahora", pt: "Comprar agora", de: "Jetzt kaufen", tr: "Şimdi al", nl: "Nu kopen", ar: "اشتر الآن" }, lang)}
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity, linkCount: pack.quantity })}
-                        className="w-full py-2.5 rounded-full text-[12px] font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
-                      >
-                        {L({ fr: "Ajouter au panier", en: "Add to cart", es: "Añadir al carrito", pt: "Adicionar ao carrinho", de: "In den Warenkorb", tr: "Sepete ekle", nl: "In winkelwagen", ar: "أضف إلى السلة" }, lang)}
-                      </button>
+                      {/* Price */}
+                      <div className="mb-5">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-4xl font-display font-bold text-white tracking-tight">
+                            {pack.price}€
+                          </span>
+                        </div>
+                        <p className="text-white/45 text-[12px] mt-1">
+                          {unitPrice}€ / {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)} · {pack.quantity}x Deezer Premium
+                        </p>
+                      </div>
+
+                      {/* Details */}
+                      <div className="space-y-2 mb-5 flex-1">
+                        {[
+                          { icon: Headphones, text: `${pack.quantity}x Deezer Premium` },
+                          { icon: Zap, text: L({ fr: "Livraison instantanée", en: "Instant delivery", es: "Entrega instantánea", pt: "Entrega instantânea", de: "Sofortige Lieferung", tr: "Anında teslimat", nl: "Directe levering", ar: "توصيل فوري" }, lang) },
+                          { icon: Shield, text: L({ fr: "Paiement crypto sécurisé", en: "Secure crypto payment", es: "Pago cripto seguro", pt: "Pagamento cripto seguro", de: "Sichere Krypto-Zahlung", tr: "Güvenli kripto ödeme", nl: "Veilige crypto-betaling", ar: "دفع كريبتو آمن" }, lang) },
+                        ].map((d, j) => (
+                          <div key={j} className="flex items-center gap-2 text-[13px] text-white/65">
+                            <d.icon className="h-3.5 w-3.5 text-violet-400/80 shrink-0" />
+                            <span>{d.text}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="space-y-2 mt-auto">
+                        <button
+                          onClick={() => {
+                            abTrackClick({ pack_id: pack.id });
+                            navigate(`/checkout/${pack.id}`);
+                          }}
+                          className={pack.badge ? "btn-primary w-full !py-3" : "btn-secondary w-full !py-3"}
+                          data-testid={`buy-${pack.id}`}
+                        >
+                          {L({ fr: "Acheter", en: "Buy now", es: "Comprar ahora", pt: "Comprar agora", de: "Jetzt kaufen", tr: "Şimdi al", nl: "Nu kopen", ar: "اشتر الآن" }, lang)}
+                          <ArrowRight className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => addToCart({ id: pack.id, name: pack.name, price: pack.price, quantity: pack.quantity, linkCount: pack.quantity })}
+                          className="w-full py-2.5 rounded-full text-[12px] font-medium text-white/60 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] transition-all"
+                        >
+                          {L({ fr: "Ajouter au panier", en: "Add to cart", es: "Añadir al carrito", pt: "Adicionar ao carrinho", de: "In den Warenkorb", tr: "Sepete ekle", nl: "In winkelwagen", ar: "أضف إلى السلة" }, lang)}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+            </MobileCarousel>
           </div>
         </div>
 
