@@ -27,7 +27,7 @@
   }
   * { @apply border-border; }
   html {
-    background: #020208;
+    background: #000000;
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
   }
@@ -54,7 +54,7 @@
     html:not(.lenis) { scroll-behavior: smooth; }
   }
   body {
-    background: #020208;
+    background: #000000;
     color: #fff;
     font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
     font-feature-settings: "ss01", "cv11";
@@ -87,41 +87,23 @@
   100% { background-position: 0% 50%; }
 }
 
-@keyframes btn-glow-pulse {
-  0%, 100% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-      0 10px 32px -10px rgba(139, 92, 246, 0.75),
-      0 0 22px -4px rgba(217, 70, 239, 0.35),
-      0 0 0 1px rgba(167, 139, 250, 0.35);
-  }
-  50% {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.32),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-      0 14px 42px -8px rgba(139, 92, 246, 0.95),
-      0 0 36px -2px rgba(217, 70, 239, 0.55),
-      0 0 0 1px rgba(217, 70, 239, 0.45);
-  }
-}
-
 .btn-primary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.9rem 1.6rem;
-  /* Animated gradient: violet → fuchsia → violet */
+  /* Crystality.win exact multi-stop purple gradient */
   background: linear-gradient(
-    120deg,
-    #7c3aed 0%,
-    #a855f7 25%,
-    #d946ef 50%,
-    #a855f7 75%,
-    #7c3aed 100%
+    224deg,
+    rgb(89, 0, 255) 0%,
+    rgb(129, 66, 255) 23.5%,
+    rgb(68, 0, 204) 34%,
+    rgb(104, 23, 255) 48%,
+    rgb(145, 106, 217) 74%,
+    rgb(53, 0, 150) 100%
   );
-  background-size: 220% 220%;
+  background-size: 180% 180%;
   color: #fff;
   font-family: "Manrope", sans-serif;
   font-weight: 600;
@@ -130,16 +112,14 @@
   border-radius: 9999px;
   position: relative;
   overflow: hidden;
+  /* Crystality exact box-shadow: inner bottom violet + inner subtle white */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-    0 10px 32px -10px rgba(139, 92, 246, 0.75),
-    0 0 22px -4px rgba(217, 70, 239, 0.35),
-    0 0 0 1px rgba(167, 139, 250, 0.35);
-  animation:
-    btn-gradient-shift 6s ease-in-out infinite,
-    btn-glow-pulse 3.2s ease-in-out infinite;
-  transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
+    inset 0 -8px 8px 0 rgb(111, 0, 255),
+    inset 0 0 12px 0 rgb(240, 235, 250),
+    0 10px 32px -10px rgba(89, 0, 255, 0.55),
+    0 0 0 1px rgba(145, 106, 217, 0.22);
+  animation: btn-gradient-shift 7s ease-in-out infinite;
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), filter 180ms ease, box-shadow 200ms ease;
   cursor: pointer;
   white-space: nowrap;
   will-change: transform, background-position;
@@ -164,7 +144,12 @@
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.08) saturate(1.1);
+  filter: brightness(1.08) saturate(1.08);
+  box-shadow:
+    inset 0 -8px 10px 0 rgb(111, 0, 255),
+    inset 0 0 14px 0 rgb(240, 235, 250),
+    0 18px 44px -8px rgba(89, 0, 255, 0.75),
+    0 0 0 1px rgba(145, 106, 217, 0.4);
 }
 
 .btn-primary:hover:not(:disabled)::before { transform: translateX(120%); }
@@ -296,114 +281,173 @@
 }
 
 /* ═══════════════════════════════════════════
-   CRYSTALLITY — FEATURE CARD (big hero-style)
+   CRYSTALLITY — FEATURE CARD (crystality.win exact style)
+   Pure black card · tight deep-violet icon glow · icon
+   animates on card hover
    ═══════════════════════════════════════════ */
 
 @keyframes feature-icon-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-5px) rotate(-1deg); }
+}
+
+@keyframes feature-icon-hover-pulse {
+  0%   { transform: translateY(-8px) scale(1)    rotate(-4deg); }
+  40%  { transform: translateY(-12px) scale(1.08) rotate(2deg); }
+  100% { transform: translateY(-8px) scale(1.05) rotate(0deg); }
 }
 
 .feature-card {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 70% 55% at 50% 115%, rgba(139, 92, 246, 0.40) 0%, rgba(124, 58, 237, 0.18) 35%, transparent 70%),
-    linear-gradient(180deg, #0a0612 0%, #050309 100%);
-  border: 1px solid rgba(139, 92, 246, 0.18);
-  border-radius: 1.75rem;
-  padding: 2.5rem 1.75rem 2rem;
-  transition: border-color 280ms ease, transform 280ms cubic-bezier(.2,.8,.2,1);
+  /* Near-pure black matching crystality — no washed gradient */
+  background: linear-gradient(180deg, #050008 0%, #030006 100%);
+  border: 1px solid rgba(98, 0, 255, 0.14);
+  border-radius: 1.5rem;
+  padding: 2.75rem 1.75rem 2rem;
+  transition:
+    border-color 320ms ease,
+    transform 320ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 320ms ease;
 }
 
+/* Tight inner violet accent at the bottom that intensifies on hover */
 .feature-card::before {
   content: "";
   position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(160deg, rgba(217, 70, 239, 0.28), rgba(139, 92, 246, 0.12) 45%, transparent 75%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
+  left: 50%;
+  bottom: -40%;
+  width: 80%;
+  height: 60%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(98, 0, 255, 0.28) 0%, rgba(76, 0, 204, 0.10) 40%, transparent 72%);
+  filter: blur(22px);
+  opacity: 0.55;
+  transition: opacity 380ms ease, transform 380ms ease;
+  pointer-events: none;
+}
+
+/* Subtle top border highlight (crystality style) */
+.feature-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(162, 105, 255, 0.55), transparent);
   pointer-events: none;
 }
 
 .feature-card:hover {
-  border-color: rgba(217, 70, 239, 0.35);
+  border-color: rgba(98, 0, 255, 0.45);
   transform: translateY(-4px);
+  box-shadow:
+    0 28px 64px -24px rgba(98, 0, 255, 0.55),
+    0 0 0 1px rgba(98, 0, 255, 0.18);
 }
 
+.feature-card:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10%) scale(1.05);
+}
+
+/* ─── Icon (crystality 3D cube style) ─── */
 .feature-card__icon {
   position: relative;
-  width: 88px;
-  height: 88px;
-  margin: 0.5rem auto 2rem;
+  width: 96px;
+  height: 96px;
+  margin: 0.25rem auto 2rem;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 1.5rem;
-  background: linear-gradient(160deg, #8b5cf6 0%, #6d28d9 55%, #4c1d95 100%);
+  /* Deep crystality violet — pure rgb(98, 0, 255) core */
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(205, 173, 255, 0.55) 0%, transparent 45%),
+    linear-gradient(160deg, rgba(145, 106, 217, 0.95) 0%, rgb(98, 0, 255) 45%, rgb(53, 0, 150) 100%);
   box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(217, 70, 239, 0.28),
-    0 18px 40px -8px rgba(139, 92, 246, 0.65),
-    0 0 38px -4px rgba(217, 70, 239, 0.45);
-  animation: feature-icon-float 5s ease-in-out infinite;
+    inset 0 2px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -4px 10px rgba(15, 0, 64, 0.55),
+    inset 0 0 18px rgba(162, 105, 255, 0.45),
+    0 0 0 1px rgba(162, 105, 255, 0.28),
+    0 14px 28px -6px rgba(98, 0, 255, 0.55),
+    0 0 42px -4px rgba(98, 0, 255, 0.55);
+  animation: feature-icon-float 6s ease-in-out infinite;
+  transition: transform 320ms cubic-bezier(.2,.8,.2,1), box-shadow 320ms ease, filter 320ms ease;
+  will-change: transform;
 }
 
+/* Glossy top highlight on icon */
 .feature-card__icon::after {
   content: "";
   position: absolute;
-  inset: 8%;
-  border-radius: 1.15rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
+  top: 8%; left: 10%; right: 10%;
+  height: 36%;
+  border-radius: 1.15rem 1.15rem 60% 60%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.04) 75%, transparent 100%);
   pointer-events: none;
 }
 
 .feature-card__icon svg {
   position: relative;
   z-index: 1;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   color: #fff;
-  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.55));
+  filter:
+    drop-shadow(0 2px 6px rgba(255, 255, 255, 0.65))
+    drop-shadow(0 0 12px rgba(205, 173, 255, 0.75));
+  transition: transform 400ms cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ─── Icon animation on card hover ─── */
+.feature-card:hover .feature-card__icon {
+  animation: feature-icon-hover-pulse 700ms cubic-bezier(.2,.8,.2,1) forwards;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -4px 12px rgba(15, 0, 64, 0.55),
+    inset 0 0 22px rgba(162, 105, 255, 0.65),
+    0 0 0 1px rgba(205, 173, 255, 0.45),
+    0 22px 40px -6px rgba(98, 0, 255, 0.75),
+    0 0 62px -2px rgba(98, 0, 255, 0.8);
+  filter: saturate(1.15) brightness(1.08);
+}
+
+.feature-card:hover .feature-card__icon svg {
+  transform: scale(1.12) rotate(6deg);
 }
 
 @media (max-width: 640px) {
-  .feature-card { padding: 1.75rem 1.25rem 1.5rem; border-radius: 1.4rem; }
-  .feature-card__icon { width: 68px; height: 68px; margin-bottom: 1.25rem; border-radius: 1.15rem; }
-  .feature-card__icon svg { width: 28px; height: 28px; }
+  .feature-card { padding: 2rem 1.25rem 1.5rem; border-radius: 1.35rem; }
+  .feature-card__icon { width: 76px; height: 76px; margin-bottom: 1.35rem; border-radius: 1.25rem; }
+  .feature-card__icon svg { width: 32px; height: 32px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .feature-card__icon { animation: none; }
+  .feature-card:hover .feature-card__icon { animation: none; }
 }
 
 /* ═══════════════════════════════════════════
    CRYSTALLITY — BACKGROUND HALO
+   (Inspired by crystality.win — deep black base,
+    tight focused violet glows rather than washed
+    radial gradients)
    ═══════════════════════════════════════════ */
 
 /* ─── Keyframes ─── */
 @keyframes orb-breathe {
-  0%, 100% { opacity: 0.80; transform: translateX(-50%) scale(1); }
-  50%       { opacity: 1;   transform: translateX(-50%) scale(1.12); }
+  0%, 100% { opacity: 0.70; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 0.92; transform: translateX(-50%) scale(1.08); }
 }
 
 @keyframes orb-drift {
-  0%, 100% { opacity: 0.55; transform: translate(0, 0)        scale(1); }
-  33%       { opacity: 0.78; transform: translate(-40px, 30px) scale(1.10); }
-  66%       { opacity: 0.62; transform: translate(30px, -22px) scale(0.95); }
+  0%, 100% { opacity: 0.40; transform: translate(0, 0)        scale(1); }
+  50%       { opacity: 0.60; transform: translate(-30px, 20px) scale(1.06); }
 }
 
-/* Crystality: slow nebula rotation for the deep layer */
-@keyframes nebula-rotate {
-  0%   { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* ─── Orbe principal — grand glow violet-indigo centré en haut ─── */
+/* ─── Container — pure black with a single subtle top-center violet accent ─── */
 .bg-orb {
   position: fixed;
   inset: 0;
@@ -411,75 +455,67 @@
   z-index: 0;
   overflow: hidden;
   contain: strict;
-  /* Deep base gradient inspired by crystality.win */
+  /* Pure black base with very subtle tighter accents, matching crystality */
   background:
-    radial-gradient(ellipse 90% 60% at 50% 0%,  rgba(76, 29, 149, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 100% 100%, rgba(217, 70, 239, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 0% 80%,   rgba(124, 58, 237, 0.14) 0%, transparent 60%),
-    #05020d;
+    radial-gradient(ellipse 55% 45% at 50% -5%,  rgba(98, 0, 255, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 35% at 92% 92%, rgba(89, 0, 255, 0.10) 0%, transparent 65%),
+    #000000;
 }
 
-/* Orbe central : vivid violet-fuchsia, 1100 × 1100 px */
+/* Orbe central : focused deep violet glow — like crystality's hero halo */
 .bg-orb::before {
   content: "";
   position: absolute;
-  top: -28%;
+  top: -22%;
   left: 50%;
-  width: 1100px;
-  height: 1100px;
+  width: 820px;
+  height: 820px;
   transform: translateX(-50%);
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(167, 139, 250, 0.75) 0%,
-    rgba(139, 92, 246, 0.58) 14%,
-    rgba(124, 58, 237, 0.38) 30%,
-    rgba(217, 70, 239, 0.18) 48%,
-    rgba(79,  30, 185, 0.08) 66%,
-    transparent 82%
+    rgba(98, 0, 255, 0.55) 0%,
+    rgba(76, 0, 204, 0.32) 18%,
+    rgba(53, 0, 150, 0.15) 38%,
+    rgba(15, 0, 64, 0.06) 60%,
+    transparent 78%
   );
-  filter: blur(54px);
-  animation: orb-breathe 14s ease-in-out infinite;
+  filter: blur(58px);
+  animation: orb-breathe 16s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
-/* Orbe secondaire : accent fuchsia/rose en bas-droite, crystality-inspired */
+/* Orbe secondaire : small tight violet accent bottom-left, subtle */
 .bg-orb::after {
   content: "";
   position: absolute;
-  bottom: -12%;
-  right: -10%;
-  width: 760px;
-  height: 760px;
+  bottom: -6%;
+  left: -8%;
+  width: 520px;
+  height: 520px;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(217, 70, 239, 0.32) 0%,
-    rgba(168, 85, 247, 0.18) 35%,
-    rgba(139, 92,  246, 0.08) 55%,
-    transparent 72%
+    rgba(104, 23, 255, 0.20) 0%,
+    rgba(53, 0, 150, 0.09) 42%,
+    transparent 68%
   );
-  filter: blur(72px);
-  animation: orb-drift 22s ease-in-out infinite;
+  filter: blur(70px);
+  animation: orb-drift 24s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
 /* ─── Optimisations mobiles ─── */
 @media (hover: none) and (pointer: coarse), (max-width: 768px) {
-  /* Orbe principal allégé — pas d'animation, taille réduite */
   .bg-orb::before {
     animation: none;
-    width: 580px;
-    height: 580px;
-    filter: blur(36px);
-    opacity: 0.85;
+    width: 460px;
+    height: 460px;
+    filter: blur(40px);
+    opacity: 0.75;
     will-change: auto;
   }
-  /* Orbe secondaire masqué sur mobile */
-  .bg-orb::after {
-    display: none;
-  }
-  /* Masquer les orbes décoratifs lourds (blur-3xl / blur-[100px]+) sur mobile */
+  .bg-orb::after { display: none; }
   .blur-3xl,
   [class*="blur-["] {
     filter: none !important;

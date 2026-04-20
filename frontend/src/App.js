@@ -77,7 +77,7 @@ function App() {
         <BrowserRouter>
           <ScrollToTop />
           <ScrollProgress />
-          <div className="min-h-screen bg-[#020208] flex flex-col relative">
+          <div className="min-h-screen bg-black flex flex-col relative">
             {/* Violet halo background + subtle grid */}
             <AnimatedBackground />
 
