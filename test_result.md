@@ -271,16 +271,133 @@ frontend:
           agent: "testing"
           comment: "Reduced mobile hero clutter tested successfully on iPhone 14 Pro viewport (390x844). VERIFIED: (1) Large 6-tile album mosaic (grid with trending albums/artists) is NOT visible on mobile - uses class 'hidden sm:block' which hides it below sm breakpoint (640px), confirmed via visibility check that mosaic elements are not visible on 390px viewport, (2) Compact avatar row IS visible on mobile - uses class 'sm:hidden' which shows it only below sm breakpoint, (3) Compact avatar row displays correct text '10,000+ Premium listeners' with subtitle 'join deezlink every month', (4) Compact row shows 3 circular avatar images in -space-x-2 overlap layout with green checkmark indicator, (5) Mobile hero is clean and uncluttered with only essential elements: pill badge, title, subtitle, CTA buttons, trust indicators, and compact avatar row. Desktop (sm+) shows the full album mosaic instead. This mobile-first optimization reduces visual clutter and improves mobile UX by replacing the large mosaic with a simpler social proof element. Screenshots captured showing mobile hero with compact avatar row visible and mosaic hidden."
 
+  - task: "Offers page mobile carousel"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Offers.js, frontend/src/components/MobileCarousel.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 1 — Offers page mobile carousel PASSED on iPhone 14 Pro (390x844). VERIFIED: (1) [data-testid='mobile-carousel'] exists inside packs section ✓, (2) Exactly 4 carousel dots found (carousel-dot-0 through carousel-dot-3) ✓, (3) Horizontal scrolling works - scrolled 273px, active dot changed from 0 to 1 ✓, (4) 'Most popular' badge on Essential/Popular card (pack_5) is NOT clipped - badge has 8px clearance from carousel top edge (badge top: 660px, carousel top: 652px) ✓. Badge dimensions: 27.5px height, fully visible with both top and bottom curved parts showing. Screenshot captured showing carousel with visible dots and unclipped badge. All requirements met."
+  
+  - task: "Checkout payment method selector (Crypto vs Card)"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Checkout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 2 — Checkout payment method selector PASSED on iPhone 14 Pro (390x844). VERIFIED: (1) Both payment method buttons exist: [data-testid='pay-method-crypto'] and [data-testid='pay-method-stripe'] ✓, (2) Crypto is initially selected (aria-checked=true) ✓, (3) Switching to Stripe: summary pill changes from 'Crypto payment' to 'Card' ✓, 'Cards accepted' section visible with Visa, Mastercard, Amex, Apple Pay, Google Pay ✓, 'Secure redirect to Stripe. 3D Secure enabled.' text visible ✓, footer text shows 'Secure payment via Stripe' ✓, (4) Switching back to Crypto: summary pill shows 'Crypto payment' ✓, 'Accepted cryptos' section visible with BTC, ETH, USDT, LTC ✓, footer text shows 'Secure payment via OxaPay' ✓. Screenshots captured for both states. All UI elements update correctly based on payment method selection. Payment method selector working perfectly."
+  
+  - task: "Mobile sticky payment bar"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Checkout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 3 — Mobile sticky payment bar PASSED on iPhone 14 Pro (390x844). VERIFIED: (1) [data-testid='sticky-pay-btn'] exists and is visible on mobile ✓, (2) Shows correct text 'Proceed to payment · 12.00€' ✓, (3) Has position: fixed ✓, (4) Stays visible at top, middle, and bottom of page when scrolling ✓, (5) Clicking sticky button triggers form validation (HTML5 validation triggered when email empty) ✓. Screenshots captured at top, middle, and bottom positions showing sticky button remains visible throughout scroll. Sticky button correctly proxies clicks to the real submit button [data-testid='pay-btn']. All requirements met."
+  
+  - task: "Desktop sticky pay bar hidden"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/Checkout.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 4 — Desktop sticky pay bar HIDDEN PASSED on desktop (1440x900). VERIFIED: (1) Sticky button is NOT visible on desktop viewport ✓, (2) Sticky button container has 'lg:hidden' class which hides it on large screens ✓. Screenshot captured showing checkout page on desktop without sticky button. Responsive behavior working correctly - sticky button only appears on mobile viewports."
+  
+  - task: "Platform-adaptive CTA system"
+    implemented: true
+    working: false
+    file: "frontend/src/utils/sourceDetection.js, frontend/src/pages/Landing.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Platform-adaptive CTA system tested comprehensively on mobile viewport (390x844). Tested all 6 platforms with URL parameters: default (/), tiktok (?src=tiktok), instagram (?src=instagram), youtube (?src=youtube), facebook (?src=facebook), and x (?src=x). VERIFIED: (1) Hero CTA button (data-testid='hero-cta-primary') displays correct platform-specific text for each source - TikTok: 'Get Deezer Premium — from 5€', Instagram: 'Join 10k+ Premium listeners', YouTube: 'Activate Deezer Premium in 5 min', Facebook: 'Exclusive Deezer Premium deal', X: 'Unlock Deezer — no subscription', Default: 'Unlock Deezer Premium', (2) Hero pill badge (data-testid='hero-pill-new') shows correct platform-specific text - TikTok deal, Insta drop, YouTube deal, Facebook deal, X deal, New drop, (3) data-source attribute on CTA buttons correctly matches the platform for all sources, (4) sessionStorage.getItem('dz_source_v1') correctly stores platform detection data with platform, detectedBy, and detectedAt fields, (5) Mobile header CTA (data-testid='mobile-cta-btn') in mobile menu displays platform-adapted text with correct data-source attribute, (6) Extra mobile CTA after metrics bar (data-testid='metrics-cta-mobile') is visible on mobile only with correct platform-adapted text and data-source. Source detection works via URL params (?src=), utm_source, and document.referrer. All 5/6 platforms passed (default shows 'direct' in sessionStorage which is correctly mapped to 'default' bucket for CTA purposes - this is working as designed). Screenshots captured showing mobile menu with CTA."
+        - working: false
+          agent: "testing"
+          comment: "TEST 5 — Platform-adaptive CTA REGRESSION FAILED on iPhone 14 Pro (390x844). ISSUE: When navigating to /?src=tiktok, hero pill shows 'New drop' instead of 'TikTok deal', and CTA shows 'Unlock Deezer Premium' instead of 'Get Deezer Premium — from 5€'. When navigating to /?src=instagram, hero pill shows 'New drop' instead of 'Insta drop', and CTA shows 'Unlock Deezer Premium' instead of 'Join 10k+ Premium listeners'. The source detection is not working properly - it's falling back to the 'default' bucket instead of detecting the platform from the ?src= URL parameter. This is a REGRESSION as the feature was previously tested and marked as working. The code in sourceDetection.js and Landing.js looks correct (lines 77-81 in sourceDetection.js handle ?src= param, lines 314-316 and 333-335 in Landing.js use srcCTA.pill and srcCTA.label). Possible causes: (1) sessionStorage caching from previous navigation preventing new source detection, (2) source detection not being re-run on navigation, (3) useMemo in Landing.js not updating when URL changes. NEEDS FIX: Source detection should reset/re-run when navigating with different ?src= parameters."
+  
+  - task: "FAQ mobile tap interactivity"
+    implemented: true
+    working: true
+    file: "frontend/src/components/landing/FAQSection.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "FAQ mobile tap interactivity tested successfully on iPhone 14 Pro viewport (390x844). This was a CRITICAL test as the review request specifically mentioned 'the previous bug was non-interactive FAQ tabs on mobile'. VERIFIED: (1) FAQ-0 (data-testid='faq-0'): Initial aria-expanded='false', after tap aria-expanded='true' (expanded), after second tap aria-expanded='false' (closed) - PASS, (2) FAQ-1 (data-testid='faq-1'): Expands and closes correctly on tap - PASS, (3) FAQ-2 (data-testid='faq-2'): Expands and closes correctly on tap - PASS. All 3 FAQs tested are fully interactive on mobile. Implementation uses proper button elements with type='button', touch-action: manipulation for snappy mobile taps, onClick AND onKeyDown handlers for accessibility, and framer-motion AnimatePresence for smooth height animations. FAQ buttons have proper aria-expanded attributes that toggle correctly. The previous non-interactive bug has been FIXED - all FAQ items are now fully interactive on mobile viewport. Screenshots captured showing FAQ in expanded state."
+        - working: true
+          agent: "testing"
+          comment: "TEST 6 — FAQ mobile interactivity REGRESSION PASSED on iPhone 14 Pro (390x844). VERIFIED: FAQ-0 initial state aria-expanded=false, after first tap aria-expanded=true (expanded), after second tap aria-expanded=false (collapsed). FAQ interactivity working correctly on mobile. Screenshot captured showing FAQ section."
+  
+  - task: "Stripe redirect flow E2E"
+    implemented: true
+    working: false
+    file: "frontend/src/pages/Checkout.js, backend/stripe_payments.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "testing"
+          comment: "TEST 7 — Stripe redirect flow E2E FAILED on iPhone 14 Pro (390x844). CRITICAL ISSUE: Stripe redirect did not happen. Steps executed: (1) Navigated to /offers ✓, (2) Clicked [data-testid='buy-pack_3'] → landed on /checkout/pack_3 ✓, (3) Entered email test+stripe@deezlink.com ✓, (4) Selected 'Card' payment method ✓, (5) Clicked submit button → TIMEOUT after 15 seconds waiting for navigation to checkout.stripe.com. Page stayed on /checkout/pack_3. Backend logs show Stripe API calls are working (response_code=200) and checkout sessions are being created successfully (cs_live_a19E73DyFMjY4TZfV1RGQlBgzOMDa9TLMefpoxviLijl0dxAFIItY9mcdk). The issue is in the frontend redirect logic. Looking at Checkout.js lines 164-179: after creating Stripe session, if stripeRes?.url exists, it should do window.location.href = stripeRes.url. Possible causes: (1) stripeRes.url is undefined/null, (2) JavaScript error preventing redirect, (3) Response format mismatch. NEEDS INVESTIGATION: Check frontend console logs for errors, verify response format from /api/payments/stripe/create-session endpoint, add error handling for redirect failures."
+  
+  - task: "iOS zoom prevention"
+    implemented: true
+    working: true
+    file: "frontend/src/index.css"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 8 — iOS zoom prevention PASSED on iPhone 14 Pro (390x844). VERIFIED: (1) Email input [data-testid='checkout-email'] has computed font-size: 16px ✓, (2) CSS rule 'input, textarea, select { font-size: 16px !important; }' found in mobile media query (@media (max-width: 767px)) ✓. Font-size is >= 16px which prevents iOS from auto-zooming when input is focused. Implementation in index.css lines 63-66 is correct and working. iOS zoom prevention active."
+  
+  - task: "Horizontal scroll check (global)"
+    implemented: true
+    working: true
+    file: "frontend/src/index.css, frontend/src/pages/*"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "TEST 9 — Horizontal scroll check PASSED on iPhone 14 Pro (390x844). Tested 5 pages: /, /offers, /checkout/pack_3, /terms, /privacy. VERIFIED: All pages have scrollWidth <= innerWidth + 1 (no horizontal scroll) ✓. Results: (1) / → scrollWidth: 390px, innerWidth: 390px ✓, (2) /offers → scrollWidth: 390px, innerWidth: 390px ✓, (3) /checkout/pack_3 → scrollWidth: 390px, innerWidth: 390px ✓, (4) /terms → scrollWidth: 390px, innerWidth: 390px ✓, (5) /privacy → scrollWidth: 390px, innerWidth: 390px ✓. One element wider than 400px found on landing page (600px div with class 'absolute -top-1/2 left-1/2 -tr') but it doesn't cause horizontal scroll because it's positioned absolutely and likely part of background decoration. No horizontal scroll issues detected on any page. All pages are mobile-friendly."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 8
+  test_sequence: 9
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Stripe Checkout integration — create-session / status / webhook"
-  stuck_tasks: []
+    - "Platform-adaptive CTA system"
+    - "Stripe redirect flow E2E"
+  stuck_tasks:
+    - "Platform-adaptive CTA system"
+    - "Stripe redirect flow E2E"
   test_all: false
   test_priority: "high_first"
 
@@ -303,3 +420,5 @@ agent_communication:
       message: "BADGE CLIPPING BUG FIX VERIFIED - Mobile carousel padding fix successfully resolves 'Most popular' badge clipping issue on iPhone 14 Pro viewport (390x844). The violet badge on Essential pricing card was previously being clipped at the top (cut in half). Fix applied: added 'pt-5 pb-3' (paddingTop: 20px, paddingBottom: 12px) to MobileCarousel scroller. VERIFICATION RESULTS: Badge is now FULLY VISIBLE with 10px clearance from carousel top edge. Badge dimensions: 93px × 27px. Badge top: 344px, Carousel top: 334px, Clearance: 10px (positive = no clipping). Visual confirmation via screenshot shows both top and bottom curved parts of the violet 'Most popular' pill badge are completely visible and unclipped. Features section also verified: feature cards have 57px clearance, purple borders/glows fully visible. Carousel scrolling works correctly (scrolled 289px, active dot changes). ALL 7 TESTS PASSED. The pt-5 pb-3 padding fix is working as intended. No critical issues found."
     - agent: "testing"
       message: "STRIPE CHECKOUT INTEGRATION TESTING COMPLETED - 84.6% SUCCESS RATE (11/13 tests passed). CORE STRIPE FUNCTIONALITY WORKING PERFECTLY: All primary Stripe Checkout endpoints operational with live Stripe API integration. ✅ CRITICAL TESTS PASSED: (1) Order creation with payment_method=stripe → status=awaiting_stripe, (2) POST /api/payments/stripe/create-session → returns valid Stripe checkout URLs (https://checkout.stripe.com/...), (3) GET /api/payments/stripe/status/{session_id} → returns complete session data with fulfilled=false, payment_status=unpaid, (4) Webhook handling → 200 response with proper error logging, (5) Admin endpoints → properly protected with JWT auth, (6) OxaPay regression → existing crypto payment flow preserved. ✅ VALIDATION TESTS: All input validation working (missing body → 400, missing origin_url → 400, unknown order → 404, already paid → 400). ✅ LIVE STRIPE API: Successfully creating real checkout sessions with live API key, returning valid payment URLs. ❌ MINOR ISSUES: /orders/create-custom and /orders/create-multi with payment_method=stripe failing due to security validation (403 errors) - these are secondary bulk order endpoints, not core functionality. ASSESSMENT: Stripe Checkout integration is production-ready. Users can successfully create orders, get Stripe payment URLs, and complete payments. All security measures working. Admin monitoring functional."
+    - agent: "testing"
+      message: "NEW FEATURE TESTING COMPLETED - iPhone 14 Pro (390x844) and Desktop (1440x900). RESULTS: 7/9 TESTS PASSED, 2 CRITICAL FAILURES. ✅ PASSED: (1) Offers page mobile carousel - 4 dots, scrolling works, badge not clipped (8px clearance), (2) Checkout payment method selector - both buttons exist, switching works, UI updates correctly, (3) Mobile sticky payment bar - visible on mobile, shows price, stays visible when scrolling, triggers validation, (4) Desktop sticky bar hidden - lg:hidden class working, (5) FAQ mobile interactivity - expand/collapse working, (6) iOS zoom prevention - font-size 16px applied, (7) Horizontal scroll check - all 5 pages pass (no horizontal scroll). ❌ FAILED: (1) TEST 5 - Platform-adaptive CTA REGRESSION - Hero pill shows 'New drop' instead of platform-specific text ('TikTok deal', 'Insta drop'), CTA shows generic 'Unlock Deezer Premium' instead of platform-specific text. Source detection not working with ?src= URL parameter, falling back to 'default' bucket. Possible sessionStorage caching issue. (2) TEST 7 - Stripe redirect flow E2E CRITICAL FAILURE - After clicking submit with Stripe payment method, page does not redirect to checkout.stripe.com. Timeout after 15 seconds. Backend logs show Stripe API working (200 responses, sessions created), issue is in frontend redirect logic (Checkout.js lines 164-179). Possible causes: stripeRes.url undefined, JavaScript error, or response format mismatch. CONSOLE ERRORS: 26 errors captured, mostly 401 auth errors (not critical for these tests). ASSESSMENT: New mobile features (carousel, sticky bar, payment selector) working perfectly. Two regressions need immediate attention: platform CTA detection and Stripe redirect."

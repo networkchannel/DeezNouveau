@@ -56,6 +56,36 @@
     letter-spacing: -0.03em;
   }
   ::selection { background: rgba(139, 92, 246, 0.35); color: #fff; }
+
+  /* ─────────── Mobile hardening ─────────── */
+  /* Prevent iOS from zooming in when an input/textarea/select is focused.
+     Any font-size >= 16px blocks the auto-zoom. */
+  @media (max-width: 767px) {
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+    /* Larger default tap targets on mobile (WCAG 2.5.5) */
+    button, a[role="button"], [role="button"], [role="tab"], [role="radio"] {
+      min-height: 40px;
+    }
+    /* On pages with a sticky mobile pay bar, add breathing room at the bottom
+       so the last content block isn't covered. Pages opt-in with
+       class="has-sticky-mobile-bar" on a wrapper, OR we rely on components
+       to add their own padding — this is a safe fallback. */
+    .has-sticky-mobile-bar { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px); }
+  }
+
+  /* Smooth momentum scroll on iOS for any horizontal scroller */
+  .mobile-scroll-x {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  /* Respect iOS safe areas globally (useful for fixed bottom elements) */
+  :root {
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 [dir="rtl"] { direction: rtl; }

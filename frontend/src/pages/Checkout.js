@@ -653,17 +653,26 @@ export default function Checkout() {
 
                 <p className="text-white/45 text-[12px] text-center flex items-center justify-center gap-1.5 mt-3.5">
                   <Shield className="h-3 w-3 text-violet-400" />
-                  {T.securePay}
+                  {paymentMethod === "stripe"
+                    ? L({ fr: "Paiement sécurisé via Stripe", en: "Secure payment via Stripe", es: "Pago seguro vía Stripe", pt: "Pagamento seguro via Stripe", de: "Sichere Zahlung via Stripe", tr: "Stripe ile güvenli ödeme", nl: "Veilige betaling via Stripe", ar: "دفع آمن عبر Stripe" }, lang)
+                    : T.securePay}
                 </p>
               </form>
 
-              {/* What happens next */}
+              {/* What happens next — adapted to payment method */}
               <div className="mt-5 rounded-2xl bg-[#0a0a0e] border border-white/[0.06] p-5">
                 <div className="text-[11px] uppercase tracking-[0.12em] text-white/40 font-semibold mb-3.5">
                   {T.whatHappens}
                 </div>
                 <ol className="space-y-3">
-                  {[T.step1, T.step2, T.step3].map((s, i) => (
+                  {(paymentMethod === "stripe"
+                    ? [
+                        L({ fr: "Tu seras redirigé vers Stripe", en: "You'll be redirected to Stripe", es: "Serás redirigido a Stripe", pt: "Você será redirecionado ao Stripe", de: "Sie werden zu Stripe weitergeleitet", tr: "Stripe'e yönlendirileceksiniz", nl: "Je wordt doorverwezen naar Stripe", ar: "سيتم تحويلك إلى Stripe" }, lang),
+                        L({ fr: "Tu paies par carte (Visa, Mastercard…)", en: "Pay with your card (Visa, Mastercard…)", es: "Paga con tu tarjeta (Visa, Mastercard…)", pt: "Pague com seu cartão (Visa, Mastercard…)", de: "Mit Karte zahlen (Visa, Mastercard…)", tr: "Kartla öde (Visa, Mastercard…)", nl: "Betaal met je kaart (Visa, Mastercard…)", ar: "ادفع ببطاقتك (Visa, Mastercard…)" }, lang),
+                        T.step3,
+                      ]
+                    : [T.step1, T.step2, T.step3]
+                  ).map((s, i) => (
                     <li key={i} className="flex items-start gap-3 text-[13px] text-white/70">
                       <span className="shrink-0 w-5 h-5 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 text-[11px] font-bold font-mono">
                         {i + 1}
@@ -676,6 +685,27 @@ export default function Checkout() {
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* ─── Sticky mobile pay bar (appears on mobile only, improves conversion) ─── */}
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-3 bg-gradient-to-t from-[#05050a] via-[#05050a]/95 to-[#05050a]/0 pointer-events-none"
+        aria-hidden
+      >
+        <button
+          type="button"
+          onClick={() => {
+            // Proxy-click the real submit button so validation still runs
+            const btn = document.querySelector('[data-testid="pay-btn"]');
+            if (btn) btn.click();
+          }}
+          disabled={loading || (requireCaptcha && !captchaToken)}
+          data-testid="sticky-pay-btn"
+          className="btn-primary w-full !py-3.5 !text-[14px] pointer-events-auto shadow-[0_10px_40px_-10px_rgba(139,92,246,0.6)] disabled:opacity-60"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+          {loading ? T.paying : `${T.pay} · ${finalPrice.toFixed(2)}€`}
+        </button>
       </div>
     </div>
   );
