@@ -83,6 +83,8 @@ function App() {
 
             <div className="relative z-10 flex flex-col min-h-screen">
               <Header />
+              {/* Spacer to compensate for fixed header height */}
+              <div aria-hidden="true" className="h-[68px] sm:h-[84px] shrink-0" />
               <main className="flex-1 flex flex-col">
                 <AnimatedRoutes />
               </main>

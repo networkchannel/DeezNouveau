@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
@@ -30,7 +30,6 @@ export default function Header() {
   const { user, loading: authLoading, logout } = useAuth();
   const { getTotalItems, showCartNotif } = useCart();
   const location = useLocation();
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -71,12 +70,13 @@ export default function Header() {
 
   return (
     <>
-      <div className="sticky top-0 z-40 pt-3 sm:pt-5 px-3 sm:px-6">
+      {/* Fixed wrapper — always visible at the top of the viewport */}
+      <div className="fixed top-0 left-0 right-0 z-50 pt-3 sm:pt-5 px-3 sm:px-6 pointer-events-none">
         <motion.header
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
-          className={`max-w-6xl mx-auto flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 rounded-full transition-all duration-300 border ${
+          className={`max-w-6xl mx-auto flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 rounded-full transition-all duration-300 border pointer-events-auto ${
             scrolled
               ? "bg-[rgba(10,10,14,0.88)] border-white/10 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(0,0,0,0.8)]"
               : "bg-[rgba(10,10,14,0.55)] border-white/[0.06] backdrop-blur-lg"
@@ -197,17 +197,6 @@ export default function Header() {
                 </div>
               </Link>
             )}
-
-            {/* Primary CTA on desktop */}
-            <div className="hidden lg:block">
-              <button
-                onClick={() => navigate("/offers")}
-                className="btn-primary !py-2 !px-4 !text-[13px]"
-                data-testid="header-cta-btn"
-              >
-                {L({ fr: "Commencer", en: "Get Started", es: "Empezar", pt: "Começar", de: "Loslegen", tr: "Başla", nl: "Begin", ar: "ابدأ" }, lang)}
-              </button>
-            </div>
 
             {/* Mobile menu */}
             <button
