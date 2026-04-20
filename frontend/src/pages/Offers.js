@@ -426,7 +426,7 @@ export default function Offers() {
                         }`}
                       >
                         <div className="text-t-muted text-[10px]">{tier.min}-{tier.max === 1000 ? "+" : tier.max}</div>
-                        <div className="text-t-primary font-bold text-sm">{tier.unit}€</div>
+                        <div className="text-t-primary font-bold text-sm">{tier.unit.toFixed(2)}€</div>
                       </div>
                     ))}
                   </div>
