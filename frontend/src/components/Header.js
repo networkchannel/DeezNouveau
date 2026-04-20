@@ -8,7 +8,7 @@ import CartSlidePanel from "@/components/CartSlidePanel";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, ShoppingCart, User, LogIn, Shield } from "lucide-react";
+import { Menu, X, ShoppingCart, User, LogIn, LogOut, Shield } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { pickLang as L } from "@/utils/langPick";
 
@@ -185,17 +185,43 @@ export default function Header() {
                 {L({ fr: "Connexion", en: "Sign in", es: "Entrar", pt: "Entrar", de: "Anmelden", tr: "Giriş", nl: "Inloggen", ar: "تسجيل الدخول" }, lang)}
               </Link>
             ) : isAdminUser ? (
-              <Link to="/admin" data-testid="admin-btn" className="p-1">
-                <div className="w-9 h-9 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500/25 transition-all">
-                  <Shield className="h-4 w-4" />
-                </div>
-              </Link>
+              <>
+                <Link to="/admin" data-testid="admin-btn" className="p-1">
+                  <div className="w-9 h-9 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 hover:bg-red-500/25 transition-all">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                </Link>
+                <button
+                  onClick={logout}
+                  data-testid="header-logout-btn"
+                  title={L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
+                  aria-label={L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
+                  className="hidden sm:inline-flex p-1"
+                >
+                  <div className="w-9 h-9 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/60 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/10 transition-all">
+                    <LogOut className="h-4 w-4" />
+                  </div>
+                </button>
+              </>
             ) : (
-              <Link to="/profile" data-testid="profile-btn" className="p-1">
-                <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 hover:bg-violet-500/25 transition-all">
-                  <User className="h-4 w-4" />
-                </div>
-              </Link>
+              <>
+                <Link to="/profile" data-testid="profile-btn" className="p-1">
+                  <div className="w-9 h-9 rounded-full bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-violet-300 hover:bg-violet-500/25 transition-all">
+                    <User className="h-4 w-4" />
+                  </div>
+                </Link>
+                <button
+                  onClick={logout}
+                  data-testid="header-logout-btn"
+                  title={L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
+                  aria-label={L({ fr: "Déconnexion", en: "Sign out", es: "Cerrar sesión", pt: "Sair", de: "Abmelden", tr: "Çıkış", nl: "Uitloggen", ar: "تسجيل الخروج" }, lang)}
+                  className="hidden sm:inline-flex p-1"
+                >
+                  <div className="w-9 h-9 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center text-white/60 hover:text-red-400 hover:border-red-500/40 hover:bg-red-500/10 transition-all">
+                    <LogOut className="h-4 w-4" />
+                  </div>
+                </button>
+              </>
             )}
 
             {/* Mobile menu */}
