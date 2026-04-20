@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { pickLang as L } from "@/utils/langPick";
 import {
   ArrowLeft, Loader2, Shield, Check, Lock, Zap, Mail, Clock,
-  Bitcoin, Headphones, Award, Sparkles,
+  Bitcoin, Headphones, Award, Sparkles, CreditCard,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
@@ -36,6 +36,8 @@ export default function Checkout() {
   const [error, setError] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [requireCaptcha, setRequireCaptcha] = useState(false);
+  // "crypto" (OxaPay) | "stripe" (card)
+  const [paymentMethod, setPaymentMethod] = useState("crypto");
 
   const isCustom = packId === "custom" || packId?.startsWith("custom_");
   const isMulti = packId === "multi";
@@ -132,7 +134,7 @@ export default function Checkout() {
 
     setLoading(true); setError("");
     try {
-      const payload = { email: email.trim(), language: lang };
+      const payload = { email: email.trim(), language: lang, payment_method: paymentMethod };
       if (captchaToken) payload.captcha_token = captchaToken;
 
       try {
@@ -156,8 +158,27 @@ export default function Checkout() {
       }
       localStorage.setItem("deezlink_email", email.trim().toLowerCase());
       window.dispatchEvent(new Event("deezlink_email_update"));
-      // Clear the multi cart AFTER successful creation
       if (isMulti) sessionStorage.removeItem("deezlink_multi_cart");
+
+      // ─── Stripe branch: create a Stripe Checkout Session and redirect ───
+      if (paymentMethod === "stripe") {
+        try {
+          const stripeRes = await securePost("/payments/stripe/create-session", {
+            order_id: data.order_id,
+            origin_url: window.location.origin,
+          });
+          if (stripeRes?.url) {
+            window.location.href = stripeRes.url;
+            return;
+          }
+          throw new Error("No Stripe URL returned");
+        } catch (sErr) {
+          setError(L({ fr: "Paiement par carte indisponible, réessaie plus tard.", en: "Card payment unavailable, please retry later.", es: "Pago con tarjeta no disponible, reintenta más tarde.", pt: "Pagamento com cartão indisponível, tente mais tarde.", de: "Kartenzahlung nicht verfügbar, später erneut versuchen.", tr: "Kart ödemesi şu anda kullanılamıyor.", nl: "Kaartbetaling niet beschikbaar, probeer later opnieuw.", ar: "الدفع بالبطاقة غير متاح الآن، حاول لاحقًا." }, lang));
+          return;
+        }
+      }
+
+      // ─── Crypto / OxaPay branch (existing behaviour) ───
       if (data.payment_url && !data.payment_url.startsWith("/")) {
         window.location.href = data.payment_url;
       } else {
@@ -358,9 +379,11 @@ export default function Checkout() {
             <aside className="card-surface p-6 sm:p-7 !hover:translate-y-0 !hover:border-white/[0.06] self-start">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-white font-semibold text-[15px]">{T.summary}</h2>
-                <span className="pill !py-1 !px-2 !text-[10px]">
+                <span className="pill !py-1 !px-2 !text-[10px]" data-testid="summary-method-pill">
                   <span className="pill-dot pill-dot-violet" />
-                  {T.crypto}
+                  {paymentMethod === "stripe"
+                    ? L({ fr: "Carte", en: "Card", es: "Tarjeta", pt: "Cartão", de: "Karte", tr: "Kart", nl: "Kaart", ar: "بطاقة" }, lang)
+                    : T.crypto}
                 </span>
               </div>
 
@@ -496,7 +519,62 @@ export default function Checkout() {
                   <p className="text-white/45 text-[12px] mt-2 pl-1">{T.emailHint}</p>
                 </label>
 
-                {/* Accepted crypto */}
+                {/* ─── Payment method selector (Crypto vs Card) ─── */}
+                <div className="mt-5 mb-5">
+                  <div className="text-[11px] uppercase tracking-[0.12em] text-white/40 font-semibold mb-2.5">
+                    {L({ fr: "Méthode de paiement", en: "Payment method", es: "Método de pago", pt: "Método de pagamento", de: "Zahlungsmethode", tr: "Ödeme yöntemi", nl: "Betaalmethode", ar: "طريقة الدفع" }, lang)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Payment method">
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === "crypto"}
+                      onClick={() => setPaymentMethod("crypto")}
+                      data-testid="pay-method-crypto"
+                      className={`relative flex flex-col items-start gap-1 px-3.5 py-3 rounded-2xl border text-left transition-all ${
+                        paymentMethod === "crypto"
+                          ? "bg-violet-500/10 border-violet-500/50 shadow-[0_0_0_3px_rgba(139,92,246,0.08)]"
+                          : "bg-[#0a0a0e] border-white/[0.08] hover:border-white/[0.18]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Bitcoin className={`h-3.5 w-3.5 ${paymentMethod === "crypto" ? "text-violet-300" : "text-white/50"}`} />
+                        <span className="text-[13px] font-semibold text-white">
+                          {L({ fr: "Crypto", en: "Crypto", es: "Cripto", pt: "Cripto", de: "Krypto", tr: "Kripto", nl: "Crypto", ar: "عملات رقمية" }, lang)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-white/50">
+                        {L({ fr: "Anonyme · OxaPay", en: "Anonymous · OxaPay", es: "Anónimo · OxaPay", pt: "Anônimo · OxaPay", de: "Anonym · OxaPay", tr: "Anonim · OxaPay", nl: "Anoniem · OxaPay", ar: "مجهول · OxaPay" }, lang)}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={paymentMethod === "stripe"}
+                      onClick={() => setPaymentMethod("stripe")}
+                      data-testid="pay-method-stripe"
+                      className={`relative flex flex-col items-start gap-1 px-3.5 py-3 rounded-2xl border text-left transition-all ${
+                        paymentMethod === "stripe"
+                          ? "bg-violet-500/10 border-violet-500/50 shadow-[0_0_0_3px_rgba(139,92,246,0.08)]"
+                          : "bg-[#0a0a0e] border-white/[0.08] hover:border-white/[0.18]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <CreditCard className={`h-3.5 w-3.5 ${paymentMethod === "stripe" ? "text-violet-300" : "text-white/50"}`} />
+                        <span className="text-[13px] font-semibold text-white">
+                          {L({ fr: "Carte", en: "Card", es: "Tarjeta", pt: "Cartão", de: "Karte", tr: "Kart", nl: "Kaart", ar: "بطاقة" }, lang)}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-white/50">
+                        {L({ fr: "Visa, Mastercard · Stripe", en: "Visa, Mastercard · Stripe", es: "Visa, Mastercard · Stripe", pt: "Visa, Mastercard · Stripe", de: "Visa, Mastercard · Stripe", tr: "Visa, Mastercard · Stripe", nl: "Visa, Mastercard · Stripe", ar: "Visa, Mastercard · Stripe" }, lang)}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Accepted crypto (only when crypto method is selected) */}
+                {paymentMethod === "crypto" && (
                 <div className="mt-5 mb-5">
                   <div className="text-[11px] uppercase tracking-[0.12em] text-white/40 font-semibold mb-2.5">
                     {T.acceptedCrypto}
@@ -513,6 +591,30 @@ export default function Checkout() {
                     ))}
                   </div>
                 </div>
+                )}
+
+                {/* Stripe accepted cards */}
+                {paymentMethod === "stripe" && (
+                <div className="mt-5 mb-5">
+                  <div className="text-[11px] uppercase tracking-[0.12em] text-white/40 font-semibold mb-2.5">
+                    {L({ fr: "Cartes acceptées", en: "Cards accepted", es: "Tarjetas aceptadas", pt: "Cartões aceitos", de: "Akzeptierte Karten", tr: "Kabul edilen kartlar", nl: "Geaccepteerde kaarten", ar: "البطاقات المقبولة" }, lang)}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {["Visa", "Mastercard", "Amex", "Apple Pay", "Google Pay"].map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border text-sky-300 bg-sky-500/5 border-sky-500/25"
+                      >
+                        <CreditCard className="h-3 w-3" />
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-white/45 text-[11.5px] mt-2.5 leading-relaxed">
+                    {L({ fr: "Redirection sécurisée vers Stripe. 3D Secure activé.", en: "Secure redirect to Stripe. 3D Secure enabled.", es: "Redirección segura a Stripe. 3D Secure habilitado.", pt: "Redirecionamento seguro para Stripe. 3D Secure ativo.", de: "Sichere Weiterleitung zu Stripe. 3D Secure aktiv.", tr: "Güvenli Stripe yönlendirmesi. 3D Secure etkin.", nl: "Veilige redirect naar Stripe. 3D Secure actief.", ar: "إعادة توجيه آمنة إلى Stripe مع 3D Secure." }, lang)}
+                  </p>
+                </div>
+                )}
 
                 {/* Captcha */}
                 {requireCaptcha && !captchaToken && (

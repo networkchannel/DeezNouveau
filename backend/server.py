@@ -33,6 +33,12 @@ from email.mime.multipart import MIMEMultipart
 # Import new security system v2
 from security_system import session_store, ip_scorer, click_captcha
 from stock_generator import stock_generator
+from stripe_payments import (
+    is_stripe_enabled,
+    create_stripe_session_for_order,
+    get_stripe_session_status,
+    handle_stripe_webhook_event,
+)
 
 # ═══════════════════════════════════════════════════════════
 # SYSTÈME ANTI-FRAUDE ULTRA-SÉCURISÉ (merged from security_middleware.py)
@@ -2108,6 +2114,7 @@ async def create_order(request: Request):
     email = data.get("email", "").strip().lower()
     language = data.get("language", "en")
     captcha_token = data.get("captcha_token", "")
+    payment_method = (data.get("payment_method") or "crypto").lower()
     
     if not pack_id or not email:
         raise HTTPException(status_code=400, detail="pack_id and email are required")
@@ -2158,12 +2165,18 @@ async def create_order(request: Request):
         "payment_url": None,
         "track_id": None,
         "links": [],
+        "payment_method": payment_method,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     
-    # OxaPay integration
-    if OXAPAY_API_KEY:
+    # OxaPay integration (only when paying with crypto)
+    if payment_method == "stripe":
+        # Stripe path: order is created pending — frontend will call
+        # /payments/stripe/create-session next to get the hosted URL.
+        order["status"] = "awaiting_stripe"
+        order["payment_provider"] = "stripe"
+    elif OXAPAY_API_KEY:
         try:
             site_url = os.environ.get('SITE_URL', 'https://clone-learn-secure.preview.emergentagent.com')
             backend_url = os.environ.get('REACT_APP_BACKEND_URL', site_url)
@@ -2235,6 +2248,7 @@ async def create_custom_order(request: Request):
     quantity = int(data.get("quantity", 0))
     email = data.get("email", "").strip().lower()
     captcha_token = data.get("captcha_token", "")
+    payment_method = (data.get("payment_method") or "crypto").lower()
     
     if not email or quantity < 1:
         raise HTTPException(status_code=400, detail="email and quantity are required")
@@ -2280,11 +2294,15 @@ async def create_custom_order(request: Request):
         "payment_url": None,
         "track_id": None,
         "links": [],
+        "payment_method": payment_method,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     
-    if OXAPAY_API_KEY:
+    if payment_method == "stripe":
+        order["status"] = "awaiting_stripe"
+        order["payment_provider"] = "stripe"
+    elif OXAPAY_API_KEY:
         try:
             site_url = os.environ.get('SITE_URL', 'https://clone-learn-secure.preview.emergentagent.com')
             backend_url = os.environ.get('REACT_APP_BACKEND_URL', site_url)
@@ -2339,6 +2357,7 @@ async def create_multi_order(request: Request):
     email = (data.get("email") or "").strip().lower()
     captcha_token = data.get("captcha_token", "")
     language = data.get("language", "en")
+    payment_method = (data.get("payment_method") or "crypto").lower()
 
     if not email or not isinstance(items, list) or len(items) == 0:
         raise HTTPException(status_code=400, detail="email and items are required")
@@ -2412,11 +2431,15 @@ async def create_multi_order(request: Request):
         "track_id": None,
         "links": [],
         "language": language,
+        "payment_method": payment_method,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    if OXAPAY_API_KEY:
+    if payment_method == "stripe":
+        order["status"] = "awaiting_stripe"
+        order["payment_provider"] = "stripe"
+    elif OXAPAY_API_KEY:
         try:
             site_url = os.environ.get('SITE_URL', 'https://clone-learn-secure.preview.emergentagent.com')
             backend_url = os.environ.get('REACT_APP_BACKEND_URL', site_url)
@@ -2663,6 +2686,311 @@ async def oxapay_webhook(request: Request):
         except Exception:
             pass
         return {"status": "ok"}
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# STRIPE CHECKOUT
+# ═════════════════════════════════════════════════════════════════════════
+#
+# Flow:
+#   1. Frontend creates a DeezLink order via /api/orders/create*
+#      (passing payment_method="stripe" to skip OxaPay).
+#   2. Frontend calls POST /api/payments/stripe/create-session with
+#      { order_id, origin_url } and redirects to the returned URL.
+#   3. User pays on Stripe's hosted page.
+#   4. Stripe sends user back to  /order/{order_id}?stripe=1&session_id=...
+#   5. OrderConfirmation page polls GET /api/payments/stripe/status/{session_id}
+#      — first paid-status call fulfills the order (assigns links, sends email).
+#   6. Webhook POST /api/webhook/stripe fulfills the order as a redundancy.
+
+STRIPE_WEBHOOK_PATH = "/api/webhook/stripe"
+
+
+def _stripe_webhook_url(request: Request) -> str:
+    base = os.environ.get('REACT_APP_BACKEND_URL') or os.environ.get('SITE_URL')
+    if base:
+        return f"{base.rstrip('/')}{STRIPE_WEBHOOK_PATH}"
+    return f"{str(request.base_url).rstrip('/')}{STRIPE_WEBHOOK_PATH}"
+
+
+async def _fulfill_paid_order(order_id: str, provider: str, extra: Optional[Dict] = None) -> Dict:
+    """
+    Idempotent post-payment fulfilment:
+      - assign available links to the order (up to requested quantity)
+      - credit loyalty points
+      - send confirmation email
+      - mark order 'completed' (or 'partial' if not enough stock)
+
+    Returns a result dict with what was done.
+    """
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        return {"ok": False, "reason": "order_not_found"}
+
+    # Idempotency: if already paid, nothing to do.
+    if order.get("status") in ("completed", "partial"):
+        return {"ok": True, "already": True, "status": order["status"]}
+
+    quantity = int(order.get("quantity") or 0)
+    available_links = await db.links.find({"status": "available"}).to_list(quantity)
+    assigned_links = []
+    for link_doc in available_links:
+        await db.links.update_one(
+            {"_id": link_doc["_id"]},
+            {"$set": {
+                "status": "sold",
+                "order_id": order_id,
+                "sold_at": datetime.now(timezone.utc).isoformat(),
+            }},
+        )
+        assigned_links.append(link_doc["url"])
+
+    new_status = "completed" if len(assigned_links) >= quantity else "partial"
+
+    points_earned = calculate_loyalty_points(order.get("price", 0))
+    try:
+        await db.users.update_one(
+            {"email": order.get("email", "")},
+            {"$inc": {"loyalty_points": points_earned}},
+            upsert=True,
+        )
+    except Exception as e:
+        logger.error(f"loyalty points update failed for {order_id}: {e}")
+
+    update = {
+        "status": new_status,
+        "links": assigned_links,
+        "loyalty_points_earned": points_earned,
+        "paid_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "payment_provider": provider,
+    }
+    if extra:
+        update["payment_meta"] = extra
+    await db.orders.update_one({"order_id": order_id}, {"$set": update})
+
+    email_sent = False
+    if assigned_links:
+        try:
+            send_order_confirmation_email(
+                order.get("email", ""),
+                order_id,
+                assigned_links,
+                order.get("language", "en"),
+            )
+            email_sent = True
+        except Exception as e:
+            logger.error(f"Confirmation email failed for order {order_id}: {e}")
+
+    return {
+        "ok": True,
+        "status": new_status,
+        "links_assigned": len(assigned_links),
+        "email_sent": email_sent,
+    }
+
+
+@api_router.post("/payments/stripe/create-session")
+async def stripe_create_session(request: Request):
+    """Create a Stripe Checkout Session for an existing (pending) order."""
+    if not is_stripe_enabled():
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+    body = await parse_body(request)
+    order_id = (body.get("order_id") or "").strip()
+    origin_url = (body.get("origin_url") or "").strip()
+    if not order_id:
+        raise HTTPException(status_code=400, detail="order_id is required")
+    if not origin_url:
+        raise HTTPException(status_code=400, detail="origin_url is required")
+
+    order = await db.orders.find_one({"order_id": order_id})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.get("status") in ("completed", "partial"):
+        raise HTTPException(status_code=400, detail="Order already paid")
+
+    try:
+        webhook_url = _stripe_webhook_url(request)
+        session_id, session_url = await create_stripe_session_for_order(order, origin_url, webhook_url)
+    except Exception as e:
+        logger.exception(f"Stripe session creation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Stripe error: {e}")
+
+    # Persist transaction BEFORE redirecting the user.
+    tx_doc = {
+        "provider": "stripe",
+        "session_id": session_id,
+        "order_id": order_id,
+        "email": order.get("email", ""),
+        "amount": float(order.get("price", 0)),
+        "currency": "EUR",
+        "payment_status": "initiated",
+        "status": "open",
+        "metadata": {
+            "pack_id": order.get("pack_id", ""),
+            "quantity": order.get("quantity", ""),
+        },
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.payment_transactions.insert_one(tx_doc)
+
+    # Save the Stripe payment URL on the order so the frontend can fall back.
+    await db.orders.update_one(
+        {"order_id": order_id},
+        {"$set": {
+            "payment_url": session_url,
+            "payment_provider": "stripe",
+            "stripe_session_id": session_id,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    return {"session_id": session_id, "url": session_url}
+
+
+@api_router.get("/payments/stripe/status/{session_id}")
+async def stripe_get_status(session_id: str, request: Request):
+    """Poll Stripe for the current status of a session. Idempotently fulfill
+    the associated order if status becomes 'paid'."""
+    if not is_stripe_enabled():
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+
+    tx = await db.payment_transactions.find_one({"session_id": session_id, "provider": "stripe"})
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    try:
+        webhook_url = _stripe_webhook_url(request)
+        snapshot = await get_stripe_session_status(session_id, webhook_url)
+    except Exception as e:
+        logger.exception(f"Stripe status fetch failed: {e}")
+        raise HTTPException(status_code=502, detail="Unable to reach Stripe")
+
+    # Update the transaction doc
+    await db.payment_transactions.update_one(
+        {"session_id": session_id, "provider": "stripe"},
+        {"$set": {
+            "status": snapshot.get("status"),
+            "payment_status": snapshot.get("payment_status"),
+            "amount_total": snapshot.get("amount_total"),
+            "currency_reported": snapshot.get("currency"),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    order_id = tx.get("order_id")
+    fulfilled_info = None
+
+    payment_status = (snapshot.get("payment_status") or "").lower()
+    session_status = (snapshot.get("status") or "").lower()
+
+    if payment_status == "paid" and order_id:
+        # Idempotent fulfilment (marks the order 'completed' or 'partial')
+        fulfilled_info = await _fulfill_paid_order(
+            order_id,
+            provider="stripe",
+            extra={"session_id": session_id, "source": "status_poll"},
+        )
+
+    return {
+        "session_id": session_id,
+        "order_id": order_id,
+        "status": snapshot.get("status"),
+        "payment_status": snapshot.get("payment_status"),
+        "amount_total": snapshot.get("amount_total"),
+        "currency": snapshot.get("currency"),
+        "fulfilled": bool(fulfilled_info and fulfilled_info.get("ok")),
+    }
+
+
+@api_router.post(STRIPE_WEBHOOK_PATH.replace("/api", ""))
+async def stripe_webhook(request: Request):
+    """Stripe webhook — verifies signature via emergentintegrations & fulfills."""
+    body_bytes = await request.body()
+    signature = request.headers.get("Stripe-Signature") or request.headers.get("stripe-signature")
+
+    webhook_doc = {
+        "received_at": datetime.now(timezone.utc).isoformat(),
+        "provider": "stripe",
+        "signature_present": bool(signature),
+        "processed": False,
+        "processing_error": None,
+    }
+
+    try:
+        webhook_url = _stripe_webhook_url(request)
+        event = await handle_stripe_webhook_event(body_bytes, signature, webhook_url)
+    except Exception as e:
+        logger.exception(f"Stripe webhook verify/parse failed: {e}")
+        webhook_doc["processing_error"] = f"parse: {e}"[:300]
+        try:
+            await db.stripe_webhooks.insert_one(webhook_doc)
+        except Exception:
+            pass
+        # Stripe retries on non-2xx — return 200 to avoid loops.
+        return {"status": "ok"}
+
+    session_id = event.get("session_id")
+    event_type = event.get("event_type")
+    payment_status = (event.get("payment_status") or "").lower()
+    order_id = (event.get("metadata") or {}).get("order_id")
+
+    webhook_doc.update({
+        "event_id": event.get("event_id"),
+        "event_type": event_type,
+        "session_id": session_id,
+        "order_id": order_id,
+        "payment_status": payment_status,
+    })
+
+    try:
+        if session_id:
+            await db.payment_transactions.update_one(
+                {"session_id": session_id, "provider": "stripe"},
+                {"$set": {
+                    "last_webhook_event": event_type,
+                    "payment_status": payment_status or "unknown",
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }},
+            )
+
+        if payment_status == "paid" and order_id:
+            result = await _fulfill_paid_order(
+                order_id,
+                provider="stripe",
+                extra={"session_id": session_id, "source": "webhook", "event_type": event_type},
+            )
+            webhook_doc["processed"] = True
+            webhook_doc["details"] = result
+        else:
+            webhook_doc["processed"] = True
+            webhook_doc["details"] = {"note": f"payment_status={payment_status}"}
+    except Exception as e:
+        logger.exception(f"Stripe webhook handle failed: {e}")
+        webhook_doc["processing_error"] = str(e)[:300]
+
+    try:
+        await db.stripe_webhooks.insert_one(webhook_doc)
+    except Exception:
+        pass
+
+    return {"status": "ok"}
+
+
+# --- Admin: Stripe monitoring ---
+@api_router.get("/admin/stripe/webhooks")
+async def admin_stripe_webhooks(user: dict = Depends(require_admin), limit: int = 50):
+    limit = max(1, min(200, limit))
+    rows = await db.stripe_webhooks.find({}, {"_id": 0}).sort("received_at", -1).to_list(limit)
+    return {"webhooks": rows}
+
+
+@api_router.get("/admin/stripe/transactions")
+async def admin_stripe_transactions(user: dict = Depends(require_admin), limit: int = 50):
+    limit = max(1, min(200, limit))
+    rows = await db.payment_transactions.find({"provider": "stripe"}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return {"transactions": rows}
 
 
 # --- Admin: OxaPay monitoring ---

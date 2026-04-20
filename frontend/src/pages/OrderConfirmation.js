@@ -151,13 +151,46 @@ export default function OrderConfirmation() {
   const { orderId } = useParams();
   const [searchParams] = useSearchParams();
   const isMock = searchParams.get("mock") === "true";
+  const stripeFlag = searchParams.get("stripe"); // "1" on success, "cancel" on cancel
+  const stripeSessionId = searchParams.get("session_id") || "";
+  const isStripeReturn = stripeFlag === "1" && stripeSessionId;
+  const isStripeCancel = stripeFlag === "cancel";
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(-1);
   const [copiedAll, setCopiedAll] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [stripePolling, setStripePolling] = useState(isStripeReturn);
   const lang = i18n.language || "fr";
+
+  // Poll Stripe status once on mount for return URL — the first 'paid' hit
+  // fulfills the order server-side, after which the order polling (below) will
+  // reflect status=completed.
+  useEffect(() => {
+    if (!isStripeReturn) return undefined;
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 40; // ~2 minutes at 3s
+    const poll = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      try {
+        const { data } = await axios.get(`${API}/payments/stripe/status/${encodeURIComponent(stripeSessionId)}`);
+        if (data?.payment_status === "paid" || data?.fulfilled) {
+          setStripePolling(false);
+          return;
+        }
+      } catch { /* will retry */ }
+      if (attempts >= maxAttempts) {
+        setStripePolling(false);
+        return;
+      }
+      setTimeout(poll, 3000);
+    };
+    poll();
+    return () => { cancelled = true; };
+  }, [isStripeReturn, stripeSessionId]);
 
   const fetchOrder = useCallback(async () => {
     try {
