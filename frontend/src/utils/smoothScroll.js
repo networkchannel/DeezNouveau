@@ -1,65 +1,24 @@
-import Lenis from "lenis";
-import "lenis/dist/lenis.css";
-
-let lenisInstance = null;
+/**
+ * Native smooth scroll helpers (no Lenis).
+ * Relies on CSS `scroll-behavior: smooth` + `scroll-padding-top` for anchors.
+ * Kept as a thin shim so existing imports keep working.
+ */
 
 export function initSmoothScroll() {
-  if (typeof window === "undefined") return null;
-  if (lenisInstance) return lenisInstance;
-
-  // Respect user preference
-  const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  if (prefersReduced) return null;
-
-  lenisInstance = new Lenis({
-    // RAF géré en interne par Lenis
-    autoRaf: true,
-
-    // Fluidité du scroll — plus bas = plus fluide/inertiel (défaut 0.1)
-    // 0.08 donne un rendu très soyeux proche des sites premium
-    lerp: 0.08,
-
-    // Scroll vers les ancres (#section) avec offset pour le header sticky
-    anchors: {
-      offset: -88,
-    },
-
-    // Active Lenis sur les écrans tactiles (mobile) — sans ça le scroll tactile
-    // reste natif et n'a pas le même feel "lissé" qu'au desktop
-    syncTouch: true,
-    syncTouchLerp: 0.075,
-    touchInertiaMultiplier: 25,
-
-    // Laisse les éléments scrollables imbriqués (cart panel, dropdowns,
-    // sélecteur de langue, modales) scroller nativement
-    allowNestedScroll: true,
-
-    // Arrête l'inertie de scroll quand on clique sur un lien interne
-    stopInertiaOnNavigate: true,
-
-    // Active/désactive automatiquement Lenis quand overflow change
-    // (utile pour les modales qui font overflow: hidden sur body)
-    autoToggle: true,
-  });
-
-  // Expose pour debug dans la console navigateur
-  if (typeof window !== "undefined") {
-    window.__LENIS__ = lenisInstance;
+  // Native CSS scroll-behavior takes care of everything.
+  // We just ensure the html has a sensible scroll-padding for anchor offsets.
+  if (typeof document !== "undefined") {
+    document.documentElement.style.scrollPaddingTop = "88px";
   }
-
-  // eslint-disable-next-line no-console
-  console.log("[Lenis] smooth scroll initialized", lenisInstance);
-
-  return lenisInstance;
+  return null;
 }
 
 export function destroySmoothScroll() {
-  lenisInstance?.destroy?.();
-  lenisInstance = null;
+  // no-op
 }
 
 export function getLenis() {
-  return lenisInstance;
+  return null;
 }
 
 /**
@@ -67,22 +26,17 @@ export function getLenis() {
  * target: sélecteur CSS, élément DOM, ou valeur Y en pixels.
  */
 export function smoothScrollTo(target, options = {}) {
-  if (lenisInstance) {
-    lenisInstance.scrollTo(target, {
-      duration: options.duration ?? 1.4,
-      offset: options.offset ?? 0,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      immediate: options.immediate ?? false,
-      lock: false,
-      force: false,
-    });
-  } else {
-    // Fallback scroll natif
-    if (typeof target === "number") {
-      window.scrollTo({ top: target, behavior: "smooth" });
-    } else {
-      const el = typeof target === "string" ? document.querySelector(target) : target;
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+  const offset = options.offset ?? 0;
+
+  if (typeof target === "number") {
+    window.scrollTo({ top: target + offset, behavior: "smooth" });
+    return;
   }
+
+  const el = typeof target === "string" ? document.querySelector(target) : target;
+  if (!el) return;
+
+  const rect = el.getBoundingClientRect();
+  const y = window.scrollY + rect.top + offset;
+  window.scrollTo({ top: y, behavior: "smooth" });
 }

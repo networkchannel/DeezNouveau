@@ -133,7 +133,7 @@ export default function CartSlidePanel({ isOpen, onClose }) {
             </div>
 
             {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-6" data-lenis-prevent>
+            <div className="flex-1 overflow-y-auto p-6">
               {cart.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <ShoppingBag className="h-16 w-16 text-t-muted mb-4 opacity-20" />

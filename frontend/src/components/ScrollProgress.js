@@ -1,35 +1,24 @@
 import { useEffect, useState } from "react";
-import { getLenis } from "@/utils/smoothScroll";
 
 /**
- * Thin violet progress bar at the top of the page, driven by Lenis' scroll event.
- * If you see it moving = Lenis is running and reporting progress.
+ * Thin violet progress bar at the top of the page, driven by native scroll.
  */
 export default function ScrollProgress() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const lenis = getLenis();
-
-    const update = ({ progress: p } = {}) => {
-      // Lenis emits { scroll, limit, progress, velocity, direction }
-      if (typeof p === "number") {
-        setProgress(p);
-      } else {
-        // Fallback for native scroll
-        const doc = document.documentElement;
-        const maxY = doc.scrollHeight - doc.clientHeight;
-        setProgress(maxY > 0 ? window.scrollY / maxY : 0);
-      }
+    const update = () => {
+      const doc = document.documentElement;
+      const maxY = doc.scrollHeight - doc.clientHeight;
+      setProgress(maxY > 0 ? window.scrollY / maxY : 0);
     };
-
-    if (lenis) {
-      lenis.on("scroll", update);
-      return () => { try { lenis.off("scroll", update); } catch { /* ignore */ } };
-    } else {
-      window.addEventListener("scroll", update, { passive: true });
-      return () => window.removeEventListener("scroll", update);
-    }
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   return (
