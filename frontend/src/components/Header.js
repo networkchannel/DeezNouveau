@@ -246,7 +246,8 @@ export default function Header() {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="md:hidden max-w-6xl mx-auto mt-2 rounded-3xl bg-[rgba(10,10,14,0.92)] backdrop-blur-xl border border-white/10 p-3"
+              className="md:hidden max-w-6xl mx-auto mt-2 rounded-3xl bg-[rgba(10,10,14,0.92)] backdrop-blur-xl border border-white/10 p-3 pointer-events-auto"
+              data-testid="mobile-menu-panel"
             >
               <div className="flex flex-col gap-2">
                 {/* Nav links in 2-column grid on mobile */}
