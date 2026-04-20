@@ -64,8 +64,20 @@ function writeStorage(obj) {
 export function detectSource() {
   if (typeof window === "undefined") return null;
 
+  // If the URL carries an explicit source marker, ALWAYS re-detect and
+  // overwrite any previously cached value. This way, a user landing with
+  // ?src=tiktok after having visited the site directly still gets the
+  // TikTok-tailored CTA.
+  let forceRedetect = false;
+  try {
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.get("src") || qs.get("source") || qs.get("ref") || qs.get("utm_source")) {
+      forceRedetect = true;
+    }
+  } catch { /* ignore */ }
+
   const existing = readStorage();
-  if (existing && existing.platform) return existing;
+  if (existing && existing.platform && !forceRedetect) return existing;
 
   let platform = "direct";
   let detectedBy = null;
