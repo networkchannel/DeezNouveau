@@ -94,6 +94,7 @@ export default function MobileCarousel({
       <div
         ref={scrollerRef}
         data-testid="mobile-carousel"
+        data-no-smooth
         role="region"
         aria-label={ariaLabel}
         className={`
