@@ -1,31 +1,31 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 /**
- * MobileCarousel — reveal-style slider on mobile, grid on desktop.
+ * MobileCarousel — peek-style reveal slider on mobile, grid on desktop.
  *
  * Mobile ( < md ):
- *   - One card visible at a time, full width.
- *   - Horizontal swipe/drag → current card slides out, next slides in from
- *     the opposite side (Framer-Motion spring reveal transition).
- *   - Dots for direct navigation, keyboard ← → support.
- *   - Container height follows the active slide's natural height
- *     (AnimatePresence popLayout — exiting slide becomes absolute so it
- *     doesn't stretch the container).
- *   - Horizontal clipping via clip-path so the outgoing card is masked on
- *     the sides, but the card's own glow/aura can still bleed vertically
- *     (no overflow-hidden on the vertical axis).
+ *   - Active card centered, full size ( ~70% of container width )
+ *   - Previous and next cards visible on the sides, scaled down (~0.82)
+ *     with reduced opacity → classic "peek" / coverflow-lite effect.
+ *   - Horizontal drag/swipe → animates smoothly to prev/next with spring.
+ *   - Dots for direct nav + keyboard ← → support.
+ *   - Container height is reserved by an invisible shim containing all
+ *     items in a single grid cell (prevents layout jumps, works with any
+ *     card height variance between slides).
+ *   - clip-path only clips horizontally → vertical auras / glows are
+ *     never cut off (card ::before shadow is free to bleed).
  *
  * Desktop ( >= md ):
  *   - Classic CSS grid (columns configurable via desktopCols).
- *
- * Props:
- *   - desktopCols: "2" | "3" | "4" (default "3")
- *   - showDots   : boolean (default true)
- *   - ariaLabel  : accessibility label
- *   - className  : extra wrapper class
- *   - itemClass  : kept for API compat (unused in reveal mode)
  */
+
+const CARD_WIDTH_PCT = 70;   // active card width (% of container)
+const OFFSET_PCT = 72;       // horizontal spacing between cards (% of container)
+const SIDE_SCALE = 0.82;
+const SIDE_OPACITY = 0.5;
+const SWIPE_CONFIDENCE = 10000;
+
 export default function MobileCarousel({
   children,
   desktopCols = "3",
@@ -38,18 +38,17 @@ export default function MobileCarousel({
   const items = Array.isArray(children) ? children : [children];
   const count = items.length;
 
-  const [[page, direction], setPage] = useState([0, 0]);
-  const index = ((page % count) + count) % count;
+  const [index, setIndex] = useState(0);
 
   const paginate = (dir) => {
     const next = index + dir;
     if (next < 0 || next >= count) return;
-    setPage([page + dir, dir]);
+    setIndex(next);
   };
 
   const goToIndex = (i) => {
-    if (i === index) return;
-    setPage([i, i > index ? 1 : -1]);
+    if (i === index || i < 0 || i >= count) return;
+    setIndex(i);
   };
 
   useEffect(() => {
@@ -69,66 +68,113 @@ export default function MobileCarousel({
       ? "md:grid-cols-2"
       : "md:grid-cols-3";
 
-  // Slide reveal variants
-  const variants = {
-    enter: (dir) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (dir) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
-  };
-
   const swipePower = (offset, velocity) => Math.abs(offset) * velocity;
-  const SWIPE_CONFIDENCE = 10000;
+
+  const handleDragEnd = (_e, { offset, velocity }) => {
+    const swipe = swipePower(offset.x, velocity.x);
+    if (swipe < -SWIPE_CONFIDENCE || offset.x < -60) {
+      paginate(1);
+    } else if (swipe > SWIPE_CONFIDENCE || offset.x > 60) {
+      paginate(-1);
+    }
+  };
 
   return (
     <div className={`relative ${className}`} data-testid="mobile-carousel-root">
-      {/* ═════════ MOBILE — reveal slider ═════════ */}
+      {/* ═════════ MOBILE — peek reveal slider ═════════ */}
       <div
         className="md:hidden relative"
         role="region"
         aria-label={ariaLabel}
         aria-roledescription="carousel"
-        // Clip horizontally only — vertical overflow stays visible so card
-        // auras/shadows are not cut off. Expanded bottom/top region is free.
+        // Horizontal clip only — vertical glow / aura bleeds freely.
         style={{ clipPath: "inset(-400px 0 -400px 0)" }}
       >
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.div
-            key={page}
-            data-testid="mobile-carousel"
-            data-carousel-slide
-            data-carousel-index={index}
-            data-no-smooth
-            custom={direction}
-            variants={variants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 320, damping: 34 },
-              opacity: { duration: 0.2 },
-            }}
-            drag="x"
-            dragDirectionLock
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.22}
-            onDragEnd={(_e, { offset, velocity }) => {
-              const swipe = swipePower(offset.x, velocity.x);
-              if (swipe < -SWIPE_CONFIDENCE || offset.x < -80) {
-                paginate(1);
-              } else if (swipe > SWIPE_CONFIDENCE || offset.x > 80) {
-                paginate(-1);
-              }
-            }}
-            whileDrag={{ cursor: "grabbing" }}
-            style={{
-              touchAction: "pan-y",
-              WebkitTapHighlightColor: "transparent",
-            }}
-            className="mx-auto pt-5 pb-2 w-[82%] max-w-sm"
-          >
-            {items[index]}
-          </motion.div>
-        </AnimatePresence>
+        {/* Invisible shim reserves the max card height so the container
+            sizes itself properly. Each shim item is the exact same width
+            as a live slide to keep identical layout metrics. */}
+        <div
+          className="invisible pointer-events-none grid"
+          aria-hidden="true"
+        >
+          {items.map((child, i) => (
+            <div
+              key={`shim-${i}`}
+              style={{
+                gridArea: "1 / 1",
+                width: `${CARD_WIDTH_PCT}%`,
+                margin: "0 auto",
+                // Ensure the wrapped card does not collapse / stretch.
+                minHeight: 0,
+              }}
+            >
+              <div style={{ height: "auto" }}>{child}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Animated drag layer with all cards positioned over the shim */}
+        <motion.div
+          className="absolute inset-0"
+          drag="x"
+          dragDirectionLock
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.22}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ cursor: "grabbing" }}
+          style={{
+            touchAction: "pan-y",
+            WebkitTapHighlightColor: "transparent",
+          }}
+          data-testid="mobile-carousel-drag-layer"
+          data-carousel-index={index}
+        >
+          {items.map((child, i) => {
+            const offset = i - index;
+            const absOffset = Math.abs(offset);
+            // Only render nearby cards (current + 1 each side + 1 buffer)
+            if (absOffset > 2) return null;
+
+            const isActive = offset === 0;
+
+            return (
+              <motion.div
+                key={i}
+                data-testid={`mobile-carousel-slide-${i}`}
+                data-carousel-slide
+                data-no-smooth
+                data-active={isActive || undefined}
+                initial={false}
+                animate={{
+                  x: `${offset * OFFSET_PCT}%`,
+                  scale: isActive ? 1 : SIDE_SCALE,
+                  opacity: absOffset > 1 ? 0 : isActive ? 1 : SIDE_OPACITY,
+                  zIndex: 10 - absOffset,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 32,
+                  mass: 0.9,
+                }}
+                // Tap on a side card → navigate to it
+                onTap={() => {
+                  if (!isActive && absOffset <= 1) goToIndex(i);
+                }}
+                className="absolute top-0"
+                style={{
+                  left: `${(100 - CARD_WIDTH_PCT) / 2}%`,
+                  width: `${CARD_WIDTH_PCT}%`,
+                  transformOrigin: "center center",
+                  pointerEvents: absOffset > 1 ? "none" : "auto",
+                  cursor: !isActive && absOffset === 1 ? "pointer" : undefined,
+                }}
+              >
+                {child}
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
 
       {/* ═════════ DESKTOP — grid ═════════ */}
