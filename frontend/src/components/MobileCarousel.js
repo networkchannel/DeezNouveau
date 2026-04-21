@@ -124,7 +124,7 @@ export default function MobileCarousel({
               touchAction: "pan-y",
               WebkitTapHighlightColor: "transparent",
             }}
-            className="w-full px-4 pt-5 pb-2"
+            className="mx-auto pt-5 pb-2 w-[82%] max-w-sm"
           >
             {items[index]}
           </motion.div>
