@@ -276,7 +276,9 @@ class TestOxaPayDirectApi:
         """
         import httpx
         
-        OXAPAY_API_KEY = "EWVVRZ-Y40MQP-ZZBKWM-GRJ8UT"
+        OXAPAY_API_KEY = os.environ.get("OXAPAY_MERCHANT_API_KEY", "")
+        if not OXAPAY_API_KEY:
+            pytest.skip("OXAPAY_MERCHANT_API_KEY not configured — skipping direct API call")
         OXAPAY_BASE_URL = "https://api.oxapay.com"
         
         payload = {
