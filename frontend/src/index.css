@@ -32,6 +32,15 @@
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     scroll-padding-top: 88px;
+    /* Gentle section alignment — only snaps when the user is
+       already close to a section edge, never interrupts mid-scroll. */
+    scroll-snap-type: y proximity;
+  }
+  /* Mark every top-level landing section as a snap point.
+     Use `data-no-snap` on a section if you need to opt out. */
+  section[id]:not([data-no-snap]) {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
   }
   body {
     overflow-x: hidden;
@@ -474,6 +483,60 @@
 
 .feature-card:hover .feature-card__icon svg {
   transform: scale(1.12) rotate(6deg);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CAROUSEL ACTIVE CARD — auto-apply hover state on mobile
+   when a card is the centered/active slide (peek carousel).
+   ═══════════════════════════════════════════════════════════ */
+
+/* Same styling as :hover, but driven by [data-active="true"] on
+   the motion.div wrapping the active slide in MobileCarousel. */
+[data-carousel-slide][data-active="true"] .feature-card {
+  border-color: rgba(98, 0, 255, 0.45);
+  background: linear-gradient(180deg, rgba(18, 6, 32, 0.65) 0%, rgba(6, 0, 16, 0.55) 100%);
+  box-shadow:
+    0 28px 64px -24px rgba(98, 0, 255, 0.55),
+    0 0 0 1px rgba(98, 0, 255, 0.18);
+}
+
+[data-carousel-slide][data-active="true"] .feature-card::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10%) scale(1.05);
+}
+
+[data-carousel-slide][data-active="true"] .feature-card .feature-card__icon {
+  animation: feature-icon-hover-pulse 700ms cubic-bezier(.2,.8,.2,1) forwards;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -4px 12px rgba(15, 0, 64, 0.55),
+    inset 0 0 22px rgba(162, 105, 255, 0.65),
+    0 0 0 1px rgba(205, 173, 255, 0.45),
+    0 22px 40px -6px rgba(98, 0, 255, 0.75),
+    0 0 62px -2px rgba(98, 0, 255, 0.8);
+  filter: saturate(1.15) brightness(1.08);
+}
+
+[data-carousel-slide][data-active="true"] .feature-card .feature-card__icon svg {
+  transform: scale(1.12) rotate(6deg);
+}
+
+/* Pricing cards — non-highlighted (card-surface) */
+[data-carousel-slide][data-active="true"] .card-surface {
+  border-color: rgba(139, 92, 246, 0.35);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.075) 0%, rgba(30, 22, 50, 0.45) 100%);
+}
+
+/* Pricing cards — highlighted (best value) — matches the inline
+   Tailwind "hover:border-violet-400/70" class on PricingSection. */
+[data-carousel-slide][data-active="true"] .border-violet-500\/40 {
+  border-color: rgba(167, 139, 250, 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-carousel-slide][data-active="true"] .feature-card .feature-card__icon {
+    animation: none;
+  }
 }
 
 @media (max-width: 640px) {
