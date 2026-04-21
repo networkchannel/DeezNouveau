@@ -35,6 +35,9 @@
     /* Gentle section alignment — only snaps when the user is
        already close to a section edge, never interrupts mid-scroll. */
     scroll-snap-type: y proximity;
+    /* Kill iOS pull-to-refresh / overscroll rubber band so the fixed
+       header never visually detaches from the viewport top. */
+    overscroll-behavior-y: none;
   }
   /* Mark every top-level landing section as a snap point.
      Use `data-no-snap` on a section if you need to opt out. */
@@ -45,6 +48,7 @@
   body {
     overflow-x: hidden;
     max-width: 100vw;
+    overscroll-behavior-y: none;
   }
   /* Disable smooth scroll for users who prefer reduced motion */
   @media (prefers-reduced-motion: reduce) {
