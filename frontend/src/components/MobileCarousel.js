@@ -1,163 +1,192 @@
-import { useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * MobileCarousel — horizontal-scroll carousel for mobile.
+ * MobileCarousel — full-slide reveal carousel on mobile, grid on desktop.
  *
- * Behaviour:
- *   - On mobile (< md breakpoint) : horizontal overflow-scroll with snap,
- *     dot indicators, optional prev/next buttons.
- *   - On desktop (>= md) : renders a normal CSS grid of children.
+ * Mobile ( < md ) :
+ *   - One card visible at a time (full width, with horizontal padding)
+ *   - Drag/swipe horizontally → current card slides out, next slides in
+ *     from the opposite side (reveal / page-turn transition)
+ *   - Spring snap to the next/prev slide based on distance + velocity
+ *   - Dot indicators (optional) + keyboard ← → support
  *
- * The component is "class-based" — it just sets the right flex/grid
- * wrapper and snap behaviour. Each child keeps its own styling.
+ * Desktop ( >= md ) :
+ *   - Classic CSS grid (columns configurable via desktopCols)
  *
  * Props:
- *   - desktopCols: "2" | "3" | "4" (default "3")    CSS grid columns on desktop
- *   - itemClass  : extra class applied to each slide (sizing)
+ *   - desktopCols: "2" | "3" | "4" (default "3")
  *   - showDots   : boolean (default true)
- *   - showArrows : boolean (default false, UX-safer on mobile)
- *   - ariaLabel  : accessibility label for the scroller
- *   - gap        : Tailwind gap utility (default "gap-4")
+ *   - ariaLabel  : accessibility label
  *   - className  : container class override
+ *   - itemClass  : kept for API compat — only applied on mobile wrapper
  */
 export default function MobileCarousel({
   children,
   desktopCols = "3",
-  itemClass = "w-[82%] sm:w-[60%]",
+  // itemClass kept for API compatibility with existing callers (no-op in reveal mode)
+  // eslint-disable-next-line no-unused-vars
+  itemClass = "",
   showDots = true,
-  showArrows = false,
   ariaLabel = "Carousel",
-  gap = "gap-4",
   className = "",
 }) {
-  const scrollerRef = useRef(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-
   const items = Array.isArray(children) ? children : [children];
   const count = items.length;
 
-  // Track active slide based on scroll position (mobile only)
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return undefined;
+  // page increments by ±1 with each navigation. direction tracks which side the
+  // new slide should enter from (+1 = enter from right, -1 = enter from left).
+  const [[page, direction], setPage] = useState([0, 0]);
+  const index = ((page % count) + count) % count;
 
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const slides = el.querySelectorAll("[data-carousel-slide]");
-        if (!slides.length) return;
-        const scrollMid = el.scrollLeft + el.clientWidth / 2;
-        let best = 0;
-        let bestDist = Infinity;
-        slides.forEach((s, i) => {
-          const mid = s.offsetLeft + s.clientWidth / 2;
-          const d = Math.abs(mid - scrollMid);
-          if (d < bestDist) { bestDist = d; best = i; }
-        });
-        setActiveIdx(best);
-      });
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const scrollTo = (idx) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const slide = el.querySelectorAll("[data-carousel-slide]")[idx];
-    if (slide) {
-      el.scrollTo({
-        left: slide.offsetLeft - (el.clientWidth - slide.clientWidth) / 2,
-        behavior: "smooth",
-      });
-    }
+  const paginate = (newDirection) => {
+    const next = index + newDirection;
+    if (next < 0 || next >= count) return; // no wrap-around
+    setPage([page + newDirection, newDirection]);
   };
 
-  const prev = () => scrollTo(Math.max(0, activeIdx - 1));
-  const next = () => scrollTo(Math.min(count - 1, activeIdx + 1));
+  const goToIndex = (i) => {
+    if (i === index) return;
+    setPage([i, i > index ? 1 : -1]);
+  };
 
-  // Desktop grid cols mapping
+  // Keyboard navigation (mobile carousel still useful with external keyboards)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "ArrowRight") paginate(1);
+      if (e.key === "ArrowLeft") paginate(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, count]);
+
+  // Desktop grid cols
   const desktopGridClass =
-    desktopCols === "4" ? "md:grid-cols-4" :
-    desktopCols === "2" ? "md:grid-cols-2" : "md:grid-cols-3";
+    desktopCols === "4"
+      ? "md:grid-cols-4"
+      : desktopCols === "2"
+      ? "md:grid-cols-2"
+      : "md:grid-cols-3";
+
+  // ─── Slide reveal variants ──────────────────────────────────────────
+  // The entering slide starts off-screen on the side the user swiped FROM
+  // (direction > 0 = going next = new enters from right).
+  const variants = {
+    enter: (dir) => ({
+      x: dir > 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir) => ({
+      x: dir > 0 ? "-100%" : "100%",
+      opacity: 0,
+    }),
+  };
+
+  // Swipe intent heuristic: combine distance + velocity
+  const swipePower = (offset, velocity) => Math.abs(offset) * velocity;
+  const SWIPE_CONFIDENCE = 10000;
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Mobile: horizontal scroller with snap. Desktop (md+): grid. */}
+    <div className={`relative ${className}`} data-testid="mobile-carousel-root">
+      {/* ═════════ MOBILE — reveal slider ═════════ */}
       <div
-        ref={scrollerRef}
-        data-testid="mobile-carousel"
-        data-no-smooth
+        className="md:hidden relative"
         role="region"
         aria-label={ariaLabel}
-        className={`
-          flex ${gap} overflow-x-auto snap-x snap-mandatory scroll-smooth
-          px-4 -mx-4 pt-5 pb-8
-          [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
-          md:grid md:${desktopGridClass} md:overflow-visible md:mx-0 md:px-0 md:py-0 md:gap-5
-        `}
-        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
+        aria-roledescription="carousel"
       >
+        {/* Shim: renders all items invisibly so the container reserves the
+           height of the tallest card. Prevents layout jumps during transition. */}
+        <div
+          className="invisible pointer-events-none"
+          aria-hidden="true"
+          style={{ display: "grid" }}
+        >
+          {items.map((child, i) => (
+            <div
+              key={`shim-${i}`}
+              style={{ gridArea: "1 / 1", width: "100%" }}
+            >
+              {child}
+            </div>
+          ))}
+        </div>
+
+        {/* Animated slide overlay */}
+        <div className="absolute inset-0 overflow-hidden">
+          <AnimatePresence initial={false} custom={direction} mode="sync">
+            <motion.div
+              key={page}
+              data-testid="mobile-carousel"
+              data-carousel-slide
+              data-carousel-index={index}
+              data-no-smooth
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                x: { type: "spring", stiffness: 320, damping: 34 },
+                opacity: { duration: 0.18 },
+              }}
+              drag="x"
+              dragDirectionLock
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.22}
+              onDragEnd={(_e, { offset, velocity }) => {
+                const swipe = swipePower(offset.x, velocity.x);
+                if (swipe < -SWIPE_CONFIDENCE || offset.x < -80) {
+                  paginate(1);
+                } else if (swipe > SWIPE_CONFIDENCE || offset.x > 80) {
+                  paginate(-1);
+                }
+              }}
+              whileDrag={{ cursor: "grabbing" }}
+              style={{ touchAction: "pan-y", WebkitTapHighlightColor: "transparent" }}
+              className="absolute inset-0 flex items-stretch px-4 pt-5 pb-2"
+            >
+              <div className="w-full">{items[index]}</div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ═════════ DESKTOP — grid ═════════ */}
+      <div className={`hidden md:grid ${desktopGridClass} gap-5`}>
         {items.map((child, i) => (
-          <div
-            key={i}
-            data-carousel-slide
-            data-carousel-index={i}
-            className={`shrink-0 ${itemClass} snap-center md:w-auto md:shrink md:snap-none`}
-          >
-            {child}
-          </div>
+          <div key={i}>{child}</div>
         ))}
       </div>
 
-      {/* Dot indicators (mobile only) */}
+      {/* ═════════ Dots (mobile only) ═════════ */}
       {showDots && count > 1 && (
-        <div className="flex justify-center gap-1.5 mt-4 md:hidden" role="tablist" aria-label="Slides">
+        <div
+          className="flex justify-center gap-1.5 mt-4 md:hidden"
+          role="tablist"
+          aria-label="Slides"
+        >
           {items.map((_, i) => (
             <button
               key={i}
-              onClick={() => scrollTo(i)}
+              onClick={() => goToIndex(i)}
               role="tab"
-              aria-selected={i === activeIdx}
+              aria-selected={i === index}
               aria-label={`Slide ${i + 1}`}
               data-testid={`carousel-dot-${i}`}
               className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === activeIdx ? "w-6 bg-violet-400" : "w-1.5 bg-white/20 hover:bg-white/40"
+                i === index
+                  ? "w-6 bg-violet-400"
+                  : "w-1.5 bg-white/20 hover:bg-white/40"
               }`}
             />
           ))}
         </div>
-      )}
-
-      {/* Arrow buttons (optional, mobile-only) */}
-      {showArrows && count > 1 && (
-        <>
-          <button
-            onClick={prev}
-            disabled={activeIdx === 0}
-            aria-label="Previous"
-            data-testid="carousel-prev"
-            className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#0f0f14]/80 backdrop-blur border border-white/10 text-white/80 hover:text-white flex items-center justify-center disabled:opacity-0 transition-opacity z-10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={next}
-            disabled={activeIdx === count - 1}
-            aria-label="Next"
-            data-testid="carousel-next"
-            className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-[#0f0f14]/80 backdrop-blur border border-white/10 text-white/80 hover:text-white flex items-center justify-center disabled:opacity-0 transition-opacity z-10"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </>
       )}
     </div>
   );
