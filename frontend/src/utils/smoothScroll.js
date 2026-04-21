@@ -31,6 +31,10 @@ let touchActive = false;
 let lastTouchY = 0;
 let lastTouchTime = 0;
 let touchVelocity = 0;          // pixels per ms
+let touchStartX = 0;
+let touchStartY = 0;
+let touchDirection = null;      // null | "vertical" | "horizontal"
+const DIR_LOCK_THRESHOLD = 8;   // pixels before we decide direction
 
 function isTouchDevice() {
   if (typeof window === "undefined") return false;
@@ -89,6 +93,9 @@ function onTouchStart(e) {
   if (hasScrollableAncestor(e.target)) { touchActive = false; return; }
 
   touchActive = true;
+  touchDirection = null;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
   lastTouchY = e.touches[0].clientY;
   lastTouchTime = performance.now();
   touchVelocity = 0;
@@ -104,7 +111,27 @@ function onTouchMove(e) {
   if (!touchActive) return;
   if (e.touches.length > 1) { touchActive = false; return; }
 
+  const x = e.touches[0].clientX;
   const y = e.touches[0].clientY;
+
+  // Lock direction on first meaningful movement.
+  // If the gesture is horizontal → hand over to native (lets horizontal
+  // carousels / overflow-x-auto scrollers work on mobile).
+  if (touchDirection === null) {
+    const totalDx = Math.abs(x - touchStartX);
+    const totalDy = Math.abs(y - touchStartY);
+    if (totalDx < DIR_LOCK_THRESHOLD && totalDy < DIR_LOCK_THRESHOLD) return;
+    if (totalDx > totalDy) {
+      // Horizontal swipe: let the browser handle it natively.
+      touchActive = false;
+      touchDirection = "horizontal";
+      return;
+    }
+    touchDirection = "vertical";
+  }
+
+  if (touchDirection !== "vertical") return;
+
   const now = performance.now();
   const dy = lastTouchY - y;     // finger moves up → scroll down
   const dt = Math.max(1, now - lastTouchTime);
