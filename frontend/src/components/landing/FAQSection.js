@@ -28,6 +28,7 @@ export default function FAQSection({ T, faqs, openFAQ, setOpenFAQ }) {
             return (
               <StaggerItem
                 key={i}
+                standalone={false}
                 className={`rounded-2xl border backdrop-blur-xl transition-colors ${
                   open
                     ? "bg-[rgba(15,10,24,0.55)] border-violet-500/30"

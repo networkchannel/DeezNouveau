@@ -26,9 +26,10 @@ export default function PricingSection({ T, packs, lang }) {
           ariaLabel="Pricing packs"
           gap="gap-3 sm:gap-4"
         >
-          {packs.map((pack) => (
+          {packs.map((pack, i) => (
             <StaggerItem
               key={pack.id}
+              delay={i * 0.08}
               className={`relative p-6 sm:p-7 rounded-[1.5rem] transition-all duration-200 h-full ${
                 pack.highlight
                   ? "bg-gradient-to-b from-violet-900/30 to-[rgba(10,5,20,0.4)] backdrop-blur-xl border border-violet-500/40 hover:border-violet-400/70 hover:-translate-y-[3px]"

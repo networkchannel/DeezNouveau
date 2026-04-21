@@ -25,7 +25,7 @@ export default function FeaturesSection({ T, features }) {
           {features.map((f, i) => {
             const Icon = f.icon;
             return (
-              <StaggerItem key={i} className="feature-card text-center h-full" y={24}>
+              <StaggerItem key={i} className="feature-card text-center h-full" y={24} delay={i * 0.08}>
                 <div data-testid={`feature-${i}`}>
                   <div className="feature-card__icon">
                     <Icon strokeWidth={2.2} />

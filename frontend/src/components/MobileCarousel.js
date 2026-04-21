@@ -147,6 +147,7 @@ export default function MobileCarousel({
                 initial={false}
                 animate={{
                   x: `${offset * OFFSET_PCT}%`,
+                  y: isActive ? -10 : 0,
                   scale: isActive ? 1 : SIDE_SCALE,
                   opacity: absOffset > 1 ? 0 : isActive ? 1 : SIDE_OPACITY,
                   zIndex: 10 - absOffset,
