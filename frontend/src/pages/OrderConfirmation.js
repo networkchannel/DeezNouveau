@@ -510,7 +510,7 @@ export default function OrderConfirmation() {
             <div className="p-3 space-y-2">
               {order.links.map((link, idx) => (
                 <LinkCard
-                  key={idx}
+                  key={typeof link === "string" ? link : (link?.id || link?.url || idx)}
                   link={link}
                   index={idx}
                   copiedIdx={copiedIdx}

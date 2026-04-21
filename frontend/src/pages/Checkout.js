@@ -391,7 +391,7 @@ export default function Checkout() {
               {isMulti && pack.multi_lines ? (
                 <div className="pb-5 mb-5 border-b border-white/[0.06] space-y-3">
                   {pack.multi_lines.map((l, i) => (
-                    <div key={i} className="flex items-center gap-3" data-testid={`multi-line-${l.pack_id}`}>
+                    <div key={l.pack_id || i} className="flex items-center gap-3" data-testid={`multi-line-${l.pack_id}`}>
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-violet-700 flex items-center justify-center shrink-0">
                         <Headphones className="h-4 w-4 text-white" />
                       </div>

@@ -434,11 +434,11 @@ export default function Offers() {
                       {L({ fr: "Tarifs dégressifs", en: "Volume pricing", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
                     </div>
                     <div className="grid grid-cols-5 gap-1.5">
-                      {VOLUME_TIERS.map((tier, i) => {
+                      {VOLUME_TIERS.map((tier) => {
                         const active = customQuantity >= tier.min && customQuantity <= tier.max;
                         return (
                           <div
-                            key={i}
+                            key={`${tier.min}-${tier.max}`}
                             className={`p-1.5 rounded-lg text-center transition-all ${
                               active
                                 ? "bg-violet-500/15 border border-violet-400/40 shadow-[0_0_0_3px_rgba(139,92,246,0.05)]"

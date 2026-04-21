@@ -41,6 +41,38 @@ export default function ClickCaptchaWidget({ onVerified, label, forceShow = fals
     };
   }, []);
 
+  const verifyChallenge = useCallback(async (id, fp) => {
+    setState(STATES.VERIFYING);
+
+    try {
+      const resp = await fetch(`${API}/captcha/click/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challenge_id: id,
+          fingerprint: fp || telemetryService.fingerprint || '',
+        }),
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Verification failed');
+      }
+
+      const data = await resp.json();
+      if (data.success && data.captcha_token) {
+        setState(STATES.SUCCESS);
+        onVerified(data.captcha_token);
+      } else {
+        throw new Error('Invalid response');
+      }
+    } catch (err) {
+      const msg = typeof err.message === 'string' ? err.message : 'Verification failed';
+      setError(msg);
+      setState(STATES.ERROR);
+    }
+  }, [onVerified]);
+
   const startChallenge = useCallback(async () => {
     setState(STATES.WAITING);
     setError('');
@@ -85,39 +117,7 @@ export default function ClickCaptchaWidget({ onVerified, label, forceShow = fals
       setError('Failed to start verification');
       setState(STATES.ERROR);
     }
-  }, []);
-
-  const verifyChallenge = async (id, fp) => {
-    setState(STATES.VERIFYING);
-
-    try {
-      const resp = await fetch(`${API}/captcha/click/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          challenge_id: id,
-          fingerprint: fp || telemetryService.fingerprint || '',
-        }),
-      });
-
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData.detail || 'Verification failed');
-      }
-
-      const data = await resp.json();
-      if (data.success && data.captcha_token) {
-        setState(STATES.SUCCESS);
-        onVerified(data.captcha_token);
-      } else {
-        throw new Error('Invalid response');
-      }
-    } catch (err) {
-      const msg = typeof err.message === 'string' ? err.message : 'Verification failed';
-      setError(msg);
-      setState(STATES.ERROR);
-    }
-  };
+  }, [verifyChallenge]);
 
   // ═══ RENDER ═══
 

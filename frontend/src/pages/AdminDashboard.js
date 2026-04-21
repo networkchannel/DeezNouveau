@@ -927,7 +927,7 @@ export default function AdminDashboard() {
                       <TableHeader><TableRow className="border-border hover:bg-transparent"><TableHead className="text-t-muted text-xs">URL</TableHead><TableHead className="text-t-muted text-xs">Statut</TableHead><TableHead className="text-t-muted text-xs">Source</TableHead></TableRow></TableHeader>
                       <TableBody>
                         {realLinks.map((link, i) => (
-                          <TableRow key={i} className="border-border hover:bg-white/[0.02]">
+                          <TableRow key={link.id || link.url || i} className="border-border hover:bg-white/[0.02]">
                             <TableCell className="font-mono text-xs text-t-secondary max-w-[400px]"><div className="flex items-center gap-1.5 truncate"><ExternalLink className="h-3 w-3 text-t-muted shrink-0" /><span className="truncate">{link.url}</span></div></TableCell>
                             <TableCell><Badge className={link.status === "available" ? "bg-green/10 text-green border-green/20" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}>{link.status === "available" ? "Dispo" : "Vendu"}</Badge></TableCell>
                             <TableCell><Badge className={link.source === "generator" ? "bg-accent/10 text-accent border-accent/20" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}>{link.source || "import"}</Badge></TableCell>
@@ -949,7 +949,7 @@ export default function AdminDashboard() {
                     <TableHeader><TableRow className="border-border hover:bg-transparent"><TableHead className="text-t-muted text-xs">Email</TableHead><TableHead className="text-t-muted text-xs">Fidélité</TableHead><TableHead className="text-t-muted text-xs">IP</TableHead><TableHead className="text-t-muted text-xs">Inscrit</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {users.map((u, i) => (
-                        <TableRow key={i} className="border-border hover:bg-white/[0.02]">
+                        <TableRow key={u.id || u.email || i} className="border-border hover:bg-white/[0.02]">
                           <TableCell className="text-sm"><div className="flex items-center gap-2">{u.role === "admin" && <Shield className="h-3.5 w-3.5 text-red-400" />}<span className="text-t-primary">{u.email}</span></div></TableCell>
                           <TableCell><Badge className="bg-accent/10 text-accent border-accent/20">{u.loyalty_tier?.name || "Bronze"} ({u.loyalty_points || 0}pts)</Badge></TableCell>
                           <TableCell className="font-mono text-xs text-t-muted">{u.last_ip || "-"}</TableCell>
@@ -991,11 +991,11 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <div className="glass rounded-xl border border-border p-5">
                     <h3 className="font-semibold text-sm mb-3 flex items-center gap-2 text-t-primary"><Ban className="h-4 w-4 text-red-400" />IPs Bloquées</h3>
-                    <div className="space-y-2">{blockedList.blocked_ips?.map((item, i) => (<div key={i} className="flex justify-between items-center p-2.5 bg-red-500/5 rounded-lg border border-red-500/10"><span className="font-mono text-sm text-red-400">{item.ip}</span><button onClick={() => handleUnblockIp(item.ip)} className="text-green hover:text-green/80 p-1"><CheckCircle className="h-4 w-4" /></button></div>))}{(!blockedList.blocked_ips || blockedList.blocked_ips.length === 0) && <p className="text-t-muted text-sm text-center py-3">Aucune IP bloquée</p>}</div>
+                    <div className="space-y-2">{blockedList.blocked_ips?.map((item) => (<div key={item.ip} className="flex justify-between items-center p-2.5 bg-red-500/5 rounded-lg border border-red-500/10"><span className="font-mono text-sm text-red-400">{item.ip}</span><button onClick={() => handleUnblockIp(item.ip)} className="text-green hover:text-green/80 p-1"><CheckCircle className="h-4 w-4" /></button></div>))}{(!blockedList.blocked_ips || blockedList.blocked_ips.length === 0) && <p className="text-t-muted text-sm text-center py-3">Aucune IP bloquée</p>}</div>
                   </div>
                   <div className="glass rounded-xl border border-border p-5">
                     <h3 className="font-semibold text-sm mb-3 flex items-center gap-2 text-t-primary"><Eye className="h-4 w-4 text-accent" />Journal Sécurité</h3>
-                    <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">{securityLogs.slice(0, 10).map((log, i) => (<div key={i} className="flex flex-wrap justify-between items-center p-2 bg-white/[0.02] rounded-lg text-xs gap-1"><Badge className="bg-gray-500/10 text-gray-400">{log.event?.replace(/_/g, ' ')}</Badge><span className="text-t-muted">{log.ip}</span></div>))}{securityLogs.length === 0 && <p className="text-t-muted text-sm text-center py-3">Aucun log</p>}</div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto scrollbar-thin">{securityLogs.slice(0, 10).map((log, i) => (<div key={log.id || `${log.event}-${log.ip}-${log.created_at || i}`} className="flex flex-wrap justify-between items-center p-2 bg-white/[0.02] rounded-lg text-xs gap-1"><Badge className="bg-gray-500/10 text-gray-400">{log.event?.replace(/_/g, ' ')}</Badge><span className="text-t-muted">{log.ip}</span></div>))}{securityLogs.length === 0 && <p className="text-t-muted text-sm text-center py-3">Aucun log</p>}</div>
                   </div>
                 </div>
               </div>
