@@ -69,11 +69,53 @@ function tick() {
     current = target;
     window.scrollTo(0, current);
     rafId = null;
+    // Gesture ended & inertia settled on mobile → try to align on nearest section
+    if (mode === "touch") {
+      mode = "idle";
+      trySnapToSection();
+    }
     return;
   }
   current += diff * lerp;
   window.scrollTo(0, current);
   rafId = requestAnimationFrame(tick);
+}
+
+// ─── Section snap (mobile only, triggered after touch inertia settles) ──
+const SNAP_THRESHOLD_PX = 180;
+const SNAP_HEADER_OFFSET = 88;
+
+function findNearestSection() {
+  const sections = Array.from(
+    document.querySelectorAll("section[id]:not([data-no-snap])")
+  );
+  if (!sections.length) return null;
+  const viewportTop = window.scrollY + SNAP_HEADER_OFFSET;
+  let best = null;
+  let bestDist = Infinity;
+  for (const s of sections) {
+    const rect = s.getBoundingClientRect();
+    const sectionAbsTop = window.scrollY + rect.top;
+    const dist = Math.abs(sectionAbsTop - viewportTop);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = {
+        el: s,
+        scrollY: sectionAbsTop - SNAP_HEADER_OFFSET,
+        dist,
+      };
+    }
+  }
+  return best;
+}
+
+function trySnapToSection() {
+  const near = findNearestSection();
+  if (!near) return;
+  if (near.dist < 8) return;                 // already aligned
+  if (near.dist > SNAP_THRESHOLD_PX) return; // too far, don't force it
+  target = Math.max(0, Math.min(near.scrollY, maxScroll()));
+  if (rafId == null) rafId = requestAnimationFrame(tick);
 }
 
 // ─── Wheel (desktop) ──────────────────────────────────────────────────
@@ -157,8 +199,16 @@ function onTouchEnd() {
   touchActive = false;
   // Apply flick inertia if velocity is meaningful (>0.1 px/ms)
   if (Math.abs(touchVelocity) > 0.1) {
+    mode = "touch";
     target = Math.max(0, Math.min(target + touchVelocity * TOUCH_VELOCITY_MULT * 16, maxScroll()));
     if (rafId == null) rafId = requestAnimationFrame(tick);
+  } else {
+    // No meaningful flick — try to snap to nearest section immediately
+    // so a gentle drag still aligns cleanly on section boundaries.
+    mode = "touch";
+    target = window.scrollY;
+    current = window.scrollY;
+    trySnapToSection();
   }
   touchVelocity = 0;
 }
@@ -189,11 +239,21 @@ export function initSmoothScroll() {
   };
   window.addEventListener("scroll", onScroll, { passive: true });
 
-  // Wheel (desktop + trackpads). Mobile intentionally uses native
-  // touch scrolling so iOS/Android momentum + CSS scroll-snap are
-  // preserved — our custom interpolation only drives mouse / wheel.
+  // Wheel (desktop + trackpads).
   wheelHandler = onWheel;
   window.addEventListener("wheel", wheelHandler, { passive: false });
+
+  // Touch (mobile) — custom smooth scroll + section snap.
+  // Horizontal gestures are released to native so carousels work.
+  if (isTouchDevice()) {
+    touchStartHandler = onTouchStart;
+    touchMoveHandler = onTouchMove;
+    touchEndHandler = onTouchEnd;
+    window.addEventListener("touchstart", touchStartHandler, { passive: true });
+    window.addEventListener("touchmove", touchMoveHandler, { passive: false });
+    window.addEventListener("touchend", touchEndHandler, { passive: true });
+    window.addEventListener("touchcancel", touchEndHandler, { passive: true });
+  }
 
   resizeHandler = onResize;
   window.addEventListener("resize", resizeHandler);
