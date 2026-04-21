@@ -98,11 +98,11 @@ export default function MobileCarousel({
         aria-label={ariaLabel}
         className={`
           flex ${gap} overflow-x-auto snap-x snap-mandatory scroll-smooth
-          px-4 -mx-4 pt-5 pb-3
+          px-4 -mx-4 pt-5 pb-8
           [scrollbar-width:none] [&::-webkit-scrollbar]:hidden
           md:grid md:${desktopGridClass} md:overflow-visible md:mx-0 md:px-0 md:py-0 md:gap-5
         `}
-        style={{ WebkitOverflowScrolling: "touch" }}
+        style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y pinch-zoom", overscrollBehaviorX: "contain" }}
       >
         {items.map((child, i) => (
           <div

@@ -101,6 +101,8 @@ export default function Offers() {
       name: m.name || p.name,
       quantity: p.quantity,
       price: p.price,
+      strike: p.strike,
+      savePct: p.savePct,
       icon: m.icon,
       color: m.color,
       shadow: m.shadow,
@@ -110,7 +112,7 @@ export default function Offers() {
   });
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-x-clip">
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
 
         {/* Hero Section — Deezer Branding */}
@@ -208,8 +210,18 @@ export default function Offers() {
 
                       {/* Price */}
                       <div className="mb-5">
+                        {pack.strike && (
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-white/35 text-sm line-through tabular-nums">{pack.strike}€</span>
+                            {pack.savePct && (
+                              <span className="inline-flex items-center px-1.5 py-[1px] rounded-md bg-green-500/15 border border-green-500/30 text-green-400 text-[10px] font-bold tabular-nums">
+                                -{pack.savePct}%
+                              </span>
+                            )}
+                          </div>
+                        )}
                         <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-display font-bold text-white tracking-tight">
+                          <span className="text-4xl font-display font-bold text-white tracking-tight tabular-nums">
                             {pack.price}€
                           </span>
                         </div>
@@ -292,152 +304,174 @@ export default function Offers() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4"
               onClick={() => setShowCustomModal(false)}
+              data-testid="custom-quantity-modal"
             >
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, y: 40, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 40, scale: 0.98 }}
+                transition={{ type: "spring", damping: 28, stiffness: 280 }}
                 onClick={(e) => e.stopPropagation()}
-                className="glass backdrop-blur-xl rounded-3xl border border-border p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                className="relative w-full sm:max-w-md bg-[rgba(10,8,16,0.98)] backdrop-blur-2xl border border-white/10 sm:border rounded-t-3xl sm:rounded-3xl shadow-[0_-20px_60px_-10px_rgba(0,0,0,0.8)] max-h-[88vh] overflow-hidden flex flex-col"
               >
+                {/* Mobile grab handle */}
+                <div className="sm:hidden flex justify-center pt-2 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-white/20" />
+                </div>
+
                 {/* Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-t-primary flex items-center gap-2">
-                    <Package className="h-6 w-6 text-accent" />
-                    {L({ fr: "Quantité personnalisée", en: "Custom quantity", es: "Cantidad personalizada", pt: "Quantidade personalizada", de: "Eigene Menge", tr: "Özel miktar", nl: "Aangepaste hoeveelheid", ar: "كمية مخصصة" }, lang)}
-                  </h2>
+                <div className="flex items-center justify-between px-5 sm:px-6 pt-4 sm:pt-6 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/25 flex items-center justify-center">
+                      <Package className="h-4 w-4 text-violet-300" />
+                    </div>
+                    <div>
+                      <h2 className="text-[15px] font-semibold text-white leading-tight">
+                        {L({ fr: "Quantité sur mesure", en: "Custom quantity", es: "Cantidad personalizada", pt: "Quantidade personalizada", de: "Eigene Menge", tr: "Özel miktar", nl: "Aangepaste hoeveelheid", ar: "كمية مخصصة" }, lang)}
+                      </h2>
+                      <p className="text-white/45 text-[11px]">
+                        {L({ fr: "Plus tu prends, moins c'est cher", en: "The more you take, the cheaper it gets", es: "Más cantidad, menor precio", pt: "Mais quantidade, menor preço", de: "Mehr kaufen, weniger zahlen", tr: "Ne kadar çok, o kadar ucuz", nl: "Meer kopen = lagere prijs", ar: "كلما زادت الكمية، قل السعر" }, lang)}
+                      </p>
+                    </div>
+                  </div>
                   <button
                     onClick={() => setShowCustomModal(false)}
-                    className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-all"
+                    className="w-9 h-9 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+                    data-testid="custom-modal-close"
                   >
-                    <X className="h-5 w-5 text-t-secondary" />
+                    <X className="h-4 w-4 text-white/70" />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left: Quantity selection */}
-                  <div>
-                    <h3 className="text-t-secondary text-sm font-medium mb-4">
-                      {L({ fr: "Choisissez la quantité", en: "Choose quantity", es: "Elige la cantidad", pt: "Escolha a quantidade", de: "Menge wählen", tr: "Miktarı seçin", nl: "Kies hoeveelheid", ar: "اختر الكمية" }, lang)}
-                    </h3>
+                {/* Scrollable content */}
+                <div className="flex-1 overflow-y-auto px-5 sm:px-6 pb-3">
+                  {/* Big qty display */}
+                  <div className="text-center py-4">
+                    <div className="inline-flex items-baseline gap-1.5">
+                      <span className="text-[56px] leading-none font-display font-bold text-white tabular-nums">{customQuantity}</span>
+                      <span className="text-white/50 text-sm">
+                        {L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-white/40">
+                      {getUnitPrice(customQuantity).toFixed(2)}€ / {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)}
+                    </div>
+                  </div>
 
-                    {/* Preset buttons */}
-                    <div className="grid grid-cols-3 gap-2 mb-4">
-                      {[10, 25, 50, 100, 200].map((val) => (
-                        <motion.button
+                  {/* Preset chips */}
+                  <div className="flex flex-wrap gap-1.5 mb-4 justify-center">
+                    {[10, 25, 50, 100, 200].map((val) => {
+                      const selected = customQuantity === val;
+                      const disabled = val > availableStock;
+                      return (
+                        <button
                           key={val}
-                          whileTap={{ scale: 0.95 }}
                           onClick={() => setCustomQuantity(Math.min(val, availableStock))}
-                          disabled={val > availableStock}
-                          className={`py-3 rounded-xl text-sm font-semibold transition-all ${
-                            customQuantity === val
-                              ? "bg-violet-500/15 border-2 border-violet-400/50 text-white"
-                              : "bg-white/[0.04] border border-white/[0.08] text-t-secondary hover:text-t-primary hover:border-white/[0.15] disabled:opacity-30"
+                          disabled={disabled}
+                          data-testid={`custom-qty-preset-${val}`}
+                          className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all ${
+                            selected
+                              ? "bg-violet-500 text-white shadow-[0_6px_20px_-6px_rgba(139,92,246,0.8)]"
+                              : "bg-white/[0.05] text-white/70 hover:text-white hover:bg-white/[0.08] border border-white/[0.08] disabled:opacity-30"
                           }`}
                         >
                           {val}
-                        </motion.button>
-                      ))}
-                    </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                    {/* Input */}
-                    <input
-                      type="number"
-                      value={customQuantity}
-                      onChange={(e) => setCustomQuantity(Math.min(availableStock, Math.max(1, parseInt(e.target.value) || 1)))}
-                      min="1"
-                      max={availableStock}
-                      className="w-full bg-white/[0.04] border border-white/[0.08] text-t-primary rounded-xl px-4 py-3 mb-4"
-                    />
-
-                    {/* Slider */}
+                  {/* Slider */}
+                  <div className="mb-4">
                     <input
                       type="range"
                       value={customQuantity}
                       onChange={(e) => setCustomQuantity(parseInt(e.target.value))}
                       min="1"
                       max={availableStock}
-                      className="w-full h-2 bg-zinc-800 rounded-full mb-2"
+                      className="w-full h-1.5 bg-white/[0.08] rounded-full appearance-none cursor-pointer accent-violet-400"
+                      data-testid="custom-qty-slider"
                     />
-                    <p className="text-xs text-t-muted">
-                      {L({ fr: "Stock disponible : ", en: "Available stock: ", es: "Stock disponible: ", pt: "Estoque disponível: ", de: "Verfügbarer Bestand: ", tr: "Mevcut stok: ", nl: "Beschikbare voorraad: ", ar: "المخزون المتاح: " }, lang)}
-                      <span className="text-green font-semibold">{availableStock}</span>
-                    </p>
+                    <div className="flex justify-between text-[10px] text-white/40 mt-1 tabular-nums">
+                      <span>1</span>
+                      <span>{Math.floor(availableStock / 2)}</span>
+                      <span>{availableStock}</span>
+                    </div>
                   </div>
 
-                  {/* Right: Summary */}
-                  <div>
-                    <h3 className="text-t-secondary text-sm font-medium mb-4">
-                      {L({ fr: "Résumé", en: "Summary", es: "Resumen", pt: "Resumo", de: "Zusammenfassung", tr: "Özet", nl: "Samenvatting", ar: "الملخص" }, lang)}
-                    </h3>
+                  {/* Exact input */}
+                  <input
+                    type="number"
+                    value={customQuantity}
+                    onChange={(e) => setCustomQuantity(Math.min(availableStock, Math.max(1, parseInt(e.target.value) || 1)))}
+                    min="1"
+                    max={availableStock}
+                    className="w-full bg-[#0a0a0e] border border-white/[0.08] focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/15 rounded-xl px-4 py-2.5 text-white text-center text-[15px] font-semibold outline-none transition-all tabular-nums"
+                    data-testid="custom-qty-input"
+                  />
 
-                    <div className="bg-white/[0.03] rounded-2xl p-4 mb-4">
-                      <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-5xl font-bold text-violet-300">
-                          {customQuantity}
-                        </span>
-                        <span className="text-t-muted">{L({ fr: "liens", en: "links", es: "enlaces", pt: "links", de: "Links", tr: "bağlantı", nl: "links", ar: "روابط" }, lang)}</span>
+                  {/* Total */}
+                  <div className="mt-4 rounded-2xl bg-gradient-to-br from-violet-900/30 to-transparent border border-violet-500/20 p-4 flex items-baseline justify-between">
+                    <div>
+                      <div className="text-white/50 text-[11px] uppercase tracking-wider font-semibold">
+                        {L({ fr: "Total", en: "Total", es: "Total", pt: "Total", de: "Gesamt", tr: "Toplam", nl: "Totaal", ar: "المجموع" }, lang)}
                       </div>
-                      <p className="text-t-secondary text-sm mb-4">
-                        Deezer Premium · {L({ fr: "1 mois minimum garanti", en: "1 month minimum guaranteed", es: "1 mes mínimo garantizado", pt: "1 mês mínimo garantido", de: "Mind. 1 Monat garantiert", tr: "Min. 1 ay garantili", nl: "Min. 1 maand gegarandeerd", ar: "شهر واحد مضمون كحد أدنى" }, lang)}
-                      </p>
-
-                      <div className="space-y-2 mb-4 pb-4 border-b border-white/[0.08]">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-t-secondary">{L({ fr: "Prix unitaire", en: "Unit price", es: "Precio unitario", pt: "Preço unitário", de: "Stückpreis", tr: "Birim fiyat", nl: "Stuksprijs", ar: "سعر الوحدة" }, lang)}</span>
-                          <span className="text-t-primary font-semibold">{getUnitPrice(customQuantity).toFixed(2)}€</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-t-secondary">{L({ fr: "Quantité", en: "Quantity", es: "Cantidad", pt: "Quantidade", de: "Menge", tr: "Miktar", nl: "Hoeveelheid", ar: "الكمية" }, lang)}</span>
-                          <span className="text-t-primary font-semibold">×{customQuantity}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-t-secondary text-sm">{L({ fr: "Total", en: "Total", es: "Total", pt: "Total", de: "Gesamt", tr: "Toplam", nl: "Totaal", ar: "المجموع" }, lang)}</span>
-                        <div className="text-3xl font-bold text-violet-300">
-                          {(customQuantity * getUnitPrice(customQuantity)).toFixed(2)}€
-                        </div>
+                      <div className="text-white/40 text-[11px] mt-0.5">
+                        {L({ fr: "Paiement sécurisé", en: "Secure checkout", es: "Pago seguro", pt: "Pagamento seguro", de: "Sichere Zahlung", tr: "Güvenli ödeme", nl: "Veilig betalen", ar: "دفع آمن" }, lang)}
                       </div>
                     </div>
+                    <div className="text-3xl font-display font-bold text-white tabular-nums">
+                      {(customQuantity * getUnitPrice(customQuantity)).toFixed(2)}€
+                    </div>
+                  </div>
 
-                    <motion.button
-                      onClick={handleCustomCheckout}
-                      disabled={loadingStock || customQuantity < 1}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="btn-primary w-full !py-3"
-                      data-testid="custom-quantity-cta"
-                    >
-                      {L({ fr: "Commander", en: "Order now", es: "Pedir ahora", pt: "Pedir agora", de: "Jetzt bestellen", tr: "Şimdi sipariş ver", nl: "Nu bestellen", ar: "اطلب الآن" }, lang)}
-                      <ArrowRight className="h-5 w-5" />
-                    </motion.button>
+                  {/* Volume tiers — compact bar */}
+                  <div className="mt-4">
+                    <div className="text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-2 flex items-center gap-1.5">
+                      <TrendingDown className="h-3 w-3 text-green-400" />
+                      {L({ fr: "Tarifs dégressifs", en: "Volume pricing", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {VOLUME_TIERS.map((tier, i) => {
+                        const active = customQuantity >= tier.min && customQuantity <= tier.max;
+                        return (
+                          <div
+                            key={i}
+                            className={`p-1.5 rounded-lg text-center transition-all ${
+                              active
+                                ? "bg-violet-500/15 border border-violet-400/40 shadow-[0_0_0_3px_rgba(139,92,246,0.05)]"
+                                : "bg-white/[0.03] border border-white/[0.06]"
+                            }`}
+                          >
+                            <div className={`text-[9px] ${active ? "text-violet-300" : "text-white/40"}`}>
+                              {tier.min}{tier.max === 1000 ? "+" : `-${tier.max}`}
+                            </div>
+                            <div className={`font-bold text-[12px] tabular-nums ${active ? "text-white" : "text-white/70"}`}>
+                              {tier.unit.toFixed(2)}€
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* Price tiers */}
-                <div className="mt-6 pt-6 border-t border-white/[0.08]">
-                  <h3 className="text-t-secondary text-sm font-medium mb-3 flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-green" />
-                    {L({ fr: "Tarifs dégressifs", en: "Volume discounts", es: "Descuentos por volumen", pt: "Descontos por volume", de: "Mengenrabatte", tr: "Hacim indirimleri", nl: "Volumekortingen", ar: "خصومات الحجم" }, lang)}
-                  </h3>
-                  <div className="grid grid-cols-5 gap-2">
-                    {VOLUME_TIERS.map((tier, i) => (
-                      <div
-                        key={i}
-                        className={`p-2 rounded-lg text-center ${
-                          customQuantity >= tier.min && customQuantity <= tier.max
-                            ? "bg-purple-500/10 border border-purple-500/30"
-                            : "bg-white/[0.03] border border-white/[0.06]"
-                        }`}
-                      >
-                        <div className="text-t-muted text-[10px]">{tier.min}-{tier.max === 1000 ? "+" : tier.max}</div>
-                        <div className="text-t-primary font-bold text-sm">{tier.unit.toFixed(2)}€</div>
-                      </div>
-                    ))}
-                  </div>
+                {/* Sticky CTA */}
+                <div className="px-5 sm:px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+14px)] sm:pb-6 border-t border-white/[0.06] bg-gradient-to-t from-[#08060d] to-transparent">
+                  <button
+                    onClick={handleCustomCheckout}
+                    disabled={loadingStock || customQuantity < 1}
+                    className="btn-primary w-full !py-3.5 !text-[14px]"
+                    data-testid="custom-quantity-cta"
+                  >
+                    {L({ fr: "Commander", en: "Order now", es: "Pedir ahora", pt: "Pedir agora", de: "Jetzt bestellen", tr: "Şimdi sipariş ver", nl: "Nu bestellen", ar: "اطلب الآن" }, lang)}
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                  <p className="text-center text-[11px] text-white/40 mt-2">
+                    {L({ fr: "Stock dispo", en: "In stock", es: "En stock", pt: "Em estoque", de: "Verfügbar", tr: "Stokta", nl: "Op voorraad", ar: "متوفر" }, lang)} : <span className="text-green-400 font-semibold">{availableStock}</span>
+                  </p>
                 </div>
               </motion.div>
             </motion.div>
