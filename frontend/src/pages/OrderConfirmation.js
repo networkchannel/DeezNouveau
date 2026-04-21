@@ -4,148 +4,16 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import {
-  Check, Copy, Loader2, ExternalLink, Download,
-  CheckCircle2, Clock, AlertCircle, ArrowRight, Sparkles, FileText, Share2
+  Loader2, CheckCircle2, Clock, AlertCircle, ArrowRight, Sparkles, FileText,
 } from "lucide-react";
 import { pickLang as L } from "@/utils/langPick";
+import Confetti from "@/components/confirmation/Confetti";
+import OrderSummaryCard from "@/components/confirmation/OrderSummaryCard";
+import LinksSection from "@/components/confirmation/LinksSection";
+import { StripeCancelBanner, StripePollingBanner } from "@/components/confirmation/StripeBanners";
 
 const API = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
-/* ──────── confetti particles ──────── */
-function Confetti() {
-  const colors = ["#6366f1", "#a855f7", "#ec4899", "#22c55e", "#eab308", "#3b82f6"];
-  return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
-      {Array.from({ length: 40 }).map((_, i) => {
-        const left = Math.random() * 100;
-        const delay = Math.random() * 0.8;
-        const dur = 2 + Math.random() * 2;
-        const size = 6 + Math.random() * 8;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const rotation = Math.random() * 360;
-        return (
-          <motion.div
-            key={i}
-            initial={{ y: -20, x: 0, opacity: 1, rotate: 0 }}
-            animate={{ y: "100vh", x: (Math.random() - 0.5) * 200, opacity: 0, rotate: rotation + 360 }}
-            transition={{ duration: dur, delay, ease: "easeIn" }}
-            style={{
-              position: "absolute",
-              left: `${left}%`,
-              top: -10,
-              width: size,
-              height: size * 0.6,
-              backgroundColor: color,
-              borderRadius: 2,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/* ──────── status badge ──────── */
-function StatusBadge({ status, lang }) {
-  const config = {
-    completed: {
-      icon: CheckCircle2,
-      label: L({ fr: "Terminee", en: "Completed", es: "Completado", pt: "Concluído", de: "Abgeschlossen", tr: "Tamamlandı", nl: "Voltooid", ar: "مكتمل" }, lang),
-      bg: "bg-emerald-500/10 border-emerald-500/20",
-      text: "text-emerald-400",
-      dot: "bg-emerald-400",
-    },
-    pending: {
-      icon: Clock,
-      label: L({ fr: "En attente de paiement", en: "Awaiting payment", es: "Esperando pago", pt: "Aguardando pagamento", de: "Warte auf Zahlung", tr: "Ödeme bekleniyor", nl: "Wacht op betaling", ar: "في انتظار الدفع" }, lang),
-      bg: "bg-amber-500/10 border-amber-500/20",
-      text: "text-amber-400",
-      dot: "bg-amber-400 animate-pulse",
-    },
-    payment_mock: {
-      icon: Sparkles,
-      label: L({ fr: "Mode test", en: "Test mode", es: "Modo de prueba", pt: "Modo de teste", de: "Testmodus", tr: "Test modu", nl: "Testmodus", ar: "وضع الاختبار" }, lang),
-      bg: "bg-violet-500/10 border-violet-500/20",
-      text: "text-violet-400",
-      dot: "bg-violet-400",
-    },
-    failed: {
-      icon: AlertCircle,
-      label: L({ fr: "Echouee", en: "Failed", es: "Fallido", pt: "Falhou", de: "Fehlgeschlagen", tr: "Başarısız", nl: "Mislukt", ar: "فشل" }, lang),
-      bg: "bg-red-500/10 border-red-500/20",
-      text: "text-red-400",
-      dot: "bg-red-400",
-    },
-  };
-  const c = config[status] || config.pending;
-  const Icon = c.icon;
-  return (
-    <span className={`inline-flex items-center gap-2 text-[12px] font-medium px-3 py-1.5 rounded-full border ${c.bg} ${c.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
-      <Icon className="h-3.5 w-3.5" />
-      {c.label}
-    </span>
-  );
-}
-
-/* ──────── link card ──────── */
-function LinkCard({ link, index, copiedIdx, onCopy }) {
-  const isCopied = copiedIdx === index;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.06, duration: 0.35 }}
-      className="group relative"
-    >
-      <div className={`
-        flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all duration-200
-        ${isCopied
-          ? "bg-emerald-500/5 border-emerald-500/20"
-          : "bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]"
-        }
-      `}>
-        {/* Number */}
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center shrink-0">
-          <span className="text-[12px] font-bold text-accent tabular-nums">{index + 1}</span>
-        </div>
-
-        {/* Link */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-mono text-white/70 truncate group-hover:text-white/90 transition-colors">
-            {link}
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-accent hover:bg-accent/10 transition-all"
-            title="Ouvrir"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-          <button
-            onClick={() => onCopy(link, index)}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-              isCopied
-                ? "text-emerald-400 bg-emerald-500/10"
-                : "text-white/30 hover:text-white hover:bg-white/10"
-            }`}
-            title="Copier"
-          >
-            {isCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-/* ──────── main page ──────── */
 export default function OrderConfirmation() {
   const { i18n } = useTranslation();
   const { orderId } = useParams();
@@ -164,9 +32,8 @@ export default function OrderConfirmation() {
   const [stripePolling, setStripePolling] = useState(isStripeReturn);
   const lang = i18n.language || "fr";
 
-  // Poll Stripe status once on mount for return URL — the first 'paid' hit
-  // fulfills the order server-side, after which the order polling (below) will
-  // reflect status=completed.
+  // Poll Stripe status on mount (return URL) — first 'paid' hit fulfills the
+  // order server-side, after which the order polling (below) reflects it.
   useEffect(() => {
     if (!isStripeReturn) return undefined;
     let cancelled = false;
@@ -279,7 +146,6 @@ export default function OrderConfirmation() {
     }
   };
 
-  /* ──────── loading ──────── */
   if (loading) return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-center">
@@ -289,7 +155,6 @@ export default function OrderConfirmation() {
     </div>
   );
 
-  /* ──────── not found ──────── */
   if (!order) return (
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="text-center">
@@ -315,7 +180,6 @@ export default function OrderConfirmation() {
     <div className="relative min-h-screen overflow-hidden">
       <AnimatePresence>{showConfetti && <Confetti />}</AnimatePresence>
 
-      {/* BG orbs */}
       {isCompleted && (
         <>
           <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
@@ -325,35 +189,11 @@ export default function OrderConfirmation() {
 
       <div className="relative z-10 max-w-xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
 
-        {/* ── Stripe return banners (when coming back from Stripe Checkout) ── */}
-        {isStripeCancel && !isCompleted && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3" data-testid="stripe-cancel-banner">
-            <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <div className="text-amber-300 font-semibold text-[13.5px]">
-                {L({ fr: "Paiement Stripe annulé", en: "Stripe payment cancelled", es: "Pago Stripe cancelado", pt: "Pagamento Stripe cancelado", de: "Stripe-Zahlung abgebrochen", tr: "Stripe ödemesi iptal edildi", nl: "Stripe-betaling geannuleerd", ar: "تم إلغاء الدفع عبر Stripe" }, lang)}
-              </div>
-              <div className="text-white/60 text-[12.5px] mt-1">
-                {L({ fr: "Aucun montant n'a été débité. Tu peux réessayer ou choisir un autre mode de paiement.", en: "No amount was charged. You can retry or pick another payment method.", es: "No se cobró ningún importe. Puedes reintentar o elegir otro método de pago.", pt: "Nenhum valor foi cobrado. Tente novamente ou escolha outro método.", de: "Es wurde nichts abgebucht. Bitte erneut versuchen oder andere Methode wählen.", tr: "Herhangi bir tutar alınmadı. Tekrar deneyebilir veya başka yöntem seçebilirsin.", nl: "Er is niets afgeschreven. Probeer opnieuw of kies een andere betaalmethode.", ar: "لم يتم خصم أي مبلغ. يمكنك إعادة المحاولة أو اختيار طريقة أخرى." }, lang)}
-              </div>
-            </div>
-          </div>
-        )}
-        {isStripeReturn && stripePolling && !isCompleted && (
-          <div className="mb-6 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/25 flex items-start gap-3" data-testid="stripe-polling-banner">
-            <Loader2 className="h-5 w-5 text-violet-300 shrink-0 mt-0.5 animate-spin" />
-            <div>
-              <div className="text-violet-200 font-semibold text-[13.5px]">
-                {L({ fr: "Confirmation du paiement Stripe…", en: "Confirming your Stripe payment…", es: "Confirmando tu pago Stripe…", pt: "Confirmando seu pagamento Stripe…", de: "Stripe-Zahlung wird bestätigt…", tr: "Stripe ödemesi onaylanıyor…", nl: "Stripe-betaling wordt bevestigd…", ar: "جارٍ تأكيد الدفع عبر Stripe…" }, lang)}
-              </div>
-              <div className="text-white/60 text-[12.5px] mt-1">
-                {L({ fr: "Cela ne prend que quelques secondes. Ne ferme pas cette page.", en: "This usually takes a few seconds. Please keep this page open.", es: "Solo tardará unos segundos. No cierres esta página.", pt: "Só leva alguns segundos. Não feche esta página.", de: "Dauert nur ein paar Sekunden. Diese Seite bitte offen halten.", tr: "Sadece birkaç saniye sürer. Bu sayfayı kapatma.", nl: "Dit duurt maar enkele seconden. Sluit deze pagina niet.", ar: "يستغرق الأمر بضع ثوانٍ فقط. لا تغلق الصفحة." }, lang)}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Stripe return banners */}
+        {isStripeCancel && !isCompleted && <StripeCancelBanner lang={lang} />}
+        {isStripeReturn && stripePolling && !isCompleted && <StripePollingBanner lang={lang} />}
 
-        {/* ── Success header ── */}
+        {/* Success header */}
         {isCompleted && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -387,7 +227,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── Pending / Mock header ── */}
+        {/* Pending / Mock header */}
         {!isCompleted && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -406,51 +246,9 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── Order summary card ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl overflow-hidden mb-5"
-        >
-          <div className="px-5 py-4 flex items-center justify-between">
-            <div>
-              <p className="text-white/30 text-[11px] font-mono tracking-wider uppercase mb-1">
-                {L({ fr: "Commande", en: "Order", es: "Pedido", pt: "Pedido", de: "Bestellung", tr: "Sipariş", nl: "Bestelling", ar: "الطلب" }, lang)} #{orderId}
-              </p>
-              <p className="text-white/40 text-[12px]">{formattedDate}</p>
-            </div>
-            <StatusBadge status={order.status} lang={lang} />
-          </div>
-          <div className="border-t border-white/[0.06] px-5 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-white font-medium text-[14px]">
-                    {order.pack_id === "solo" ? "Solo" : order.pack_id === "duo" ? "Duo" : order.pack_id === "family" ? "Family" : order.pack_id}
-                  </p>
-                  <p className="text-white/40 text-[12px]">
-                    {order.quantity} {L({ fr: "lien", en: "link", es: "enlace", pt: "link", de: "Link", tr: "bağlantı", nl: "link", ar: "رابط" }, lang)}{order.quantity > 1 ? "s" : ""} · Deezer Premium
-                  </p>
-                </div>
-              </div>
-              <span className="text-white font-bold text-xl tabular-nums">{order.price}<span className="text-white/40 text-[14px]">EUR</span></span>
-            </div>
-            {order.loyalty_points_earned > 0 && (
-              <div className="mt-3 pt-3 border-t border-white/[0.04] flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                <span className="text-amber-400/80 text-[12px]">
-                  +{order.loyalty_points_earned} {L({ fr: "points fidélité gagnés", en: "loyalty points earned", es: "puntos de fidelidad ganados", pt: "pontos de fidelidade ganhos", de: "Treuepunkte gesammelt", tr: "kazanılan sadakat puanı", nl: "loyaliteitspunten verdiend", ar: "نقاط ولاء مكتسبة" }, lang)}
-                </span>
-              </div>
-            )}
-          </div>
-        </motion.div>
+        <OrderSummaryCard order={order} orderId={orderId} formattedDate={formattedDate} lang={lang} />
 
-        {/* ── Mock confirm button ── */}
+        {/* Mock confirm button */}
         {(order.status === "payment_mock" || (isMock && order.status === "pending")) && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -487,80 +285,20 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── Links section ── */}
         {hasLinks && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl overflow-hidden mb-5"
-          >
-            {/* Header with actions */}
-            <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="text-white font-medium text-[14px]">
-                  {L({ fr: "Vos liens d'activation", en: "Your activation links", es: "Tus enlaces de activación", pt: "Seus links de ativação", de: "Ihre Aktivierungslinks", tr: "Aktivasyon bağlantılarınız", nl: "Uw activeringslinks", ar: "روابط التفعيل الخاصة بك" }, lang)}
-                </span>
-                <span className="text-white/30 text-[12px]">({order.links.length})</span>
-              </div>
-            </div>
-
-            {/* Links list */}
-            <div className="p-3 space-y-2">
-              {order.links.map((link, idx) => (
-                <LinkCard
-                  key={typeof link === "string" ? link : (link?.id || link?.url || idx)}
-                  link={link}
-                  index={idx}
-                  copiedIdx={copiedIdx}
-                  onCopy={copyLink}
-                />
-              ))}
-            </div>
-
-            {/* Action bar */}
-            <div className="px-4 py-3.5 border-t border-white/[0.06] flex flex-wrap items-center gap-2">
-              <motion.button
-                onClick={copyAllLinks}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl transition-all ${
-                  copiedAll
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-                    : "bg-white/[0.05] text-white/70 hover:text-white hover:bg-white/[0.08] border border-white/[0.06]"
-                }`}
-              >
-                {copiedAll ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {copiedAll
-                  ? (L({ fr: "Copie !", en: "Copied!", es: "¡Copiado!", pt: "Copiado!", de: "Kopiert!", tr: "Kopyalandı!", nl: "Gekopieerd!", ar: "تم النسخ!" }, lang))
-                  : (L({ fr: "Copier tout", en: "Copy all", es: "Copiar todo", pt: "Copiar tudo", de: "Alles kopieren", tr: "Tümünü kopyala", nl: "Alles kopiëren", ar: "نسخ الكل" }, lang))}
-              </motion.button>
-
-              <motion.button
-                onClick={downloadLinks}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-all"
-              >
-                <Download className="h-3.5 w-3.5" />
-                {L({ fr: "Telecharger .txt", en: "Download .txt", es: "Descargar .txt", pt: "Baixar .txt", de: ".txt herunterladen", tr: ".txt indir", nl: ".txt downloaden", ar: "تنزيل .txt" }, lang)}
-              </motion.button>
-
-              <motion.button
-                onClick={shareLinks}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.08] border border-white/[0.06] transition-all"
-                title={L({ fr: "Partager", en: "Share", es: "Compartir", pt: "Compartilhar", de: "Teilen", tr: "Paylaş", nl: "Delen", ar: "مشاركة" }, lang)}
-              >
-                <Share2 className="h-3.5 w-3.5" />
-              </motion.button>
-            </div>
-          </motion.div>
+          <LinksSection
+            order={order}
+            lang={lang}
+            copiedIdx={copiedIdx}
+            copiedAll={copiedAll}
+            onCopyLink={copyLink}
+            onCopyAll={copyAllLinks}
+            onDownload={downloadLinks}
+            onShare={shareLinks}
+          />
         )}
 
-        {/* ── No links yet (pending) ── */}
+        {/* No links yet (pending) */}
         {!hasLinks && order.status !== "completed" && order.status !== "failed" && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -575,7 +313,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── How to use ── */}
+        {/* How to use */}
         {hasLinks && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -606,7 +344,7 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── Email notice ── */}
+        {/* Email notice */}
         {isCompleted && order.email && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -629,31 +367,22 @@ export default function OrderConfirmation() {
           </motion.div>
         )}
 
-        {/* ── Footer nav ── */}
+        {/* Footer nav */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
           className="flex items-center justify-center gap-4 pt-2"
         >
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors"
-          >
+          <Link to="/" className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors">
             {L({ fr: "Accueil", en: "Home", es: "Inicio", pt: "Início", de: "Startseite", tr: "Ana Sayfa", nl: "Home", ar: "الرئيسية" }, lang)}
           </Link>
           <span className="text-white/10">|</span>
-          <Link
-            to="/history"
-            className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors"
-          >
+          <Link to="/history" className="inline-flex items-center gap-1.5 text-white/30 hover:text-white/60 text-[13px] transition-colors">
             {L({ fr: "Mes commandes", en: "My Orders", es: "Mis pedidos", pt: "Meus pedidos", de: "Meine Bestellungen", tr: "Siparişlerim", nl: "Mijn bestellingen", ar: "طلباتي" }, lang)}
           </Link>
           <span className="text-white/10">|</span>
-          <Link
-            to="/offers"
-            className="inline-flex items-center gap-1.5 text-accent/60 hover:text-accent text-[13px] transition-colors"
-          >
+          <Link to="/offers" className="inline-flex items-center gap-1.5 text-accent/60 hover:text-accent text-[13px] transition-colors">
             {L({ fr: "Commander encore", en: "Order again", es: "Pedir de nuevo", pt: "Pedir novamente", de: "Erneut bestellen", tr: "Tekrar sipariş ver", nl: "Opnieuw bestellen", ar: "اطلب مجددًا" }, lang)} <ArrowRight className="h-3 w-3" />
           </Link>
         </motion.div>
