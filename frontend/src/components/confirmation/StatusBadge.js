@@ -35,7 +35,10 @@ export default function StatusBadge({ status, lang }) {
   const c = config[status] || config.pending;
   const Icon = c.icon;
   return (
-    <span className={`inline-flex items-center gap-2 text-[12px] font-medium px-3 py-1.5 rounded-full border ${c.bg} ${c.text}`}>
+    <span
+      className={`inline-flex items-center gap-2 text-[12px] font-medium px-3 py-1.5 rounded-full border ${c.bg} ${c.text}`}
+      data-testid={`status-badge-${status || "pending"}`}
+    >
       <span className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />
       <Icon className="h-3.5 w-3.5" />
       {c.label}

@@ -19,6 +19,7 @@ export default function LinksSection({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
       className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl overflow-hidden mb-5"
+      data-testid="links-section"
     >
       <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -38,6 +39,7 @@ export default function LinksSection({
             index={idx}
             copiedIdx={copiedIdx}
             onCopy={onCopyLink}
+            lang={lang}
           />
         ))}
       </div>
@@ -47,6 +49,7 @@ export default function LinksSection({
           onClick={onCopyAll}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          data-testid="copy-all-btn"
           className={`flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl transition-all ${
             copiedAll
               ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
@@ -63,6 +66,7 @@ export default function LinksSection({
           onClick={onDownload}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          data-testid="download-txt-btn"
           className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 text-[13px] font-medium px-4 py-2.5 rounded-xl bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 transition-all"
         >
           <Download className="h-3.5 w-3.5" />
@@ -73,6 +77,7 @@ export default function LinksSection({
           onClick={onShare}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          data-testid="share-btn"
           className="w-10 h-10 inline-flex items-center justify-center rounded-xl bg-white/[0.05] text-white/50 hover:text-white hover:bg-white/[0.08] border border-white/[0.06] transition-all"
           title={L({ fr: "Partager", en: "Share", es: "Compartir", pt: "Compartilhar", de: "Teilen", tr: "Paylaş", nl: "Delen", ar: "مشاركة" }, lang)}
         >

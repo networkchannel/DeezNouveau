@@ -274,6 +274,7 @@ export default function OrderConfirmation() {
               disabled={confirming}
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
+              data-testid="mock-confirm-btn"
               className="w-full bg-violet-500 hover:bg-violet-600 disabled:opacity-50 text-white text-[14px] font-semibold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
             >
               {confirming ? (

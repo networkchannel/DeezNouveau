@@ -10,6 +10,7 @@ export default function OrderSummaryCard({ order, orderId, formattedDate, lang }
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
       className="bg-white/[0.03] backdrop-blur-xl border border-white/[0.06] rounded-2xl overflow-hidden mb-5"
+      data-testid="order-summary-card"
     >
       <div className="px-5 py-4 flex items-center justify-between">
         <div>
