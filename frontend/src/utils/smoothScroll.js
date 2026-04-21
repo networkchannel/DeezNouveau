@@ -1,8 +1,10 @@
 /**
- * Lightweight wheel + touch inertia smooth scroll (no external deps).
+ * Lightweight wheel-only smooth scroll (desktop / trackpads).
  *
- * Desktop : intercepts wheel events and lerps toward target.
- * Mobile  : intercepts touch events (drag + flick-inertia) and lerps.
+ * Mobile is intentionally NOT intercepted — native iOS / Android scroll
+ * physics + CSS `scroll-snap-type: y proximity` on <html> give the best
+ * possible feel (momentum, bounce, overscroll, snap) and any JS override
+ * ends up fighting the browser.
  *
  * Preserves nested scrollable containers (overflow auto/scroll),
  * respects `data-no-smooth`, pinch-zoom, horizontal scroll, keyboard,
@@ -10,31 +12,16 @@
  */
 
 const LERP = 0.10;              // wheel inertia (0=infinite, 1=instant)
-const TOUCH_LERP = 0.14;        // post-flick inertia on mobile
 const WHEEL_MULTIPLIER = 1.0;
-const TOUCH_VELOCITY_MULT = 18; // flick strength multiplier
 const MIN_DIFF = 0.25;
 
 let target = 0;
 let current = 0;
 let rafId = null;
 let enabled = false;
-let mode = "wheel";             // "wheel" or "touch"
 let wheelHandler = null;
 let resizeHandler = null;
-let touchStartHandler = null;
-let touchMoveHandler = null;
-let touchEndHandler = null;
-
-// Touch tracking state
-let touchActive = false;
-let lastTouchY = 0;
-let lastTouchTime = 0;
-let touchVelocity = 0;          // pixels per ms
-let touchStartX = 0;
-let touchStartY = 0;
-let touchDirection = null;      // null | "vertical" | "horizontal"
-const DIR_LOCK_THRESHOLD = 8;   // pixels before we decide direction
+let scrollHandler = null;
 
 function isTouchDevice() {
   if (typeof window === "undefined") return false;
@@ -63,163 +50,33 @@ function maxScroll() {
 }
 
 function tick() {
-  const lerp = mode === "touch" ? TOUCH_LERP : LERP;
   const diff = target - current;
   if (Math.abs(diff) < MIN_DIFF) {
     current = target;
     window.scrollTo(0, current);
     rafId = null;
-    // Gesture ended & inertia settled on mobile → try to align on nearest section
-    if (mode === "touch") {
-      mode = "idle";
-      trySnapToSection();
-    }
     return;
   }
-  current += diff * lerp;
+  current += diff * LERP;
   window.scrollTo(0, current);
   rafId = requestAnimationFrame(tick);
 }
 
-// ─── Section snap (mobile only, triggered after touch inertia settles) ──
-const SNAP_THRESHOLD_PX = 180;
-const SNAP_HEADER_OFFSET = 88;
-
-function findNearestSection() {
-  const sections = Array.from(
-    document.querySelectorAll("section[id]:not([data-no-snap])")
-  );
-  if (!sections.length) return null;
-  const viewportTop = window.scrollY + SNAP_HEADER_OFFSET;
-  let best = null;
-  let bestDist = Infinity;
-  for (const s of sections) {
-    const rect = s.getBoundingClientRect();
-    const sectionAbsTop = window.scrollY + rect.top;
-    const dist = Math.abs(sectionAbsTop - viewportTop);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = {
-        el: s,
-        scrollY: sectionAbsTop - SNAP_HEADER_OFFSET,
-        dist,
-      };
-    }
-  }
-  return best;
-}
-
-function trySnapToSection() {
-  const near = findNearestSection();
-  if (!near) return;
-  if (near.dist < 8) return;                 // already aligned
-  if (near.dist > SNAP_THRESHOLD_PX) return; // too far, don't force it
-  target = Math.max(0, Math.min(near.scrollY, maxScroll()));
-  if (rafId == null) rafId = requestAnimationFrame(tick);
-}
-
-// ─── Wheel (desktop) ──────────────────────────────────────────────────
 function onWheel(e) {
   if (hasScrollableAncestor(e.target)) return;
   if (e.ctrlKey || e.metaKey) return;
   if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
   e.preventDefault();
-  mode = "wheel";
   target = Math.max(0, Math.min(target + e.deltaY * WHEEL_MULTIPLIER, maxScroll()));
   if (rafId == null) rafId = requestAnimationFrame(tick);
 }
 
-// ─── Touch (mobile) ───────────────────────────────────────────────────
-function onTouchStart(e) {
-  if (e.touches.length > 1) { touchActive = false; return; }        // pinch
-  if (hasScrollableAncestor(e.target)) { touchActive = false; return; }
-
-  touchActive = true;
-  touchDirection = null;
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-  lastTouchY = e.touches[0].clientY;
-  lastTouchTime = performance.now();
-  touchVelocity = 0;
-
-  // Kill any running inertia, snap current = target = native scroll.
-  if (rafId != null) cancelAnimationFrame(rafId);
-  rafId = null;
-  target = window.scrollY;
-  current = window.scrollY;
-}
-
-function onTouchMove(e) {
-  if (!touchActive) return;
-  if (e.touches.length > 1) { touchActive = false; return; }
-
-  const x = e.touches[0].clientX;
-  const y = e.touches[0].clientY;
-
-  // Lock direction on first meaningful movement.
-  // If the gesture is horizontal → hand over to native (lets horizontal
-  // carousels / overflow-x-auto scrollers work on mobile).
-  if (touchDirection === null) {
-    const totalDx = Math.abs(x - touchStartX);
-    const totalDy = Math.abs(y - touchStartY);
-    if (totalDx < DIR_LOCK_THRESHOLD && totalDy < DIR_LOCK_THRESHOLD) return;
-    if (totalDx > totalDy) {
-      // Horizontal swipe: let the browser handle it natively.
-      touchActive = false;
-      touchDirection = "horizontal";
-      return;
-    }
-    touchDirection = "vertical";
-  }
-
-  if (touchDirection !== "vertical") return;
-
-  const now = performance.now();
-  const dy = lastTouchY - y;     // finger moves up → scroll down
-  const dt = Math.max(1, now - lastTouchTime);
-
-  // prevent OS default scroll so WE drive the scrollTop
-  e.preventDefault();
-
-  mode = "touch";
-  target = Math.max(0, Math.min(target + dy, maxScroll()));
-  current = target;
-  window.scrollTo(0, current);
-
-  // moving-average velocity for smoother flick inertia
-  const instant = dy / dt;
-  touchVelocity = touchVelocity * 0.7 + instant * 0.3;
-
-  lastTouchY = y;
-  lastTouchTime = now;
-}
-
-function onTouchEnd() {
-  if (!touchActive) return;
-  touchActive = false;
-  // Apply flick inertia if velocity is meaningful (>0.1 px/ms)
-  if (Math.abs(touchVelocity) > 0.1) {
-    mode = "touch";
-    target = Math.max(0, Math.min(target + touchVelocity * TOUCH_VELOCITY_MULT * 16, maxScroll()));
-    if (rafId == null) rafId = requestAnimationFrame(tick);
-  } else {
-    // No meaningful flick — try to snap to nearest section immediately
-    // so a gentle drag still aligns cleanly on section boundaries.
-    mode = "touch";
-    target = window.scrollY;
-    current = window.scrollY;
-    trySnapToSection();
-  }
-  touchVelocity = 0;
-}
-
-// ─── Misc ─────────────────────────────────────────────────────────────
 function onResize() {
   target = Math.max(0, Math.min(target, maxScroll()));
 }
 
 /**
- * Enable smooth scroll (wheel on desktop, touch drag+flick on mobile).
+ * Enable smooth scroll on desktop (wheel). Mobile is left to native scroll.
  */
 export function initSmoothScroll() {
   if (typeof window === "undefined") return;
@@ -230,30 +87,24 @@ export function initSmoothScroll() {
   target = window.scrollY;
   current = window.scrollY;
 
+  // On mobile, don't attach any handlers — let the browser handle
+  // scrolling natively (momentum, bounce, CSS scroll-snap).
+  if (isTouchDevice()) {
+    enabled = true;
+    return;
+  }
+
   // Keep target in sync with keyboard / anchor / programmatic scroll
-  const onScroll = () => {
-    if (rafId == null && !touchActive) {
+  scrollHandler = () => {
+    if (rafId == null) {
       target = window.scrollY;
       current = window.scrollY;
     }
   };
-  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("scroll", scrollHandler, { passive: true });
 
-  // Wheel (desktop + trackpads).
   wheelHandler = onWheel;
   window.addEventListener("wheel", wheelHandler, { passive: false });
-
-  // Touch (mobile) — custom smooth scroll + section snap.
-  // Horizontal gestures are released to native so carousels work.
-  if (isTouchDevice()) {
-    touchStartHandler = onTouchStart;
-    touchMoveHandler = onTouchMove;
-    touchEndHandler = onTouchEnd;
-    window.addEventListener("touchstart", touchStartHandler, { passive: true });
-    window.addEventListener("touchmove", touchMoveHandler, { passive: false });
-    window.addEventListener("touchend", touchEndHandler, { passive: true });
-    window.addEventListener("touchcancel", touchEndHandler, { passive: true });
-  }
 
   resizeHandler = onResize;
   window.addEventListener("resize", resizeHandler);
@@ -264,19 +115,12 @@ export function initSmoothScroll() {
 export function destroySmoothScroll() {
   if (!enabled) return;
   if (wheelHandler) window.removeEventListener("wheel", wheelHandler);
-  if (touchStartHandler) window.removeEventListener("touchstart", touchStartHandler);
-  if (touchMoveHandler) window.removeEventListener("touchmove", touchMoveHandler);
-  if (touchEndHandler) {
-    window.removeEventListener("touchend", touchEndHandler);
-    window.removeEventListener("touchcancel", touchEndHandler);
-  }
+  if (scrollHandler) window.removeEventListener("scroll", scrollHandler);
   if (resizeHandler) window.removeEventListener("resize", resizeHandler);
   if (rafId != null) cancelAnimationFrame(rafId);
   rafId = null;
   wheelHandler = null;
-  touchStartHandler = null;
-  touchMoveHandler = null;
-  touchEndHandler = null;
+  scrollHandler = null;
   resizeHandler = null;
   enabled = false;
 }
