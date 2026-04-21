@@ -189,20 +189,11 @@ export function initSmoothScroll() {
   };
   window.addEventListener("scroll", onScroll, { passive: true });
 
-  // Wheel (all devices that emit wheel events — desktop, trackpads)
+  // Wheel (desktop + trackpads). Mobile intentionally uses native
+  // touch scrolling so iOS/Android momentum + CSS scroll-snap are
+  // preserved — our custom interpolation only drives mouse / wheel.
   wheelHandler = onWheel;
   window.addEventListener("wheel", wheelHandler, { passive: false });
-
-  // Touch (mobile)
-  if (isTouchDevice()) {
-    touchStartHandler = onTouchStart;
-    touchMoveHandler = onTouchMove;
-    touchEndHandler = onTouchEnd;
-    window.addEventListener("touchstart", touchStartHandler, { passive: true });
-    window.addEventListener("touchmove", touchMoveHandler, { passive: false });
-    window.addEventListener("touchend", touchEndHandler, { passive: true });
-    window.addEventListener("touchcancel", touchEndHandler, { passive: true });
-  }
 
   resizeHandler = onResize;
   window.addEventListener("resize", resizeHandler);

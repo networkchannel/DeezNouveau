@@ -539,6 +539,17 @@
   }
 }
 
+/* Inactive (side) carousel cards — freeze all animations so only
+   the centered card is visually "alive". */
+[data-carousel-slide]:not([data-active="true"]) .feature-card__icon,
+[data-carousel-slide]:not([data-active="true"]) .feature-card,
+[data-carousel-slide]:not([data-active="true"]) .feature-card * {
+  animation-play-state: paused !important;
+}
+[data-carousel-slide]:not([data-active="true"]) .feature-card__icon {
+  animation: none;
+}
+
 @media (max-width: 640px) {
   .feature-card { padding: 2rem 1.25rem 1.5rem; border-radius: 1.35rem; }
   .feature-card__icon { width: 76px; height: 76px; margin-bottom: 1.35rem; border-radius: 1.25rem; }
