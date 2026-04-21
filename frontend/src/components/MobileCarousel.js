@@ -2,29 +2,33 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /**
- * MobileCarousel — full-slide reveal carousel on mobile, grid on desktop.
+ * MobileCarousel — reveal-style slider on mobile, grid on desktop.
  *
- * Mobile ( < md ) :
- *   - One card visible at a time (full width, with horizontal padding)
- *   - Drag/swipe horizontally → current card slides out, next slides in
- *     from the opposite side (reveal / page-turn transition)
- *   - Spring snap to the next/prev slide based on distance + velocity
- *   - Dot indicators (optional) + keyboard ← → support
+ * Mobile ( < md ):
+ *   - One card visible at a time, full width.
+ *   - Horizontal swipe/drag → current card slides out, next slides in from
+ *     the opposite side (Framer-Motion spring reveal transition).
+ *   - Dots for direct navigation, keyboard ← → support.
+ *   - Container height follows the active slide's natural height
+ *     (AnimatePresence popLayout — exiting slide becomes absolute so it
+ *     doesn't stretch the container).
+ *   - Horizontal clipping via clip-path so the outgoing card is masked on
+ *     the sides, but the card's own glow/aura can still bleed vertically
+ *     (no overflow-hidden on the vertical axis).
  *
- * Desktop ( >= md ) :
- *   - Classic CSS grid (columns configurable via desktopCols)
+ * Desktop ( >= md ):
+ *   - Classic CSS grid (columns configurable via desktopCols).
  *
  * Props:
  *   - desktopCols: "2" | "3" | "4" (default "3")
  *   - showDots   : boolean (default true)
  *   - ariaLabel  : accessibility label
- *   - className  : container class override
- *   - itemClass  : kept for API compat — only applied on mobile wrapper
+ *   - className  : extra wrapper class
+ *   - itemClass  : kept for API compat (unused in reveal mode)
  */
 export default function MobileCarousel({
   children,
   desktopCols = "3",
-  // itemClass kept for API compatibility with existing callers (no-op in reveal mode)
   // eslint-disable-next-line no-unused-vars
   itemClass = "",
   showDots = true,
@@ -34,15 +38,13 @@ export default function MobileCarousel({
   const items = Array.isArray(children) ? children : [children];
   const count = items.length;
 
-  // page increments by ±1 with each navigation. direction tracks which side the
-  // new slide should enter from (+1 = enter from right, -1 = enter from left).
   const [[page, direction], setPage] = useState([0, 0]);
   const index = ((page % count) + count) % count;
 
-  const paginate = (newDirection) => {
-    const next = index + newDirection;
-    if (next < 0 || next >= count) return; // no wrap-around
-    setPage([page + newDirection, newDirection]);
+  const paginate = (dir) => {
+    const next = index + dir;
+    if (next < 0 || next >= count) return;
+    setPage([page + dir, dir]);
   };
 
   const goToIndex = (i) => {
@@ -50,7 +52,6 @@ export default function MobileCarousel({
     setPage([i, i > index ? 1 : -1]);
   };
 
-  // Keyboard navigation (mobile carousel still useful with external keyboards)
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowRight") paginate(1);
@@ -61,7 +62,6 @@ export default function MobileCarousel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, count]);
 
-  // Desktop grid cols
   const desktopGridClass =
     desktopCols === "4"
       ? "md:grid-cols-4"
@@ -69,25 +69,13 @@ export default function MobileCarousel({
       ? "md:grid-cols-2"
       : "md:grid-cols-3";
 
-  // ─── Slide reveal variants ──────────────────────────────────────────
-  // The entering slide starts off-screen on the side the user swiped FROM
-  // (direction > 0 = going next = new enters from right).
+  // Slide reveal variants
   const variants = {
-    enter: (dir) => ({
-      x: dir > 0 ? "100%" : "-100%",
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-    },
-    exit: (dir) => ({
-      x: dir > 0 ? "-100%" : "100%",
-      opacity: 0,
-    }),
+    enter: (dir) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
   };
 
-  // Swipe intent heuristic: combine distance + velocity
   const swipePower = (offset, velocity) => Math.abs(offset) * velocity;
   const SWIPE_CONFIDENCE = 10000;
 
@@ -99,62 +87,48 @@ export default function MobileCarousel({
         role="region"
         aria-label={ariaLabel}
         aria-roledescription="carousel"
+        // Clip horizontally only — vertical overflow stays visible so card
+        // auras/shadows are not cut off. Expanded bottom/top region is free.
+        style={{ clipPath: "inset(-400px 0 -400px 0)" }}
       >
-        {/* Shim: renders all items invisibly so the container reserves the
-           height of the tallest card. Prevents layout jumps during transition. */}
-        <div
-          className="invisible pointer-events-none"
-          aria-hidden="true"
-          style={{ display: "grid" }}
-        >
-          {items.map((child, i) => (
-            <div
-              key={`shim-${i}`}
-              style={{ gridArea: "1 / 1", width: "100%" }}
-            >
-              {child}
-            </div>
-          ))}
-        </div>
-
-        {/* Animated slide overlay */}
-        <div className="absolute inset-0 overflow-hidden">
-          <AnimatePresence initial={false} custom={direction} mode="sync">
-            <motion.div
-              key={page}
-              data-testid="mobile-carousel"
-              data-carousel-slide
-              data-carousel-index={index}
-              data-no-smooth
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 320, damping: 34 },
-                opacity: { duration: 0.18 },
-              }}
-              drag="x"
-              dragDirectionLock
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.22}
-              onDragEnd={(_e, { offset, velocity }) => {
-                const swipe = swipePower(offset.x, velocity.x);
-                if (swipe < -SWIPE_CONFIDENCE || offset.x < -80) {
-                  paginate(1);
-                } else if (swipe > SWIPE_CONFIDENCE || offset.x > 80) {
-                  paginate(-1);
-                }
-              }}
-              whileDrag={{ cursor: "grabbing" }}
-              style={{ touchAction: "pan-y", WebkitTapHighlightColor: "transparent" }}
-              className="absolute inset-0 flex items-stretch px-4 pt-5 pb-2"
-            >
-              <div className="w-full">{items[index]}</div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <motion.div
+            key={page}
+            data-testid="mobile-carousel"
+            data-carousel-slide
+            data-carousel-index={index}
+            data-no-smooth
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 320, damping: 34 },
+              opacity: { duration: 0.2 },
+            }}
+            drag="x"
+            dragDirectionLock
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.22}
+            onDragEnd={(_e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x);
+              if (swipe < -SWIPE_CONFIDENCE || offset.x < -80) {
+                paginate(1);
+              } else if (swipe > SWIPE_CONFIDENCE || offset.x > 80) {
+                paginate(-1);
+              }
+            }}
+            whileDrag={{ cursor: "grabbing" }}
+            style={{
+              touchAction: "pan-y",
+              WebkitTapHighlightColor: "transparent",
+            }}
+            className="w-full px-4 pt-5 pb-2"
+          >
+            {items[index]}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* ═════════ DESKTOP — grid ═════════ */}
